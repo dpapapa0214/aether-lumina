@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aether Lumina</title>
+    <link rel="icon" href="https://firebasestorage.googleapis.com/v0/b/kng1-1.appspot.com/o/%E3%82%A2%E3%82%A4%E3%82%B3%E3%83%B3%2Flogo-sparkles%20(1).png?alt=media&token=1680d7cc-206b-4d23-9db5-d4090bd98cd9">
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        .aurora-bg { background: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%), radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%); background-size: 200% 200%; animation: aurora 15s ease infinite; }
+        @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .glass-panel { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); }
+        .glass-card { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.3); transition: all 0.3s ease; }
+        .glass-card:hover { background: rgba(255, 255, 255, 0.6); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .glass-input { background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(4px); }
+        .lumina-ring { background: linear-gradient(45deg, #f59e0b, #ec4899, #8b5cf6); padding: 3px; border-radius: 9999px; }
+        .masonry-grid { column-count: 1; gap: 1rem; }
+        @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
+        @media (min-width: 1280px) { .masonry-grid { column-count: 4; } }
+        .break-inside-avoid { break-inside: avoid; }
+        .union-badge { color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* Mobile Scaling: Scale down base font size to 75% on mobile */
+        @media (max-width: 768px) {
+            html {
+                font-size: 12px; /* 16px * 0.75 = 12px */
+            }
+        }
+    </style>
+</head>
+<body class="h-screen w-full text-slate-800 aurora-bg">
+    <div id="root" class="h-full w-full"></div>
+    <script type="text/babel">
+        const API_URL = 'https://ethimp0.shop/api3.php';
+
+        // --- Icons ---
+        // Enhanced IconBase to support rem sizing for responsive scaling
+        const IconBase = ({ size = 24, className = "", children, ...props }) => {
+            // Convert numerical size (px) to rem based on 16px base
+            // This allows icons to scale with the root font-size change on mobile
+            const sizeStyle = typeof size === 'number' ? `${size / 16}rem` : size;
+            
+            return (
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width={size} 
+                    height={size} 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={className} 
+                    style={{ width: sizeStyle, height: sizeStyle }}
+                    {...props}
+                >
+                    {children}
+                </svg>
+            );
+        };
+
+        const MessageSquare = (p) => <IconBase {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></IconBase>;
+        const Heart = (p) => <IconBase {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></IconBase>;
+        const User = (p) => <IconBase {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconBase>;
+        const LogOut = (p) => <IconBase {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></IconBase>;
+        const Send = (p) => <IconBase {...p}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></IconBase>;
+        const ImageIcon = (p) => <IconBase {...p}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></IconBase>;
+        const MessageCircle = (p) => <IconBase {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></IconBase>;
+        const Home = (p) => <IconBase {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></IconBase>;
+        const Users = (p) => <IconBase {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></IconBase>;
+        const X = (p) => <IconBase {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></IconBase>;
+        const ChevronLeft = (p) => <IconBase {...p}><polyline points="15 18 9 12 15 6" /></IconBase>;
+        const Plus = (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></IconBase>;
+        const Check = (p) => <IconBase {...p}><polyline points="20 6 9 17 4 12" /></IconBase>;
+        const Camera = (p) => <IconBase {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></IconBase>;
+        const Sparkles = (p) => <IconBase {...p}><path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" /><path d="M19 18L18 20L16 21L18 22L19 24L20 22L22 21L20 20L19 18Z" /></IconBase>;
+        const Compass = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></IconBase>;
+        const Search = (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconBase>;
+        const Shield = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconBase>;
+        const Verified = (p) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className} {...p} style={{ width: typeof p.size === 'number' ? `${p.size/16}rem` : p.size, height: typeof p.size === 'number' ? `${p.size/16}rem` : p.size }}>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" fill="currentColor" stroke="none" />
+                <polyline points="22 4 12 14.01 9 11.01" stroke="white" strokeWidth="3" />
+            </svg>
+        );
+        const Edit = (p) => <IconBase {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></IconBase>;
+        const UserPlus = (p) => <IconBase {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></IconBase>;
+
+        // --- Helpers ---
+        const api = { async post(action, data = {}) { try { const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...data }) }); const json = await res.json(); if (!res.ok || json.error) throw new Error(json.error || 'Server Error'); return json; } catch (e) { console.error(e); return { error: e.message }; } } };
+        const processImage = (file, maxSize = 800) => { return new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); let w = img.width, h = img.height; if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } } else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } } canvas.width = w; canvas.height = h; canvas.getContext("2d").drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL("image/jpeg", 0.8)); }; img.src = e.target.result; }; reader.readAsDataURL(file); }); };
+
+        // --- Shared UI Components ---
+        const Avatar = ({ url, name, size = "md", className = "", onClick, isLumina = false }) => {
+            const sizeClass = { sm: "w-8 h-8 text-xs", md: "w-12 h-12 text-sm", lg: "w-24 h-24 text-xl", xl: "w-32 h-32 text-3xl" }[size];
+            const ring = isLumina ? "lumina-ring" : "border-2 border-white";
+            return (
+                <div onClick={onClick} className={`rounded-full flex-shrink-0 bg-gradient-to-tr from-indigo-100 to-purple-100 overflow-hidden flex items-center justify-center font-bold text-indigo-600 ${ring} shadow-md transition-transform hover:scale-105 ${sizeClass} ${className} ${onClick ? 'cursor-pointer' : ''}`}>
+                    {url ? <img src={url} alt={name} className="w-full h-full object-cover rounded-full bg-white" /> : (name ? name[0].toUpperCase() : '?')}
+                </div>
+            );
+        };
+
+        const VerificationBadge = ({ level }) => {
+            if (!level || Number(level) === 0) return null;
+            const color = Number(level) === 2 ? "text-yellow-500" : "text-blue-500";
+            return <Verified size={14} className={`ml-1 inline ${color}`} />;
+        };
+
+        const SidebarButton = ({ icon, label, active, onClick }) => (
+            <button onClick={onClick} className={`flex items-center space-x-4 w-full p-4 rounded-2xl transition-all duration-300 group ${active ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105' : 'text-slate-500 hover:bg-white/60 hover:text-indigo-600'}`}>
+                <span className={active ? 'text-white' : 'group-hover:scale-110 transition-transform duration-300'}>{icon}</span>
+                <span className="hidden lg:inline font-bold text-lg">{label}</span>
+            </button>
+        );
+
+        const MobileNavButton = ({ icon, label, active, onClick }) => (
+            <button onClick={onClick} className={`flex flex-col items-center justify-center p-2 rounded-xl transition w-16 ${active ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <span className={`transition-transform duration-300 ${active ? '-translate-y-1' : ''}`}>{icon}</span>
+                {active && <span className="text-[10px] font-bold mt-1 fade-in">{label}</span>}
+            </button>
+        );
+
+        const AuthScreen = ({ onAuth }) => { 
+            const [isLogin, setIsLogin] = React.useState(true); const [username, setUsername] = React.useState(''); const [password, setPassword] = React.useState(''); const [error, setError] = React.useState(''); const [loading, setLoading] = React.useState(false);
+            const handleSubmit = async (e) => { e.preventDefault(); setLoading(true); setError(''); const res = await api.post(isLogin ? 'login' : 'register', { username, password }); setLoading(false); if (res.success) onAuth(res); else setError(res.error); };
+            return (<div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"><div className="glass-panel w-full max-w-md p-10 rounded-3xl shadow-2xl relative z-10 fade-in"><div className="text-center mb-10"><div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white mb-6 shadow-lg shadow-indigo-500/30 p-4"><Sparkles size={48} /></div><h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight mb-2">Aether Lumina</h1><p className="text-slate-500">Connect beyond the horizon.</p></div><div className="flex bg-slate-100/50 p-1 rounded-xl mb-8 backdrop-blur-sm"><button onClick={() => setIsLogin(true)} className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${isLogin ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Login</button><button onClick={() => setIsLogin(false)} className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${!isLogin ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Sign Up</button></div>{error && <div className="mb-6 p-4 bg-red-50/80 border border-red-100 text-red-500 text-sm rounded-xl text-center backdrop-blur-sm">{error}</div>}<form onSubmit={handleSubmit} className="space-y-5"><div className="space-y-1"><label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Username</label><input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-5 py-4 rounded-xl glass-input outline-none transition text-slate-800 font-medium" placeholder="Enter your ID" required /></div><div className="space-y-1"><label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Password</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-xl glass-input outline-none transition text-slate-800 font-medium" placeholder="••••••••" required /></div><button disabled={loading} className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-[0.98] mt-4">{loading ? 'Processing...' : (isLogin ? 'Enter Aether' : 'Join Lumina')}</button></form></div></div>);
+        };
+
+        const UnionFilterBar = ({ unions, selected, onSelect }) => (
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide px-1">
+                <button onClick={() => onSelect('')} className={`px-4 py-2 rounded-full font-bold text-sm transition whitespace-nowrap ${selected === '' ? 'bg-slate-800 text-white shadow-md' : 'bg-white/60 hover:bg-white text-slate-600'}`}>All</button>
+                {unions.map(u => (
+                    <button key={u.id} onClick={() => onSelect(u.id)} className={`px-4 py-2 rounded-full font-bold text-sm transition whitespace-nowrap flex items-center gap-2 ${selected === u.id ? 'text-white shadow-md' : 'bg-white/60 hover:bg-white text-slate-600'}`} style={selected === u.id ? {backgroundColor: u.color || '#6366f1'} : {}}>
+                        {u.icon_url ? <img src={u.icon_url} className="w-4 h-4 rounded-full object-cover" /> : <Shield size={14} />}
+                        {u.name}
+                    </button>
+                ))}
+            </div>
+        );
+
+        const UserListModal = ({ isOpen, onClose, title, type, userId, excludeRoomId, excludeUnionId, onSelect, onUserClick, multiSelect = false }) => {
+            const [users, setUsers] = React.useState([]); const [selected, setSelected] = React.useState([]);
+            React.useEffect(() => { if (isOpen) { api.post('get_user_list', { type, userId, excludeRoomId, excludeUnionId }).then(res => { if (res.users) setUsers(res.users); }); setSelected([]); } }, [isOpen, type, userId, excludeRoomId, excludeUnionId]);
+            const handleClick = (uid) => { if (onSelect) { if (!multiSelect) { onSelect([uid]); } else { if (selected.includes(uid)) setSelected(selected.filter(id => id !== uid)); else setSelected([...selected, uid]); } } else if (onUserClick) { onUserClick(uid); onClose(); } };
+            if (!isOpen) return null;
+            return (<div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity"><div className="glass-panel w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] fade-in"><div className="p-5 border-b border-slate-200/50 flex justify-between items-center bg-white/50"><h3 className="font-bold text-xl text-slate-800">{title}</h3><button onClick={onClose} className="p-2 hover:bg-slate-200/50 rounded-full transition"><X className="text-slate-500" /></button></div><div className="flex-1 overflow-y-auto p-3 space-y-2">{users.length === 0 ? <div className="p-8 text-center text-slate-400 font-medium">No users found.</div> : users.map(u => (<div key={u.id} onClick={() => handleClick(u.id)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition border border-transparent ${selected.includes(u.id) ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-white/60 hover:border-white/50'}`}><div className="flex items-center space-x-4"><Avatar url={u.avatar_url} name={u.username} size="md" /><div className="font-bold text-slate-800 text-lg">{u.username}<VerificationBadge level={u.verified_level} /></div></div>{multiSelect && <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition ${selected.includes(u.id) ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300'}`}>{selected.includes(u.id) && <Check size={14} />}</div>}</div>))}</div>{multiSelect && <div className="p-5 border-t border-slate-200/50 bg-white/50"><button onClick={() => onSelect(selected)} disabled={selected.length === 0} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:shadow-none transition">Confirm ({selected.length})</button></div>}</div></div>);
+        };
+
+        const RoomMembersModal = ({ isOpen, onClose, roomId, onUserClick }) => {
+            const [members, setMembers] = React.useState([]); React.useEffect(() => { if(isOpen && roomId) { api.post('get_room_members', { roomId }).then(res => { if(res.members) setMembers(res.members) }); } }, [isOpen, roomId]); if(!isOpen) return null;
+            return (<div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div className="glass-panel w-full max-w-md rounded-3xl shadow-2xl p-6 fade-in"><div className="flex justify-between items-center mb-6"><h3 className="font-bold text-xl text-slate-800">Members ({members.length})</h3><button onClick={onClose}><X className="text-slate-500" /></button></div><div className="max-h-80 overflow-y-auto space-y-3 pr-2">{members.map(m => <div key={m.id} onClick={() => { onUserClick(m.id); onClose(); }} className="flex items-center space-x-4 p-3 hover:bg-white/60 rounded-xl cursor-pointer transition border border-transparent hover:border-white/50"><Avatar url={m.avatar_url} name={m.username} size="md" /><span className="font-bold text-slate-700">{m.username}<VerificationBadge level={m.verified_level} /></span></div>)}</div></div></div>);
+        };
+
+        const UnionModal = ({ isOpen, onClose, userId, onRefresh }) => {
+            const [mode, setMode] = React.useState('create'); 
+            const [name, setName] = React.useState(''); const [desc, setDesc] = React.useState('');
+            const [color, setColor] = React.useState('#6366f1'); const [icon, setIcon] = React.useState(null);
+            const colors = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'];
+            const handleCreate = async () => { const res = await api.post('create_union', { userId, name, description: desc, color, icon }); if (res.success) { alert("Union Created!"); onClose(); onRefresh(); } else { alert(res.error); } };
+            const handleIcon = async (e) => { const b64 = await processImage(e.target.files[0], 200); setIcon(b64); };
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass-panel w-full max-w-md rounded-3xl shadow-2xl p-6 fade-in">
+                        <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-xl text-slate-800">Create Union</h3><button onClick={onClose}><X className="text-slate-500" /></button></div>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                                <label className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-slate-300 hover:border-indigo-500 transition">{icon ? <img src={icon} className="w-full h-full object-cover"/> : <Camera className="text-slate-400"/>}<input type="file" className="hidden" onChange={handleIcon}/></label>
+                                <div className="flex-1 grid grid-cols-4 gap-2">{colors.map(c => (<button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-slate-800 scale-110' : 'border-transparent'}`} style={{backgroundColor: c}} />))}</div>
+                            </div>
+                            <input value={name} onChange={e => setName(e.target.value)} placeholder="Union Name" className="w-full p-3 bg-white/50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description" className="w-full p-3 bg-white/50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 h-24" />
+                            <button onClick={handleCreate} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">Create</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const UnionDetailView = ({ unionId, userId, onBack, onNavigate, onUserClick, onRefresh }) => {
+            const [detail, setDetail] = React.useState(null); const [isEditing, setIsEditing] = React.useState(false); const [editName, setEditName] = React.useState(''); const [editDesc, setEditDesc] = React.useState(''); const [showInvite, setShowInvite] = React.useState(false);
+            const refreshDetail = () => { if (unionId) { api.post('get_union_details', { unionId, userId }).then(res => { if(res.union) { setDetail(res.union); setEditName(res.union.name); setEditDesc(res.union.description); } }); } };
+            React.useEffect(() => { refreshDetail(); }, [unionId, userId]);
+            const handleJoin = async () => { const res = await api.post('join_union', { userId, unionId }); if(res.success) { alert("Joined!"); if(onRefresh) onRefresh(); refreshDetail(); } };
+            const handleLeave = async () => { const res = await api.post('leave_union', { userId, unionId }); if(res.success) { alert("Left!"); if(onRefresh) onRefresh(); refreshDetail(); } };
+            const handleUpdate = async () => { const res = await api.post('update_union', { unionId, name: editName, description: editDesc }); if(res.success) { setIsEditing(false); alert("Updated!"); if(onRefresh) onRefresh(); refreshDetail(); } };
+            const handleInvite = async (selectedUsers) => { if(selectedUsers.length === 0) return; const res = await api.post('invite_to_union', { unionId, members: selectedUsers }); if(res.success) { alert("Invited!"); setShowInvite(false); } };
+            const goToChat = () => { if (detail && detail.chat_room_id) { onNavigate('chat', { id: detail.chat_room_id, name: detail.name, type: 'union', avatar: detail.icon_url }); } };
+            const filterContent = (type) => { onNavigate(type, { filterUnionId: unionId }); };
+            if (!detail) return <div className="p-8 text-center text-slate-500">Loading...</div>;
+            const isCreator = detail.created_by === userId;
+            return (
+                <div className="h-full overflow-y-auto relative bg-slate-50 pb-20">
+                    <div className="h-48 w-full relative overflow-hidden" style={{backgroundColor: detail.color || '#ccc'}}>
+                         <div className="absolute inset-0 bg-black/10"></div>
+                         <button onClick={onBack} className="absolute top-6 left-6 p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition z-10"><ChevronLeft /></button>
+                    </div>
+                    
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+                        {/* Union Detail Header - Centered for mobile, left for desktop */}
+                        <div className="relative -mt-16 mb-6 flex flex-col items-center md:flex-row md:items-end gap-6 text-center md:text-left">
+                            <div className="relative group">
+                                <div className="w-32 h-32 rounded-3xl border-[6px] border-slate-50 shadow-2xl flex items-center justify-center text-white font-bold text-4xl overflow-hidden" style={{backgroundColor: detail.color || '#ccc'}}>
+                                     {detail.icon_url ? <img src={detail.icon_url} className="w-full h-full object-cover"/> : detail.name[0]}
+                                </div>
+                            </div>
+                            <div className="flex-1 pb-4 w-full">
+                                {isEditing ? 
+                                    <input value={editName} onChange={e => setEditName(e.target.value)} className="font-black text-3xl bg-white/50 p-2 rounded-xl w-full text-center md:text-left" /> : 
+                                    <h1 className="text-3xl font-black text-slate-900 mb-1 flex items-center justify-center md:justify-start gap-2">{detail.name} <span className="text-sm font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">Union</span></h1>
+                                }
+                                <p className="text-slate-500 font-medium">{detail.member_count} Members • Created by {detail.creator_name || 'Unknown'}</p>
+                            </div>
+                            <div className="flex gap-3 pb-4 w-full md:w-auto justify-center md:justify-end">
+                                {detail.is_member ? 
+                                    <button onClick={handleLeave} className="flex-1 md:flex-none px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100 hover:bg-red-100 transition">Leave</button> :
+                                    <button onClick={handleJoin} className="flex-1 md:flex-none px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20">Join Union</button>
+                                }
+                                {isCreator && !isEditing && <button onClick={() => setIsEditing(true)} className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition"><Edit size={20}/></button>}
+                                {isCreator && isEditing && <button onClick={handleUpdate} className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition">Save</button>}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2 space-y-6">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+                                    <h3 className="font-bold text-lg mb-2 text-slate-800">About</h3>
+                                    {isEditing ? 
+                                        <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 h-32" /> :
+                                        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{detail.description || "No description provided."}</p>
+                                    }
+                                </div>
+                                
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-xl text-slate-800">Members ({detail.member_count})</h3>
+                                        {detail.is_member && <button onClick={() => setShowInvite(true)} className="text-indigo-600 font-bold text-sm flex items-center gap-1 hover:bg-indigo-50 px-3 py-1 rounded-full transition"><UserPlus size={16}/> Invite</button>}
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {detail.members && detail.members.map(m => (
+                                            <div key={m.id} onClick={() => onUserClick(m.id)} className="flex items-center space-x-3 p-3 bg-white rounded-xl border border-slate-100 hover:shadow-md transition cursor-pointer group text-left">
+                                                <Avatar url={m.avatar_url} name={m.username} size="md" />
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-slate-800 group-hover:text-indigo-600 transition truncate">{m.username}<VerificationBadge level={m.verified_level} /></div>
+                                                    <div className="text-xs text-slate-400">Member</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {detail.is_member && (
+                                    <button onClick={goToChat} className="w-full p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/20 hover:shadow-xl transition flex items-center justify-center gap-2 transform active:scale-95">
+                                        <MessageSquare size={20}/> Open Union Chat
+                                    </button>
+                                )}
+                                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                                    <button onClick={() => filterContent('timeline')} className="w-full p-3 text-left font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+                                        <span>View in Aether</span>
+                                        <ChevronLeft className="rotate-180 text-slate-300 group-hover:text-slate-600 transition"/>
+                                    </button>
+                                    <button onClick={() => filterContent('lumina')} className="w-full p-3 text-left font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+                                        <span>View in Lumina</span>
+                                        <ChevronLeft className="rotate-180 text-slate-300 group-hover:text-slate-600 transition"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <UserListModal 
+                        isOpen={showInvite} 
+                        onClose={() => setShowInvite(false)} 
+                        title={`Invite to ${detail.name}`} 
+                        type="following" 
+                        userId={userId} 
+                        excludeUnionId={unionId} 
+                        multiSelect={true}
+                        onSelect={handleInvite}
+                    />
+                </div>
+            );
+        };
+
+        const UnionView = ({ user, myUnions, onJoinMore, onNavigate }) => {
+            return (<div className="flex-1 h-full overflow-y-auto p-4 md:p-8 pb-20"><div className="max-w-6xl mx-auto"><div className="sticky top-0 z-20 pt-4 pb-2 glass-panel rounded-b-3xl px-6 -mt-8 mb-6 flex justify-between items-center"><h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-600">Unions</h2><button onClick={onJoinMore} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg flex items-center gap-2"><Plus size={16}/> Create</button></div><h3 className="font-bold text-slate-500 mb-4 px-2">My Unions</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">{myUnions.map(u => (<div key={u.id} onClick={() => onNavigate('union_detail', { id: u.id })} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border border-slate-100"><div className="h-24 w-full relative" style={{backgroundColor: u.color || '#ccc'}}><div className="absolute inset-0 bg-black/5"></div></div><div className="px-6 pb-6 relative"><div className="-mt-10 mb-3 flex justify-between items-end"><div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-2xl overflow-hidden bg-slate-200" style={{backgroundColor: u.color || '#ccc'}}>{u.icon_url ? <img src={u.icon_url} className="w-full h-full object-cover"/> : u.name[0]}</div><div className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold mb-2">{u.member_count} Members</div></div><h3 className="font-bold text-xl text-slate-800 mb-1 group-hover:text-emerald-600 transition">{u.name}</h3><p className="text-slate-500 text-sm line-clamp-2 h-10">{u.description || "No description."}</p></div></div>))}{myUnions.length === 0 && <div className="col-span-full text-center text-slate-400 py-20 glass-card rounded-2xl">You haven't joined any Unions yet.</div>}</div></div></div>);
+        };
+
+        const LuminaViewer = ({ userId, initialLuminaId, currentUser, onClose, onUserClick }) => { 
+            const [luminas, setLuminas] = React.useState([]); const [idx, setIdx] = React.useState(0); const [loading, setLoading] = React.useState(true); const [comments, setComments] = React.useState([]); const [commentInput, setCommentInput] = React.useState(''); const [liked, setLiked] = React.useState(false); const [likeCount, setLikeCount] = React.useState(0);
+            const fetchLuminas = async () => { const res = await api.post('get_user_luminas', { targetUserId: userId, myUserId: currentUser.userId }); if (res.luminas) { setLuminas(res.luminas); let targetIdx = 0; if (initialLuminaId) { const foundIdx = res.luminas.findIndex(l => l.id === initialLuminaId); if (foundIdx !== -1) targetIdx = foundIdx; } setIdx(targetIdx); if(res.luminas.length > 0) loadLuminaDetails(res.luminas[targetIdx]); } setLoading(false); };
+            const loadLuminaDetails = async (luminaData) => { setLiked(luminaData.is_liked > 0); setLikeCount(luminaData.like_count); const cRes = await api.post('get_lumina_comments', { luminaId: luminaData.id }); if(cRes.comments) setComments(cRes.comments); };
+            React.useEffect(() => { fetchLuminas(); }, [userId]);
+            if (loading) return null; if (luminas.length === 0) { onClose(); return null; }
+            const current = luminas[idx];
+            const handleNext = () => { if (idx < luminas.length - 1) { setIdx(idx + 1); loadLuminaDetails(luminas[idx+1]); } };
+            const handlePrev = () => { if (idx > 0) { setIdx(idx - 1); loadLuminaDetails(luminas[idx-1]); } };
+            const toggleLike = async () => { const res = await api.post('toggle_lumina_like', { userId: currentUser.userId, luminaId: current.id }); if(res.success) { setLiked(res.liked); setLikeCount(res.count); } };
+            const sendComment = async () => { if(!commentInput.trim()) return; await api.post('create_lumina_comment', { userId: currentUser.userId, luminaId: current.id, content: commentInput }); setCommentInput(''); loadLuminaDetails(current.id); };
+            
+            return (
+                <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-0 md:p-8">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-white hover:opacity-70 transition z-[70] bg-black/20 p-2 rounded-full backdrop-blur-sm"><X size={24} /></button>
+                    
+                    <div className="w-full max-w-6xl h-full md:max-h-[90vh] bg-neutral-900 md:rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-white/10">
+                        {/* Image Section */}
+                        <div className="flex-shrink-0 h-[40vh] md:h-auto md:flex-1 bg-neutral-900 relative flex items-center justify-center">
+                            <img src={current.image_url} className="max-w-full max-h-full object-contain" />
+                            {idx > 0 && <div className="absolute left-0 top-0 bottom-0 w-1/4 cursor-pointer hover:bg-white/5 transition" onClick={handlePrev}></div>}
+                            {idx < luminas.length - 1 && <div className="absolute right-0 top-0 bottom-0 w-1/4 cursor-pointer hover:bg-white/5 transition" onClick={handleNext}></div>}
+                            <div className="absolute top-4 left-4 right-4 flex space-x-1 z-10">
+                                {luminas.map((_, i) => <div key={i} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden"><div className={`h-full bg-white transition-all duration-300 ${i < idx ? 'w-full' : (i === idx ? 'w-full' : 'w-0')}`} /></div>)}
+                            </div>
+                        </div>
+                        
+                        {/* Info/Comment Section */}
+                        <div className="flex-1 w-full md:w-96 bg-white flex flex-col border-l border-slate-200 rounded-t-3xl md:rounded-none overflow-hidden relative -mt-6 md:mt-0 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-none">
+                            <div className="p-4 border-b border-slate-100 flex items-center space-x-3 bg-white">
+                                <Avatar url={current.avatar_url} name={current.username} size="md" onClick={() => { onClose(); onUserClick(current.user_id); }} />
+                                <div>
+                                    <div className="font-bold text-sm cursor-pointer hover:underline" onClick={() => { onClose(); onUserClick(current.user_id); }}>
+                                        {current.username}<VerificationBadge level={current.verified_level} />
+                                    </div>
+                                    {current.union_name && <span className="union-badge" style={{backgroundColor: current.union_color}}>{current.union_name}</span>}
+                                    <div className="text-xs text-slate-500">{new Date(Number(current.created_at)).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+                                {current.caption && (
+                                    <div className="flex space-x-3">
+                                        <Avatar url={current.avatar_url} name={current.username} size="sm" />
+                                        <div className="text-sm"><span className="font-bold mr-2">{current.username}</span>{current.caption}</div>
+                                    </div>
+                                )}
+                                {comments.map(c => (
+                                    <div key={c.id} className="flex space-x-3">
+                                        <Avatar url={c.avatar_url} name={c.username} size="sm" onClick={() => { onClose(); onUserClick(c.user_id); }} />
+                                        <div className="text-sm">
+                                            <span className="font-bold mr-2 cursor-pointer hover:underline" onClick={() => { onClose(); onUserClick(c.user_id); }}>
+                                                {c.username}<VerificationBadge level={c.verified_level} />
+                                            </span>
+                                            {c.content}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="p-4 border-t border-slate-100 bg-slate-50 pb-safe md:pb-4">
+                                <div className="flex items-center space-x-4 mb-3">
+                                    <button onClick={toggleLike} className={`transition ${liked ? 'text-pink-500' : 'text-slate-800 hover:opacity-60'}`}>
+                                        <Heart size={24} className={liked ? 'fill-current' : ''} />
+                                    </button>
+                                    <MessageCircle size={24} className="text-slate-800 -rotate-90" />
+                                    <Send size={24} className="text-slate-800" />
+                                </div>
+                                <div className="font-bold text-sm mb-2">{likeCount} likes</div>
+                                <div className="flex items-center gap-2">
+                                    <input 
+                                        value={commentInput} 
+                                        onChange={e => setCommentInput(e.target.value)} 
+                                        placeholder="Add a comment..." 
+                                        className="flex-1 bg-transparent text-sm outline-none p-2" 
+                                        onKeyPress={e => e.key === 'Enter' && sendComment()} 
+                                    />
+                                    <button onClick={sendComment} disabled={!commentInput.trim()} className="text-indigo-600 font-bold text-sm disabled:opacity-50">Post</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const PostItem = ({ post, currentUser, onUserClick, isReply = false }) => {
+            const [liked, setLiked] = React.useState(post.is_liked > 0); const [count, setCount] = React.useState(post.like_count); const [showReply, setShowReply] = React.useState(false); const [replies, setReplies] = React.useState([]); const [replyContent, setReplyContent] = React.useState('');
+            const toggleLike = async () => { const res = await api.post('toggle_like', { userId: currentUser.userId, postId: post.id }); if (res.success) { setLiked(res.liked); setCount(res.count); } };
+            const fetchReplies = async () => { if (showReply) { setShowReply(false); return; } const res = await api.post('get_replies', { userId: currentUser.userId, postId: post.id }); if (res.replies) setReplies(res.replies); setShowReply(true); };
+            const sendReply = async () => { if (!replyContent.trim()) return; await api.post('create_post', { userId: currentUser.userId, content: replyContent, replyToId: post.id }); setReplyContent(''); const res = await api.post('get_replies', { userId: currentUser.userId, postId: post.id }); if (res.replies) setReplies(res.replies); };
+            return (<div className={`p-6 mb-4 glass-card rounded-2xl ${isReply ? 'ml-8 bg-slate-50/30 border-l-4 border-indigo-200' : ''}`}><div className="flex space-x-4"><Avatar url={post.avatar_url} name={post.username} onClick={() => onUserClick(post.user_id)} /><div className="flex-1 min-w-0"><div className="flex items-center space-x-2 mb-1"><span onClick={() => onUserClick(post.user_id)} className="font-bold text-slate-900 cursor-pointer hover:underline text-lg">{post.username}<VerificationBadge level={post.verified_level} /></span>{post.union_name && <span className="union-badge" style={{backgroundColor: post.union_color}}><Shield size={10} /> {post.union_name}</span>}<span className="text-slate-400 text-sm font-medium">{new Date(Number(post.created_at)).toLocaleDateString()}</span></div><p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-base">{post.content}</p>{post.image_url && <div className="mt-4 rounded-2xl overflow-hidden shadow-sm border border-slate-200/50 w-fit"><img src={post.image_url} className="object-cover max-h-96 w-full" alt="post" /></div>}<div className="flex items-center gap-6 mt-4"><button onClick={fetchReplies} className={`flex items-center space-x-2 py-1 px-3 rounded-full transition font-medium ${showReply ? 'bg-indigo-100 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-500'}`}><MessageCircle size={18} /><span>{post.reply_count || replies.length || 0}</span></button><button onClick={toggleLike} className={`flex items-center space-x-2 py-1 px-3 rounded-full transition font-medium ${liked ? 'bg-pink-100 text-pink-500' : 'text-slate-500 hover:bg-slate-100 hover:text-pink-500'}`}><Heart size={18} className={liked ? 'fill-current' : ''} /><span>{count}</span></button></div>{showReply && <div className="mt-6 pt-6 border-t border-slate-200/50 space-y-4">{replies.map(r => <PostItem key={r.id} post={r} currentUser={currentUser} onUserClick={onUserClick} isReply={true} />)}<div className="flex items-center gap-3 bg-white/50 p-2 rounded-2xl border border-slate-200/50"><input value={replyContent} onChange={e => setReplyContent(e.target.value)} className="flex-1 bg-transparent px-4 py-2 text-sm focus:outline-none placeholder-slate-400" placeholder="Write a reply..." /><button onClick={sendReply} disabled={!replyContent.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-xl transition disabled:opacity-50"><Send size={18}/></button></div></div>}</div></div></div>);
+        };
+
+        const LuminaView = ({ user, onUserClick, myUnions, filterUnionId, setFilterUnionId }) => {
+             const [feed, setFeed] = React.useState([]); const [viewingUser, setViewingUser] = React.useState(null); const [caption, setCaption] = React.useState(''); const [preview, setPreview] = React.useState(null); const [unionId, setUnionId] = React.useState(filterUnionId || ''); const fileInput = React.useRef(null);
+             const [selectedLuminaId, setSelectedLuminaId] = React.useState(null);
+            
+            const fetchLuminas = (fid) => { api.post('get_lumina_feed', { userId: user.userId, filterUnionId: fid }).then(res => { if (res.luminas) setFeed(res.luminas); }); };
+            
+            React.useEffect(() => { fetchLuminas(filterUnionId); }, [filterUnionId]);
+            React.useEffect(() => { setUnionId(filterUnionId || ''); }, [filterUnionId]);
+
+            const handleFileSelect = async (e) => { const file = e.target.files[0]; if (!file) return; const base64 = await processImage(file, 1200); setPreview(base64); };
+            const handleUpload = async () => { await api.post('create_lumina', { userId: user.userId, image: preview, caption, unionId: unionId || null }); setPreview(null); setCaption(''); fetchLuminas(filterUnionId); };
+            
+            return (<div className="flex-1 h-full overflow-y-auto p-4 md:p-8 pb-20"><div className="max-w-6xl mx-auto"><div className="flex items-center justify-between mb-2 sticky top-0 z-20 py-4 glass-panel rounded-2xl px-6"><h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-indigo-600 flex items-center gap-2"><Sparkles size={24} className="text-pink-500" /> Lumina</h2><button onClick={() => fileInput.current.click()} className="bg-gradient-to-r from-pink-500 to-indigo-600 text-white px-5 py-2 rounded-full font-bold shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center gap-2 text-sm"><Plus size={18} /> New</button><input type="file" ref={fileInput} className="hidden" accept="image/*" onChange={handleFileSelect} /></div><UnionFilterBar unions={myUnions} selected={filterUnionId} onSelect={setFilterUnionId} />{preview && <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-2xl p-6 w-full max-w-md"><h3 className="font-bold text-lg mb-4">New Lumina</h3><img src={preview} className="w-full rounded-lg mb-4 max-h-60 object-contain bg-black" /><input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Caption..." className="w-full border border-slate-200 rounded-lg p-3 mb-4 outline-none" /><select value={unionId} onChange={e => setUnionId(e.target.value)} className="w-full border border-slate-200 rounded-lg p-3 mb-4 outline-none"><option value="">Public</option>{myUnions.map(u => <option key={u.id} value={u.id}>Union: {u.name}</option>)}</select><div className="flex justify-end space-x-2"><button onClick={() => setPreview(null)} className="px-4 py-2 text-slate-500">Cancel</button><button onClick={handleUpload} className="px-6 py-2 bg-pink-500 text-white rounded-full font-bold">Share</button></div></div></div>}<div className="masonry-grid">{feed.map(lumina => (<div key={lumina.id} onClick={() => { setViewingUser(lumina.user_id); setSelectedLuminaId(lumina.id); }} className="break-inside-avoid mb-6 glass-card rounded-2xl overflow-hidden cursor-pointer group relative shadow-md hover:shadow-xl transition-all duration-300"><img src={lumina.image_url} alt="lumina" className="w-full h-auto object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-4"><div className="flex items-center space-x-3 text-white mb-2"><Avatar url={lumina.avatar_url} name={lumina.username} size="sm" className="border-none" /><span className="font-bold text-sm">{lumina.username}<VerificationBadge level={lumina.verified_level} /></span></div>{lumina.union_name && <span className="union-badge mb-2" style={{backgroundColor: lumina.union_color || '#6366f1'}}><Shield size={10} /> {lumina.union_name}</span>}{lumina.caption && <p className="text-white text-xs line-clamp-2 mb-2 opacity-90">{lumina.caption}</p>}<div className="flex items-center space-x-4 text-white/80 text-xs"><span className="flex items-center"><Heart size={12} className="mr-1" /> {lumina.like_count}</span><span className="flex items-center"><MessageCircle size={12} className="mr-1" /> {lumina.comment_count}</span></div></div></div>))}</div></div>{viewingUser && <LuminaViewer userId={viewingUser} initialLuminaId={selectedLuminaId} currentUser={user} onClose={() => { setViewingUser(null); setSelectedLuminaId(null); }} onUserClick={onUserClick} />}</div>);
+        };
+
+        const TimelineView = ({ user, onUserClick, myUnions, filterUnionId, setFilterUnionId }) => {
+            const [posts, setPosts] = React.useState([]); const [content, setContent] = React.useState(''); const [unionId, setUnionId] = React.useState(''); const fileInput = React.useRef(null);
+            
+            const handleFilterChange = (id) => { setFilterUnionId(id); setUnionId(id); };
+
+            const fetchPosts = (fid) => { api.post('get_timeline', { userId: user.userId, filterUnionId: fid }).then(res => { if (res.posts) setPosts(res.posts); }); };
+            
+            React.useEffect(() => { fetchPosts(filterUnionId); }, [filterUnionId]);
+            const handlePost = async () => { if (!content.trim()) return; await api.post('create_post', { userId: user.userId, content, unionId: unionId || null }); setContent(''); fetchPosts(filterUnionId); };
+            const handleImagePost = async (e) => { const file = e.target.files[0]; if (!file) return; const base64 = await processImage(file); await api.post('create_post', { userId: user.userId, content: '', image: base64, unionId: unionId || null }); fetchPosts(filterUnionId); };
+            
+            return (
+                <div className="flex-1 h-full overflow-y-auto p-4 md:p-8 pb-20">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="flex items-center justify-between mb-2 sticky top-0 z-20 py-4 glass-panel rounded-2xl px-6">
+                            <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Aether</h2>
+                            <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold tracking-wider">LIVE</div>
+                        </div>
+                        <UnionFilterBar unions={myUnions} selected={filterUnionId} onSelect={handleFilterChange} />
+                        <div className="glass-panel p-6 rounded-3xl mb-8 shadow-sm">
+                            <div className="flex space-x-4">
+                                <Avatar url={user.avatar} name={user.username} size="lg" className="flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="What's on your mind?" className="w-full bg-transparent border-none focus:ring-0 text-lg placeholder-slate-400 resize-none h-24 p-0 leading-relaxed"></textarea>
+                                    <div className="flex flex-wrap justify-between items-center mt-4 border-t border-slate-200/50 pt-4 gap-y-2">
+                                        <div className="flex gap-2 items-center flex-wrap">
+                                            <button onClick={() => fileInput.current.click()} className="text-indigo-500 hover:bg-indigo-50 p-2.5 rounded-full transition"><ImageIcon size={22} /></button>
+                                            <select value={unionId} onChange={e => setUnionId(e.target.value)} className="bg-slate-100 rounded-full px-3 text-sm text-slate-600 outline-none h-10"><option value="">Public</option>{myUnions.map(u => <option key={u.id} value={u.id}>Union: {u.name}</option>)}</select>
+                                        </div>
+                                        <input type="file" ref={fileInput} className="hidden" accept="image/*" onChange={handleImagePost} />
+                                        <button onClick={handlePost} disabled={!content.trim()} className="bg-indigo-600 text-white px-8 py-2.5 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:shadow-none transform active:scale-95">Post</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-6 fade-in">{posts.map(post => <PostItem key={post.id} post={post} currentUser={user} onUserClick={onUserClick} />)}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProfileView = ({ user, targetUserId, onBack, onUserClick }) => {
+            const [profile, setProfile] = React.useState(null); const [userPosts, setUserPosts] = React.useState([]); const [userLuminas, setUserLuminas] = React.useState([]); const [tab, setTab] = React.useState('posts'); const [showUserList, setShowUserList] = React.useState(null); const [userUnions, setUserUnions] = React.useState([]); const [viewingLuminaUser, setViewingLuminaUser] = React.useState(null);
+            const [viewingLuminaId, setViewingLuminaId] = React.useState(null);
+            const fetchProfile = async () => { const res = await api.post('get_user_info', { targetUserId, myUserId: user.userId }); if (res.user) setProfile(res.user); const postsRes = await api.post('get_user_posts', { targetUserId, myUserId: user.userId }); if (postsRes.posts) setUserPosts(postsRes.posts); const luminaRes = await api.post('get_user_luminas', { targetUserId, myUserId: user.userId }); if (luminaRes.luminas) setUserLuminas(luminaRes.luminas); const unionRes = await api.post('get_user_unions', { targetUserId }); if (unionRes.unions) setUserUnions(unionRes.unions); };
+            React.useEffect(() => { fetchProfile(); }, [targetUserId]);
+            const toggleFollow = async () => { const res = await api.post('toggle_follow', { userId: user.userId, targetId: targetUserId }); if (res.success) setProfile(prev => ({ ...prev, is_following: res.following })); };
+            const handleUpdateProfile = async (field, file) => { if (!file) return; const base64 = await processImage(file, field === 'header' ? 1200 : 400); await api.post('update_profile', { userId: user.userId, [field]: base64 }); fetchProfile(); };
+            if (!profile) return <div className="p-8 text-center text-slate-500">Loading...</div>;
+            const isMe = user.userId === targetUserId;
+            return (
+                <div className="h-full overflow-y-auto relative bg-slate-50 pb-20">
+                    <div className="h-80 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative group overflow-hidden">
+                        {profile.header_url && <img src={profile.header_url} className="w-full h-full object-cover" />}
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        <button onClick={onBack} className="absolute top-6 left-6 p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition"><ChevronLeft /></button>
+                        {isMe && <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition bg-black/20 backdrop-blur-sm"><div className="bg-white/20 p-3 rounded-full border border-white/50 text-white"><Camera /></div><input type="file" className="hidden" accept="image/*" onChange={e => handleUpdateProfile('header', e.target.files[0])} /></label>}
+                    </div>
+                    
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+                        <div className="relative -mt-24 mb-6 flex flex-col items-center md:flex-row md:items-end gap-6 text-center md:text-left">
+                            <div className="relative group">
+                                <Avatar url={profile.avatar_url} name={profile.username} size="xl" className="w-40 h-40 border-[6px] border-white shadow-2xl bg-white text-5xl" />
+                                {isMe && <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition text-white rounded-full"><Camera /><input type="file" className="hidden" accept="image/*" onChange={e => handleUpdateProfile('avatar', e.target.files[0])} /></label>}
+                            </div>
+                            
+                            <div className="flex-1 pb-4 pt-2 md:pt-6 mt-2 md:mt-24 w-full">
+                                <h1 className="text-4xl font-black text-slate-900 mb-2 flex items-center justify-center md:justify-start gap-2">
+                                    {profile.username}<VerificationBadge level={profile.verified_level} />
+                                </h1>
+                                <p className="text-slate-500 font-medium">Joined {new Date(Number(profile.created_at)).toLocaleDateString()}</p>
+                                <div className="flex gap-2 mt-2 flex-wrap justify-center md:justify-start">
+                                    {userUnions.map(u => <span key={u.id} className="union-badge" style={{backgroundColor: u.color}}>{u.name}</span>)}
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-4 pb-6 w-full md:w-auto justify-center md:justify-end">
+                                {!isMe && <button onClick={toggleFollow} className={`px-8 py-3 rounded-full font-bold shadow-lg transition transform active:scale-95 ${profile.is_following ? 'bg-white border border-slate-200 text-slate-900' : 'bg-slate-900 text-white'}`}>{profile.is_following ? 'Following' : 'Follow'}</button>}
+                            </div>
+                        </div>
+
+                        <div className="flex space-x-10 text-base mb-10 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm w-full md:w-auto overflow-x-auto justify-center md:justify-start">
+                            <span className="font-bold text-slate-900 text-xl whitespace-nowrap">{profile.post_count || 0} <span className="font-medium text-slate-500 text-base">Posts</span></span>
+                            <span className="font-bold text-slate-900 text-xl whitespace-nowrap">{profile.lumina_count || 0} <span className="font-medium text-slate-500 text-base">Lumina</span></span>
+                            <span onClick={() => setShowUserList('following')} className="cursor-pointer hover:text-indigo-600 font-bold text-slate-900 text-xl transition whitespace-nowrap">{profile.following_count || 0} <span className="font-medium text-slate-500 text-base">Following</span></span>
+                            <span onClick={() => setShowUserList('followers')} className="cursor-pointer hover:text-indigo-600 font-bold text-slate-900 text-xl transition whitespace-nowrap">{profile.follower_count || 0} <span className="font-medium text-slate-500 text-base">Followers</span></span>
+                        </div>
+                        
+                        <div className="flex border-b border-slate-200 mb-6 gap-8 justify-center md:justify-start">
+                            <button onClick={() => setTab('posts')} className={`pb-4 px-2 font-bold text-lg transition ${tab === 'posts' ? 'text-indigo-600 border-b-4 border-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>Posts</button>
+                            <button onClick={() => setTab('lumina')} className={`pb-4 px-2 font-bold text-lg transition ${tab === 'lumina' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-slate-600'}`}>Lumina</button>
+                        </div>
+                        
+                        {tab === 'posts' ? (<div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto md:mx-0">{userPosts.length === 0 ? <div className="text-slate-400 p-4 text-center md:text-left">No posts yet.</div> : userPosts.map(post => <PostItem key={post.id} post={post} currentUser={user} onUserClick={onUserClick} />)}</div>) : (<div className="masonry-grid">{userLuminas.length === 0 ? <div className="text-slate-400 p-4 text-center md:text-left">No lumina yet.</div> : userLuminas.map(l => (<div key={l.id} onClick={() => { setViewingLuminaUser(l.user_id); setViewingLuminaId(l.id); }} className="break-inside-avoid mb-4 glass-card rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition group relative"><img src={l.image_url} className="w-full h-auto" />{l.union_name && <div className="absolute top-2 left-2 union-badge shadow-md" style={{backgroundColor: l.union_color}}><Shield size={10} /> {l.union_name}</div>}{l.caption && <div className="p-2 text-xs font-bold text-slate-700 truncate">{l.caption}</div>}</div>))}</div>)}
+                    </div>
+                    <UserListModal isOpen={!!showUserList} onClose={() => setShowUserList(null)} title={showUserList} type={showUserList} userId={targetUserId} onUserClick={onUserClick} />{viewingLuminaUser && <LuminaViewer userId={viewingLuminaUser} initialLuminaId={viewingLuminaId} currentUser={user} onClose={() => { setViewingLuminaUser(null); setViewingLuminaId(null); }} onUserClick={onUserClick} />}
+                </div>
+            );
+        };
+
+        const SearchView = ({ user, onUserClick }) => { /* ... existing ... */
+            const [query, setQuery] = React.useState(''); const [results, setResults] = React.useState({ users: [], posts: [], luminas: [] }); const [tab, setTab] = React.useState('all');
+            const handleSearch = async () => { if(!query.trim()) return; const res = await api.post('search', { query }); if(res) setResults(res); };
+            return (<div className="flex-1 h-full overflow-y-auto p-4 md:p-8 pb-20"><div className="max-w-4xl mx-auto"><div className="sticky top-0 z-20 pt-4 pb-2 glass-panel rounded-b-3xl px-6 -mt-8 mb-6"><h2 className="text-2xl font-black mb-4 text-slate-800">Search</h2><div className="flex gap-2 mb-4"><div className="flex-1 bg-white/50 border border-slate-200 rounded-xl flex items-center px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition-all"><Search size={20} className="text-slate-400 mr-2"/><input value={query} onChange={e => setQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSearch()} className="bg-transparent flex-1 outline-none text-slate-800" placeholder="Search..." /></div><button onClick={handleSearch} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 rounded-xl font-bold transition shadow-lg shadow-indigo-500/20">Go</button></div><div className="flex gap-6 border-b border-slate-200/50">{['all', 'users', 'aether', 'lumina'].map(t => (<button key={t} onClick={() => setTab(t)} className={`pb-3 capitalize font-bold text-sm transition border-b-2 ${tab === t ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>{t}</button>))}</div></div><div className="space-y-8 fade-in">{(tab === 'all' || tab === 'users') && results.users.length > 0 && (<div><h3 className="font-bold text-lg mb-4 text-slate-700 flex items-center gap-2"><User size={20}/> Users</h3><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{results.users.map(u => (<div key={u.id} onClick={() => onUserClick(u.id)} className="glass-card p-4 rounded-xl flex items-center gap-3 cursor-pointer hover:shadow-md transition border border-transparent hover:border-white/50"><Avatar url={u.avatar_url} name={u.username} /><div className="font-bold text-slate-800">{u.username}<VerificationBadge level={u.verified_level} /></div></div>))}</div></div>)}{(tab === 'all' || tab === 'aether') && results.posts.length > 0 && (<div><h3 className="font-bold text-lg mb-4 text-slate-700 flex items-center gap-2"><MessageSquare size={20}/> Aether</h3><div className="space-y-4">{results.posts.map(p => <PostItem key={p.id} post={p} currentUser={user} onUserClick={onUserClick} />)}</div></div>)}{(tab === 'all' || tab === 'lumina') && results.luminas.length > 0 && (<div><h3 className="font-bold text-lg mb-4 text-slate-700 flex items-center gap-2"><Sparkles size={20}/> Lumina</h3><div className="masonry-grid">{results.luminas.map(l => (<div key={l.id} className="break-inside-avoid mb-4 glass-card rounded-xl overflow-hidden shadow-sm"><img src={l.image_url} className="w-full h-auto object-cover" />{l.caption && <div className="p-3 text-xs font-bold text-slate-700 truncate bg-white/80 backdrop-blur-sm">{l.caption}</div>}</div>))}</div></div>)}{results.users.length === 0 && results.posts.length === 0 && results.luminas.length === 0 && query && <div className="text-center py-10 text-slate-400">No results found.</div>}</div></div></div>);
+        };
+
+        const ChatView = ({ user, activeRoom, setActiveRoom, onUserClick, onNavigate }) => {
+            const [rooms, setRooms] = React.useState([]); const [messages, setMessages] = React.useState([]); const [inputText, setInputText] = React.useState(''); const [modalMode, setModalMode] = React.useState(null); const [showMembers, setShowMembers] = React.useState(false); const msgRef = React.useRef(null); const fileRef = React.useRef(null);
+            
+            // パラメータで指定されたルームがある場合、それをアクティブにする
+            React.useEffect(() => {
+                if (onNavigate && onNavigate.roomParams) {
+                   // 簡易実装: ルームリスト取得後にIDマッチさせる必要があるが、ここでは省略して直接セットを試みる
+                   // 実際には get_rooms で取得したリストの中に目的のルームがあるか確認するロジックが必要
+                   // 今回はパラメータが渡されたら自動的にチャット画面を開く動作にする
+                }
+            }, [onNavigate]);
+
+            React.useEffect(() => { const fetchRooms = async () => { const res = await api.post('get_rooms', { userId: user.userId }); if (res.rooms) setRooms(res.rooms); }; fetchRooms(); const t = setInterval(fetchRooms, 5000); return () => clearInterval(t); }, [user]);
+            React.useEffect(() => { if (!activeRoom) return; const fetchMsg = async () => { const res = await api.post('get_messages', { roomId: activeRoom.id }); if (res.messages) setMessages(res.messages); }; fetchMsg(); const t = setInterval(fetchMsg, 3000); return () => clearInterval(t); }, [activeRoom]);
+            React.useEffect(() => { msgRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+            const sendMessage = async (e) => { e.preventDefault(); if (!inputText.trim()) return; await api.post('send_message', { roomId: activeRoom.id, userId: user.userId, username: user.username, type: 'text', content: inputText }); setInputText(''); };
+            const sendImage = async (e) => { const file = e.target.files[0]; if (!file) return; const base64 = await processImage(file); await api.post('send_message', { roomId: activeRoom.id, userId: user.userId, username: user.username, type: 'image', content: base64 }); e.target.value = ''; };
+            const handleCreateDM = async (selectedUsers) => { if (selectedUsers.length !== 1) return; const res = await api.post('create_room', { type: 'direct', userId: user.userId, members: selectedUsers }); if (res.success) setModalMode(null); };
+            const handleCreateGroup = async (selectedUsers) => { if (selectedUsers.length === 0) return; const groupName = prompt("Enter Group Name:", "New Group"); if (!groupName) return; const res = await api.post('create_room', { name: groupName, type: 'group', userId: user.userId, members: selectedUsers }); if (res.success) setModalMode(null); };
+            const handleInvite = async (selectedUsers) => { if (selectedUsers.length === 0) return; await api.post('invite_to_room', { roomId: activeRoom.id, members: selectedUsers }); setModalMode(null); alert("Invited!"); };
+            const handleHeaderClick = () => { if (activeRoom.type === 'direct' && activeRoom.partner_id) { onUserClick(activeRoom.partner_id); } };
+            
+            return (<div className="flex h-full w-full bg-white/40 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl border border-white/50 my-2 mr-2 pb-16 lg:pb-0"><div className={`w-full md:w-96 border-r border-slate-200/50 bg-white/60 flex flex-col ${activeRoom ? 'hidden md:flex' : 'flex'}`}><div className="p-6 border-b border-slate-200/50 flex justify-between items-center"><h2 className="font-bold text-2xl text-slate-800">Messages</h2><div className="flex space-x-2"><button onClick={() => setModalMode('create_dm')} className="p-3 bg-white shadow-sm border border-slate-200 rounded-full hover:bg-slate-50 text-slate-600 transition"><Plus size={20} /></button><button onClick={() => setModalMode('create_group')} className="p-3 bg-indigo-600 shadow-lg shadow-indigo-200 rounded-full hover:bg-indigo-700 text-white transition"><Users size={20} /></button></div></div><div className="flex-1 overflow-y-auto p-2">{rooms.length === 0 ? <div className="p-10 text-center text-slate-400">No conversations yet.</div> : rooms.map(room => (<div key={room.id} onClick={() => setActiveRoom(room)} className={`p-4 mb-2 rounded-2xl cursor-pointer transition flex items-center space-x-4 border border-transparent ${activeRoom?.id === room.id ? 'bg-white shadow-md border-indigo-100' : 'hover:bg-white/50 hover:border-white'}`}><Avatar url={room.avatar} name={room.name} size="md" /><div className="flex-1 min-w-0"><div className="font-bold text-slate-800 truncate text-lg flex items-center gap-1">{room.name || 'Chat'}<VerificationBadge level={room.verified_level} /></div><div className="text-sm text-slate-500 font-medium">{room.type === 'group' ? 'Group' : (room.type === 'union' ? 'Union' : 'Direct')}</div></div></div>))}</div></div><div className={`flex-1 flex flex-col bg-white/30 ${!activeRoom ? 'hidden md:flex' : 'flex'}`}>{!activeRoom ? <div className="flex-1 flex flex-col items-center justify-center text-slate-400"><MessageSquare size={64} className="mb-4 opacity-50" /><p className="text-xl font-medium">Select a conversation</p></div> : <><div className="p-4 border-b border-slate-200/50 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10"><div className="flex items-center space-x-4"><button onClick={() => setActiveRoom(null)} className="md:hidden p-2 hover:bg-slate-100 rounded-full transition text-slate-500"><ChevronLeft /></button><div onClick={handleHeaderClick} className={`flex items-center gap-3 ${activeRoom.type === 'direct' ? 'cursor-pointer hover:opacity-80 transition' : ''}`}><Avatar url={activeRoom.avatar} name={activeRoom.name} size="md" /><h2 className="font-bold text-xl text-slate-800 flex items-center gap-1">{activeRoom.name}<VerificationBadge level={activeRoom.verified_level} /></h2></div></div><div className="flex space-x-2">{activeRoom.type !== 'direct' && (<><button onClick={() => setModalMode('invite')} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition"><Plus size={22} /></button><button onClick={() => setShowMembers(true)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition"><Users size={22} /></button></>)}</div></div><div className="flex-1 overflow-y-auto p-6 space-y-6">{messages.map(msg => { const isMe = msg.sender_id === user.userId; return (<div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>{!isMe && <Avatar onClick={() => onUserClick(msg.sender_id)} url={msg.sender_avatar} name={msg.sender_name} size="sm" className="mr-3 mt-4" />}<div className={`max-w-[75%] p-4 rounded-3xl shadow-sm relative group ${isMe ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>{!isMe && <div className="text-xs font-bold opacity-60 mb-1 ml-1 flex items-center gap-1">{msg.sender_name}<VerificationBadge level={msg.sender_verified} /></div>}{msg.type === 'image' ? <img src={msg.content} alt="sent" className="rounded-2xl max-h-80" /> : <p className="text-base leading-relaxed">{msg.content}</p>}<div className={`text-[10px] text-right mt-1 font-medium ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>{new Date(Number(msg.created_at)).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div></div></div>) })}<div ref={msgRef} /></div><div className="p-4 bg-white/80 backdrop-blur-md border-t border-slate-200/50"><div className="flex items-center space-x-3 bg-white p-2 rounded-3xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition-all"><button onClick={() => fileRef.current.click()} className="p-2 text-slate-400 hover:text-indigo-600 transition hover:bg-slate-50 rounded-full"><ImageIcon size={24} /></button><input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={sendImage} /><form onSubmit={sendMessage} className="flex-1 flex items-center"><input value={inputText} onChange={e => setInputText(e.target.value)} className="flex-1 bg-transparent px-2 py-2 outline-none text-slate-800 placeholder-slate-400" placeholder="Type a message..." /><button className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/30 transform active:scale-90"><Send size={20} /></button></form></div></div></>}</div><UserListModal isOpen={modalMode === 'create_dm'} onClose={() => setModalMode(null)} title="New Message" type="following" userId={user.userId} multiSelect={false} onSelect={handleCreateDM} /><UserListModal isOpen={modalMode === 'create_group'} onClose={() => setModalMode(null)} title="New Group" type="following" userId={user.userId} multiSelect={true} onSelect={handleCreateGroup} /><UserListModal isOpen={modalMode === 'invite'} onClose={() => setModalMode(null)} title="Invite to Group" type="following" userId={user.userId} excludeRoomId={activeRoom?.id} multiSelect={true} onSelect={handleInvite} /><RoomMembersModal isOpen={showMembers} onClose={() => setShowMembers(false)} roomId={activeRoom?.id} onUserClick={onUserClick} /></div>);
+        };
+
+        const App = () => {
+            const [user, setUser] = React.useState(null);
+            const [view, setView] = React.useState('timeline');
+            const [activeRoom, setActiveRoom] = React.useState(null);
+            const [targetUserProfile, setTargetUserProfile] = React.useState(null);
+            const [targetUnionId, setTargetUnionId] = React.useState(null);
+            const [myUnions, setMyUnions] = React.useState([]);
+            const [unionModalOpen, setUnionModalOpen] = React.useState(false);
+            const [filterUnionId, setFilterUnionId] = React.useState('');
+
+            React.useEffect(() => { const saved = localStorage.getItem('aether_user_v6'); if (saved) setUser(JSON.parse(saved)); }, []);
+            const handleAuth = (data) => { const userData = { userId: data.userId, username: data.username, avatar: data.avatar, verified_level: data.verified_level }; localStorage.setItem('aether_user_v6', JSON.stringify(userData)); setUser(userData); };
+            const handleLogout = () => { localStorage.removeItem('aether_user_v6'); setUser(null); };
+            
+            const navigate = (targetView, params = {}) => {
+                if (targetView === 'profile') { setTargetUserProfile(params.id || user.userId); }
+                else if (targetView === 'chat' && params.id) { setActiveRoom({ id: params.id, name: params.name, type: params.type, avatar: params.avatar }); }
+                else if (targetView === 'timeline' || targetView === 'lumina') { setFilterUnionId(params.filterUnionId || ''); }
+                else if (targetView === 'union_detail') { setTargetUnionId(params.id); }
+                setView(targetView);
+            };
+
+            const fetchUnions = async () => { if(!user) return; const res = await api.post('get_user_unions', { targetUserId: user.userId }); if(res.unions) setMyUnions(res.unions); };
+            React.useEffect(() => { fetchUnions(); }, [user]);
+
+            if (!user) return <AuthScreen onAuth={handleAuth} />;
+
+            return (
+                <div className="flex h-screen w-full overflow-hidden">
+                    {/* Desktop Sidebar */}
+                    <div className="hidden lg:flex w-20 lg:w-72 glass-panel border-r border-white/20 flex-col justify-between z-30 shadow-xl m-2 rounded-3xl relative">
+                        <div className="p-6">
+                            <div className="flex items-center space-x-3 mb-10 pl-2 cursor-pointer" onClick={() => navigate('timeline')}>
+                                <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-500/30">
+                                    <Sparkles size={24} />
+                                </div>
+                                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-700 tracking-tight hidden lg:inline">Aether</span>
+                            </div>
+                            <nav className="space-y-4">
+                                <SidebarButton icon={<Home />} label="Aether" active={view === 'timeline'} onClick={() => navigate('timeline')} />
+                                <SidebarButton icon={<Compass />} label="Lumina" active={view === 'lumina'} onClick={() => navigate('lumina')} />
+                                <SidebarButton icon={<Shield />} label="Unions" active={view === 'unions'} onClick={() => navigate('unions')} />
+                                <SidebarButton icon={<MessageSquare />} label="Chat" active={view === 'chat'} onClick={() => navigate('chat')} />
+                                <SidebarButton icon={<Search />} label="Search" active={view === 'search'} onClick={() => navigate('search')} />
+                                <SidebarButton icon={<User />} label="Profile" active={view === 'profile' && targetUserProfile === user.userId} onClick={() => navigate('profile', { id: user.userId })} />
+                            </nav>
+                        </div>
+                        <div className="p-6 border-t border-slate-200/50 bg-white/30 rounded-b-3xl">
+                            <button onClick={handleLogout} className="flex items-center space-x-4 text-slate-500 hover:text-red-500 transition w-full p-3 rounded-xl hover:bg-red-50 group"><LogOut className="group-hover:translate-x-1 transition-transform" /> <span className="hidden lg:inline font-bold">Logout</span></button>
+                        </div>
+                    </div>
+
+                    {/* Mobile Header */}
+                    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 glass-panel z-40 flex items-center justify-between px-4 rounded-b-2xl shadow-sm">
+                        <div className="flex items-center space-x-2" onClick={() => navigate('timeline')}>
+                            <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 text-white p-1.5 rounded-lg shadow-md">
+                                <Sparkles size={18} />
+                            </div>
+                            <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-700 tracking-tight">Aether</span>
+                        </div>
+                        <button onClick={handleLogout}><LogOut size={20} className="text-slate-400" /></button>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden pt-16 lg:pt-0">
+                        {view === 'timeline' && <TimelineView user={user} onUserClick={(id) => navigate('profile', { id })} myUnions={myUnions} filterUnionId={filterUnionId} setFilterUnionId={setFilterUnionId} />}
+                        {view === 'lumina' && <LuminaView user={user} onUserClick={(id) => navigate('profile', { id })} myUnions={myUnions} filterUnionId={filterUnionId} setFilterUnionId={setFilterUnionId} />}
+                        {view === 'unions' && <UnionView user={user} myUnions={myUnions} onJoinMore={() => setUnionModalOpen(true)} onNavigate={navigate} />}
+                        {view === 'union_detail' && <UnionDetailView unionId={targetUnionId} userId={user.userId} onBack={() => navigate('unions')} onNavigate={navigate} onUserClick={(id) => navigate('profile', { id })} onRefresh={fetchUnions} />}
+                        {view === 'chat' && <ChatView user={user} activeRoom={activeRoom} setActiveRoom={setActiveRoom} onUserClick={(id) => navigate('profile', { id })} />}
+                        {view === 'search' && <SearchView user={user} onUserClick={(id) => navigate('profile', { id })} />}
+                        {view === 'profile' && <ProfileView user={user} targetUserId={targetUserProfile} onBack={() => navigate('timeline')} onUserClick={(id) => navigate('profile', { id })} />}
+                    </div>
+
+                    {/* Mobile Bottom Navigation */}
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 z-50 flex justify-around items-center px-2 pb-2 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                        <MobileNavButton icon={<Home size={24} />} label="Home" active={view === 'timeline'} onClick={() => navigate('timeline')} />
+                        <MobileNavButton icon={<Compass size={24} />} label="Lumina" active={view === 'lumina'} onClick={() => navigate('lumina')} />
+                        <div className="relative -top-5">
+                            <button onClick={() => navigate('unions')} className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition transform active:scale-95 ${view === 'unions' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white ring-4 ring-emerald-100' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                                <Shield size={24} className={view === 'unions' ? 'fill-current' : ''}/>
+                            </button>
+                        </div>
+                        <MobileNavButton icon={<MessageSquare size={24} />} label="Chat" active={view === 'chat'} onClick={() => navigate('chat')} />
+                        <MobileNavButton icon={<User size={24} />} label="Profile" active={view === 'profile' && targetUserProfile === user.userId} onClick={() => navigate('profile', { id: user.userId })} />
+                    </div>
+
+                    <UnionModal isOpen={unionModalOpen} onClose={() => setUnionModalOpen(false)} userId={user.userId} onRefresh={fetchUnions} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
