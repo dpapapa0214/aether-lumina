@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="時間を厳格に管理し、学習効率を最大化しましょう。">
     <title>Regulus Timetable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Reverted to only Zen Maru Gothic -->
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="icons/logo-crown.png">
+    <link rel="apple-touch-icon" href="icons/logo-crown.png">
+    <link rel="manifest" href="manifest-regulus.json">
     <style>
         :root {
             /* Dark Mode (Default) */
@@ -62,7 +65,7 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Branding Font - Reverted to base font */
+        /* Branding Font */
         .brand-font {
             font-family: 'Zen Maru Gothic', sans-serif;
             letter-spacing: 0.05em;
@@ -246,9 +249,32 @@
         }
 
         /* Grid & Components */
+        /* コンテナ設定の強化: PCビューで横スクロールを許可 */
+        .timetable-overflow {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* for smooth scrolling on iOS */
+            width: 100%;
+            padding-bottom: 1rem;
+        }
+
         .timetable-grid {
             display: grid;
             gap: 0.5rem;
+            /* 最小幅を設定して、画面が狭くなっても潰れないようにする */
+            min-width: 800px;
+        }
+
+        /* モバイル時はグリッドスタイルを解除してリスト表示にするため、min-widthも解除 */
+        @media (max-width: 768px) {
+            .timetable-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                min-width: 100% !important;
+                gap: 1rem;
+            }
+            .timetable-overflow {
+                overflow-x: visible; /* モバイルは縦スクロールなので横スクロール不要 */
+            }
         }
         
         /* Regulation Styles */
@@ -425,6 +451,7 @@
 
             <!-- PAGE: TIMETABLE -->
             <section id="page-timetable" class="page-section">
+                <!-- Mobile Day Selector -->
                 <div class="flex justify-between items-end mb-4 lg:hidden">
                     <div id="mobile-day-selector" class="flex gap-2 overflow-x-auto pb-2 w-full no-scrollbar"></div>
                 </div>
@@ -778,12 +805,10 @@
             const saved = localStorage.getItem('chronoGlassGasConfig');
             if (saved) gasConfig = JSON.parse(saved);
             else gasConfig.url = DEFAULT_GAS_URL;
-            // Always ensure the URL is the constant if it was somehow overwritten or not set correctly from storage
             if (gasConfig.url !== DEFAULT_GAS_URL) gasConfig.url = DEFAULT_GAS_URL;
         }
 
         function saveGasConfigFromUI() {
-            // gasConfig.url is fixed
             gasConfig.user = document.getElementById('gas-user').value;
             gasConfig.pass = document.getElementById('gas-pass').value;
             localStorage.setItem('chronoGlassGasConfig', JSON.stringify(gasConfig));
@@ -807,7 +832,6 @@
             });
 
             try {
-                // Using text/plain to avoid CORS preflight which GAS Web App doesn't handle well in some cases
                 const response = await fetch(gasConfig.url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
@@ -836,7 +860,7 @@
 
             try {
                 const response = await fetch(gasConfig.url, {
-                    method: 'POST', // GAS doPost handles both save/load
+                    method: 'POST', 
                     headers: { 'Content-Type': 'text/plain' },
                     body: body
                 });
@@ -936,6 +960,24 @@
             const header = document.getElementById('desktop-grid-header');
             if(!container) return;
             
+            // Check for Mobile
+            const isMobile = window.innerWidth <= 768;
+
+            if (isMobile) {
+                // Mobile Mode: Force List View (Flex Column)
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.gridTemplateColumns = 'none'; // Reset grid columns
+                header.style.display = 'none'; // Hide Desktop Header
+                renderMobileView(container);
+                return; // Exit here for mobile
+            }
+
+            // Desktop Mode: Grid View
+            container.style.display = 'grid';
+            container.style.flexDirection = 'row'; // Reset flex
+            header.style.display = 'grid'; // Show Header
+
             container.innerHTML = '';
             header.innerHTML = '';
             
@@ -956,14 +998,12 @@
                 for (let d = 0; d < cols; d++) {
                     const cellData = scheduleData[d] ? scheduleData[d][p] : null;
                     const cell = createCell(d, p, cellData);
-                    if (window.innerWidth > 768) container.appendChild(cell);
+                    container.appendChild(cell);
                 }
             }
-            renderMobileView(container);
         }
 
         function renderMobileView(container) {
-            if (window.innerWidth > 768) return;
             container.innerHTML = '';
             const dayIndex = currentMobileDay; 
             for (let p = 0; p < periodTimes.length; p++) {
