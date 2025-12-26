@@ -1,6 +1,6 @@
 {
   "name": "Aether Lumina",
-  "short_name": "ホーム画面用名",
+  "short_name": "Aether Lumina",
   "start_url": "./index.html",
   "display": "standalone",
   "icons": [
