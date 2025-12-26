@@ -1,0 +1,8 @@
+{
+  "name": "Regulus",
+  "short_name": "Regulus",
+  "start_url": "./regulus.html",
+  "display": "standalone",
+  "icons": [
+  ]
+}
