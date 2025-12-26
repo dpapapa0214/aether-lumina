@@ -1,7 +1,6 @@
 {
   "name": "Aether Lumina Admin",
   "short_name": "Aether Lumina Admin",
-  "start_url": "www.aether-lumina.com/aether-lumina-admini-1.html",
   "display": "standalone",
   "icons": [
   ]
