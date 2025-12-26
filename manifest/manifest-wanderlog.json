@@ -1,7 +1,6 @@
 {
   "name": "Wander Log",
   "short_name": "Wander Log",
-  "start_url": "./wanderlog.html",
   "display": "standalone",
   "icons": [
   ]
