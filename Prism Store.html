@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc; /* Slate-50 */
+        }
+        
+        /* カスタムスクロールバー (非表示にしてすっきりさせる) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* アプリカードのホバーエフェクト */
+        .app-card-hover {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .app-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(59, 130, 246, 0.25); /* Colored Shadow */
+        }
+
+        /* テキストの行数制限 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* スケルトンローディングのアニメーション */
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-700">
+
+    <!-- 通知バー（エラー時のみ表示） -->
+    <div id="notificationBar" class="hidden bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-3 sticky top-0 z-[60] shadow-sm animate-fade-in">
+        <div class="max-w-7xl mx-auto flex justify-between items-center text-sm font-medium">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-wifi text-amber-500"></i>
+                <span>オフラインモード: サンプルデータを表示しています</span>
+            </div>
+            <button onclick="document.getElementById('notificationBar').classList.add('hidden')" class="text-amber-600 hover:text-amber-900 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="fixed w-full top-0 z-40 glass transition-all duration-300" id="mainHeader">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 md:h-20 gap-4">
+                
+                <!-- ロゴ -->
+                <div class="flex-shrink-0 flex items-center cursor-pointer group" onclick="resetFilter()">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
+                        <i class="fa-solid fa-play text-lg ml-0.5"></i>
+                    </div>
+                    <span class="ml-3 font-bold text-xl tracking-tight text-slate-800 group-hover:text-blue-600 transition-colors">Prism Store</span>
+                </div>
+
+                <!-- 検索バー（デスクトップ） -->
+                <div class="hidden md:flex flex-1 max-w-xl mx-auto">
+                    <div class="relative w-full group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        </div>
+                        <input type="text" id="searchInputDesktop" 
+                            class="block w-full pl-11 pr-4 py-2.5 rounded-full border-none bg-slate-100 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:bg-white transition-all shadow-inner" 
+                            placeholder="アプリ、ゲーム、ストーリーを検索">
+                    </div>
+                </div>
+
+                <!-- アクションエリア（モバイル検索ボタンのみ残す） -->
+                <div class="flex items-center gap-2">
+                    <button class="md:hidden p-2.5 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" onclick="toggleMobileSearch()">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 検索バー（モバイル展開時） -->
+            <div id="mobileSearch" class="hidden pb-4 md:hidden animate-fade-in">
+                <input type="text" id="searchInputMobile" 
+                    class="block w-full px-4 py-3 rounded-xl border-none bg-slate-100 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm" 
+                    placeholder="検索...">
+            </div>
+
+            <!-- カテゴリナビゲーション -->
+            <nav class="flex space-x-2 overflow-x-auto pb-4 pt-1 no-scrollbar mask-gradient-r" id="categoryNav">
+                <button class="category-btn active whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm transition-all duration-300 shadow-sm shadow-blue-500/30 bg-blue-600 text-white" data-category="all">
+                    すべて
+                </button>
+                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="エンタメ">
+                    エンタメ
+                </button>
+                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="ソーシャル">
+                    ソーシャル
+                </button>
+                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="ツール">
+                    ツール
+                </button>
+                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="学習">
+                    学習
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full mt-32 md:mt-36 transition-all duration-500">
+        
+        <!-- ヒーローセクション（Featured） -->
+        <div id="heroSection" class="mb-12 hidden animate-fade-in">
+            <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/20 group">
+                <!-- 背景画像・グラデーション -->
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
+                <!-- 装飾パターン -->
+                <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+                <div class="absolute -right-20 -top-20 w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-30 group-hover:opacity-40 transition-opacity duration-700"></div>
+                <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-cyan-400 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
+
+                <div class="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div class="flex-shrink-0 transition-transform duration-500 hover:scale-105">
+                        <img id="heroIcon" src="" alt="Hero App" class="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] shadow-xl bg-white object-cover">
+                    </div>
+                    <div class="flex-1 text-center md:text-left text-white">
+                        <div class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold mb-4 border border-white/10 uppercase tracking-wider">
+                            Featured App
+                        </div>
+                        <h2 id="heroTitle" class="text-3xl md:text-5xl font-bold mb-2 tracking-tight">App Name</h2>
+                        <p id="heroDeveloper" class="text-blue-100 font-medium text-lg mb-4 opacity-90">Developer Name</p>
+                        <p id="heroDescription" class="text-blue-50/90 mb-8 max-w-2xl text-base md:text-lg leading-relaxed line-clamp-3">アプリの説明文がここに入ります。</p>
+                        
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
+                            <button onclick="openHeroApp()" class="w-full sm:w-auto px-8 py-3.5 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+                                <span>インストール</span>
+                                <i class="fas fa-download text-sm"></i>
+                            </button>
+                            <div class="flex items-center gap-6 px-4 py-2 rounded-xl bg-black/10 backdrop-blur-sm border border-white/10">
+                                <div class="flex items-center gap-1.5">
+                                    <span id="heroRating" class="font-bold text-xl">4.5</span>
+                                    <div class="flex text-yellow-400 text-sm">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                                <div class="w-px h-6 bg-white/20"></div>
+                                <div class="text-sm font-medium opacity-90">
+                                    <span id="heroDownloads">100万+</span> DL
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- セクションタイトル -->
+        <div class="flex items-end justify-between mb-6 px-1">
+            <h2 id="listTitle" class="text-2xl font-bold text-slate-800 tracking-tight">おすすめアプリ</h2>
+            <!-- 必要ならここにフィルタオプションなどを追加 -->
+        </div>
+
+        <!-- ローディングスケルトン -->
+        <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- 8個のスケルトンを表示 -->
+            <script>
+                for(let i=0; i<8; i++) {
+                    document.write(`
+                        <div class="bg-white rounded-3xl p-5 border border-slate-100 flex flex-col h-full">
+                            <div class="flex gap-4 mb-4">
+                                <div class="w-16 h-16 rounded-2xl skeleton shrink-0"></div>
+                                <div class="flex-1 space-y-2 py-1">
+                                    <div class="h-4 w-3/4 rounded skeleton"></div>
+                                    <div class="h-3 w-1/2 rounded skeleton"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mt-2">
+                                <div class="h-3 w-full rounded skeleton"></div>
+                                <div class="h-3 w-5/6 rounded skeleton"></div>
+                            </div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+
+        <!-- エラー表示 -->
+        <div id="error" class="hidden flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-exclamation text-red-500 text-3xl"></i>
+            </div>
+            <p class="text-slate-800 font-bold text-lg mb-2">読み込みエラー</p>
+            <p class="text-slate-500 text-sm max-w-md mx-auto mb-6">データの取得中に問題が発生しました。</p>
+            <button onclick="initializeApp()" class="px-6 py-2.5 bg-slate-800 text-white font-medium rounded-full hover:bg-slate-700 transition-colors shadow-lg shadow-slate-200">
+                再読み込み
+            </button>
+        </div>
+
+        <!-- アプリグリッド -->
+        <div id="appGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
+            <!-- JSでカードを生成してここに挿入 -->
+        </div>
+
+        <!-- 検索結果なし -->
+        <div id="noResults" class="hidden py-24 text-center animate-fade-in">
+            <div class="inline-block p-6 rounded-full bg-slate-100 mb-4">
+                <i class="fas fa-search text-slate-400 text-4xl"></i>
+            </div>
+            <p class="text-slate-500 font-medium">一致するアプリが見つかりませんでした</p>
+            <button onclick="resetFilter()" class="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm">
+                フィルタをリセット
+            </button>
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="mt-auto border-t border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2 text-slate-700">
+                <i class="fa-brands fa-google-play text-xl"></i>
+                <span class="font-bold tracking-tight">Prism Store</span>
+            </div>
+            <div class="text-sm text-slate-400">
+                &copy; 2025 Prism Store
+            </div>
+        </div>
+    </footer>
+
+    <!-- アプリ詳細モーダル -->
+    <div id="appModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- 背景ブラー -->
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop" onclick="closeModal()"></div>
+
+        <!-- モーダル本体 -->
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div id="modalContent" class="relative transform overflow-hidden rounded-[2rem] bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl scale-95 opacity-0">
+                    
+                    <!-- ヘッダー背景画像（オプション） -->
+                    <div class="h-32 bg-gradient-to-br from-slate-100 to-slate-200 w-full absolute top-0 left-0 z-0"></div>
+                    
+                    <!-- 閉じるボタン -->
+                    <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-slate-600 hover:text-slate-800 transition-colors backdrop-blur-md">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <div class="relative z-10 px-6 pt-12 pb-6 sm:px-10">
+                        <div class="flex flex-col sm:flex-row sm:items-start gap-6">
+                            <!-- アイコン -->
+                            <div class="flex-shrink-0 mx-auto sm:mx-0">
+                                <img id="modalIcon" src="" alt="" class="h-28 w-28 rounded-[1.5rem] bg-white object-cover shadow-lg ring-4 ring-white">
+                            </div>
+                            
+                            <!-- タイトルエリア -->
+                            <div class="flex-1 text-center sm:text-left mt-2">
+                                <h3 class="text-2xl font-bold text-slate-900 leading-tight mb-1" id="modalTitle">App Title</h3>
+                                <p class="text-blue-600 font-medium mb-3" id="modalDeveloper">Developer Name</p>
+                                
+                                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-6">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700" id="modalCategory">
+                                        Category
+                                    </span>
+                                    <div class="flex items-center text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
+                                        <span id="modalRating" class="mr-1">4.5</span>
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                        <span id="modalDownloads">1M+</span> DL
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- アクションボタン -->
+                        <div class="mt-6 flex gap-3">
+                            <a id="modalLink" href="#" target="_blank" class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:scale-[1.02]">
+                                インストール
+                            </a>
+                        </div>
+
+                        <!-- 区切り線 -->
+                        <div class="relative py-6">
+                            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div class="w-full border-t border-slate-100"></div>
+                            </div>
+                            <div class="relative flex justify-center">
+                                <span class="bg-white px-2 text-xs text-slate-400 uppercase tracking-widest">About this app</span>
+                            </div>
+                        </div>
+
+                        <!-- 説明文 -->
+                        <div class="text-slate-600 text-sm leading-relaxed space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                            <p id="modalDescription" class="whitespace-pre-line">
+                                詳細説明
+                            </p>
+                        </div>
+                        
+                        <!-- スクリーンショット（プレースホルダー） -->
+                        <div class="mt-6 overflow-x-auto pb-2 no-scrollbar flex gap-3">
+                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse"></div>
+                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse delay-75"></div>
+                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse delay-150"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 設定セクション
+         */
+        const CONFIG = {
+            useApi: true, 
+            apiUrl: "https://script.google.com/macros/s/AKfycbw35KG5zxvcTdvMQCXDeSg-PtBDHhiM1sNfU7H5Bji4deZC8mCDGqBeVZ95zAYefSL1Og/exec" 
+        };
+
+        const MOCK_DATA = [
+            {
+                title: "Space Defender X",
+                category: "エンタメ",
+                developer: "Galactic Studios",
+                rating: "4.5",
+                downloads: "50万+",
+                description: "圧倒的なグラフィックとサウンドで描く、次世代シューティングゲーム。オンライン協力プレイ対応。",
+                icon: "https://placehold.co/200x200/8b5cf6/ffffff?text=Game",
+                url: "#"
+            },
+            {
+                title: "Social Connect",
+                category: "ソーシャル",
+                developer: "Connect Inc.",
+                rating: "4.8",
+                downloads: "200万+",
+                description: "世界中の人々と繋がろう。趣味や興味で繋がる新しいソーシャルネットワーク。",
+                icon: "https://placehold.co/200x200/f43f5e/ffffff?text=Social",
+                url: "#"
+            },
+            {
+                title: "FinTrack",
+                category: "ツール",
+                developer: "Smart Finance",
+                rating: "4.2",
+                downloads: "10万+",
+                description: "資産管理をこれひとつで。銀行口座、クレジットカード、投資信託を自動連携して見える化。",
+                icon: "https://placehold.co/200x200/10b981/ffffff?text=Fin",
+                url: "#"
+            },
+            {
+                title: "LingoAI",
+                category: "学習",
+                developer: "Global Lang Lab",
+                rating: "4.7",
+                downloads: "200万+",
+                description: "ネイティブAIとの会話で学ぶ英会話アプリ。リアルタイムの発音矯正機能付き。",
+                icon: "https://placehold.co/200x200/f59e0b/ffffff?text=AI",
+                url: "#"
+            },
+            {
+                title: "Chat Sphere",
+                category: "ソーシャル",
+                developer: "Chat Devs",
+                rating: "4.6",
+                downloads: "500万+",
+                description: "シンプルで高速なメッセージアプリ。グループチャットやビデオ通話も無料で楽しめます。",
+                icon: "https://placehold.co/200x200/0ea5e9/ffffff?text=Chat",
+                url: "#"
+            },
+            {
+                title: "Pixel Magic",
+                category: "ツール",
+                developer: "Creative Art",
+                rating: "4.6",
+                downloads: "80万+",
+                description: "スマホでプロ並みの写真編集を。不要なオブジェクトの削除も指先ひとつで。",
+                icon: "https://placehold.co/200x200/ef4444/ffffff?text=Art",
+                url: "#"
+            },
+            {
+                title: "Shogi Quest",
+                category: "エンタメ",
+                developer: "Board Games Ltd.",
+                rating: "4.3",
+                downloads: "20万+",
+                description: "初心者からプロ級まで楽しめる将棋アプリ。棋譜分析機能で上達をサポート。",
+                icon: "https://placehold.co/200x200/d97706/ffffff?text=Shogi",
+                url: "#"
+            },
+             {
+                title: "Code Learner",
+                category: "学習",
+                developer: "Edu Tech",
+                rating: "4.9",
+                downloads: "30万+",
+                description: "ゲーム感覚でプログラミングを学ぼう。Python, JS, HTMLなど主要言語に対応。",
+                icon: "https://placehold.co/200x200/6366f1/ffffff?text=Code",
+                url: "#"
+            }
+        ];
+
+        let allApps = [];
+        let currentCategory = 'all';
+        let searchQuery = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        async function initializeApp() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const gridEl = document.getElementById('appGrid');
+            const heroSection = document.getElementById('heroSection');
+            const notificationBar = document.getElementById('notificationBar');
+
+            // リセット
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            gridEl.innerHTML = ''; 
+            heroSection.classList.add('hidden');
+
+            try {
+                if (CONFIG.useApi && CONFIG.apiUrl && CONFIG.apiUrl !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                    try {
+                        allApps = await fetchAppsScriptData(CONFIG.apiUrl);
+                    } catch (fetchError) {
+                        console.warn("API Error, using mock data", fetchError);
+                        notificationBar.classList.remove('hidden');
+                        allApps = [...MOCK_DATA];
+                    }
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // スケルトンを見せる演出
+                    allApps = [...MOCK_DATA];
+                }
+
+                if (!allApps || allApps.length === 0) throw new Error('No data');
+
+                setupHeroApp();
+                renderApps();
+                
+                // フェードアウト演出
+                loadingEl.style.opacity = '0';
+                setTimeout(() => {
+                    loadingEl.classList.add('hidden');
+                    loadingEl.style.opacity = '1';
+                    heroSection.classList.remove('hidden');
+                }, 300);
+
+            } catch (err) {
+                console.error("Init failed:", err);
+                loadingEl.classList.add('hidden');
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function fetchAppsScriptData(url) {
+            const response = await fetch(url, { redirect: 'follow' });
+            if (!response.ok) throw new Error(`Status: ${response.status}`);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            if (Array.isArray(data)) return data;
+            if (data.data && Array.isArray(data.data)) return data.data;
+            return [];
+        }
+
+        function setupEventListeners() {
+            // カテゴリボタンのスタイル制御
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    buttons.forEach(b => {
+                        // Reset styles
+                        b.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+                        b.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                    });
+                    
+                    // Set active style
+                    const target = e.target;
+                    target.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                    target.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+
+                    currentCategory = target.dataset.category;
+                    renderApps();
+                });
+            });
+
+            const handleSearch = (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderApps();
+            };
+            document.getElementById('searchInputDesktop').addEventListener('input', handleSearch);
+            document.getElementById('searchInputMobile').addEventListener('input', handleSearch);
+        }
+
+        function setupHeroApp() {
+            if (allApps.length === 0) return;
+            const hero = allApps[0];
+            
+            document.getElementById('heroTitle').textContent = hero.title || 'No Title';
+            document.getElementById('heroDeveloper').textContent = hero.developer || '';
+            document.getElementById('heroDescription').textContent = hero.description || '';
+            document.getElementById('heroRating').textContent = hero.rating || '-';
+            document.getElementById('heroDownloads').textContent = hero.downloads || '-';
+            
+            const heroIcon = document.getElementById('heroIcon');
+            heroIcon.src = hero.icon;
+            heroIcon.onerror = function() { this.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=App'; };
+            
+            window.openHeroApp = () => window.open(hero.url || '#', '_blank');
+        }
+
+        function renderApps() {
+            const grid = document.getElementById('appGrid');
+            const noResults = document.getElementById('noResults');
+            const listTitle = document.getElementById('listTitle');
+            grid.innerHTML = '';
+
+            let filteredApps = allApps.filter(app => {
+                if (!app || !app.title) return false;
+                const matchesCategory = currentCategory === 'all' || app.category === currentCategory;
+                const matchesSearch = (app.title || '').toLowerCase().includes(searchQuery) || 
+                                      (app.description || '').toLowerCase().includes(searchQuery);
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filteredApps.length === 0) {
+                noResults.classList.remove('hidden');
+                listTitle.classList.add('hidden');
+            } else {
+                noResults.classList.add('hidden');
+                listTitle.classList.remove('hidden');
+                listTitle.textContent = currentCategory === 'all' 
+                    ? (searchQuery ? `"${searchQuery}" の検索結果` : 'あなたへのおすすめ') 
+                    : `${currentCategory} の人気アプリ`;
+
+                filteredApps.forEach((app, index) => {
+                    const card = createAppCard(app, index);
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        function createAppCard(app, index) {
+            const div = document.createElement('div');
+            // Stagger animation delay
+            const delay = index * 50; 
+            div.style.animationDelay = `${delay}ms`;
+            
+            div.className = 'app-card-hover bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col h-full cursor-pointer animate-slide-up opacity-0 fill-mode-forwards relative overflow-hidden group';
+            
+            div.onclick = (e) => {
+                if (!e.target.closest('button')) openModal(app);
+            };
+
+            const safeIcon = app.icon || 'https://placehold.co/200x200/e2e8f0/64748b?text=App';
+
+            div.innerHTML = `
+                <div class="flex items-start gap-4 mb-4">
+                    <img src="${safeIcon}" alt="${app.title}" class="w-16 h-16 rounded-2xl object-cover bg-slate-50 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/200x200/e2e8f0/64748b?text=App'">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-slate-800 text-lg leading-tight truncate mb-1 group-hover:text-blue-600 transition-colors">${app.title}</h3>
+                        <p class="text-xs text-slate-500 truncate font-medium">${app.developer || app.category}</p>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-slate-600 mb-4 line-clamp-2 leading-relaxed flex-grow">
+                    ${app.description || 'No description available.'}
+                </p>
+
+                <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-slate-800 text-sm">${app.rating || '4.0'}</span>
+                        <i class="fas fa-star text-xs text-yellow-400"></i>
+                    </div>
+                     <button onclick="event.stopPropagation(); window.open('${app.url || '#'}', '_blank')" class="px-4 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-bold rounded-full transition-colors">
+                        入手
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('appModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalBackdrop = document.getElementById('modalBackdrop');
+
+        function openModal(app) {
+            // Set Data
+            document.getElementById('modalTitle').textContent = app.title || '';
+            document.getElementById('modalDeveloper').textContent = app.developer || 'Unknown';
+            document.getElementById('modalCategory').textContent = app.category || '';
+            document.getElementById('modalRating').textContent = app.rating || '-';
+            document.getElementById('modalDownloads').textContent = app.downloads || '-';
+            document.getElementById('modalDescription').textContent = app.description || '';
+            document.getElementById('modalLink').href = app.url || '#';
+            
+            const iconImg = document.getElementById('modalIcon');
+            iconImg.src = app.icon || '';
+            iconImg.onerror = function() { this.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=App'; };
+
+            // Show
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Animation In
+            requestAnimationFrame(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function closeModal() {
+            // Animation Out
+            modalBackdrop.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200);
+        }
+
+        function toggleMobileSearch() {
+            const searchBar = document.getElementById('mobileSearch');
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                document.getElementById('searchInputMobile').focus();
+            }
+        }
+
+        function resetFilter() {
+            searchQuery = '';
+            currentCategory = 'all';
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            
+            // UI Reset
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                 btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+                 btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+            });
+            const allBtn = document.querySelector('[data-category="all"]');
+            allBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+            allBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+
+            renderApps();
+        }
+    </script>
+</body>
+</html>
