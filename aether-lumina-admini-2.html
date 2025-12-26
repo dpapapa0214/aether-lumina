@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Lumina Admin 2</title>
+    <link rel="icon" href="icons/aether-lumina-icon.png">
+    <link rel="apple-touch-icon" href="icons/aether-lumina-icon.png">
+    <link rel="manifest" href="/manifest/manifest-aether-lumina-admin-2.json">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
+        
+        .admin-bg { 
+            background: radial-gradient(at 0% 0%, rgba(17, 24, 39, 1) 0px, transparent 50%), 
+                        radial-gradient(at 100% 0%, rgba(88, 28, 135, 0.2) 0px, transparent 50%), 
+                        radial-gradient(at 100% 100%, rgba(15, 23, 42, 1) 0px, transparent 50%), 
+                        radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.2) 0px, transparent 50%); 
+            background-size: 150% 150%; 
+            animation: aurora 20s ease infinite;
+            background-color: #0f172a;
+        }
+        @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s ease; }
+        .glass-card:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .glass-input { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
+        
+        .status-badge { padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-banned { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+        th { text-align: left; padding: 1rem; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        td { padding: 1rem; background: rgba(255,255,255,0.02); first-child: border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; last-child: border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+        tr:hover td { background: rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="h-screen w-full text-slate-200 admin-bg">
+    <div id="root" class="h-full w-full"></div>
+    <script type="text/babel">
+        const API_URL = 'https://ethimp0.shop/api4.php';
+
+        const Icon = ({ name, size = 20, className = "", ...props }) => {
+            const icons = {
+                Activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>,
+                Users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+                Shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+                Search: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+                Trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+                Ban: <><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></>,
+                Check: <polyline points="20 6 9 17 4 12"/>,
+                MessageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+                Image: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
+                LogOut: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+                Settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+                MoreVertical: <><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></>,
+                Verified: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" fill="currentColor" stroke="none"/><polyline points="22 4 12 14.01 9 11.01" stroke="#0f172a" strokeWidth="3"/></>,
+                ChevronLeft: <polyline points="15 18 9 12 15 6" />
+            };
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{icons[name]}</svg>;
+        };
+
+        const api = { 
+            async post(action, data = {}) { 
+                try { 
+                    const payload = { action, ...data, is_admin_request: true };
+                    const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+                    const json = await res.json(); 
+                    if (!res.ok || json.error) throw new Error(json.error || 'Server Error'); 
+                    return json; 
+                } catch (e) { 
+                    console.error(e); 
+                    return { error: e.message, success: false }; 
+                } 
+            } 
+        };
+
+        const VerifiedBadge = ({ level }) => {
+            if (!level || Number(level) === 0) return null;
+            const color = Number(level) === 2 ? "text-yellow-500" : "text-blue-500";
+            return <Icon name="Verified" size={14} className={`ml-1 inline ${color}`} />;
+        };
+
+        const AdminAuth = ({ onLogin }) => {
+            const [username, setUsername] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [loading, setLoading] = React.useState(false);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                const res = await api.post('login', { username, password });
+                setLoading(false);
+                if (res.success) {
+                    // 金色の認証（Level 2）または管理者フラグを持つユーザーのみ許可
+                    if (Number(res.verified_level) === 2 || res.is_admin) {
+                        onLogin(res);
+                    } else {
+                        alert('アクセス権限がありません。金色の認証バッジを持つアカウントのみログイン可能です。');
+                    }
+                } else {
+                    alert('Login failed');
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4 relative">
+                    <div className="glass-panel w-full max-w-md p-10 rounded-2xl shadow-2xl fade-in">
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white mb-4 shadow-lg shadow-indigo-500/20">
+                                <Icon name="Shield" size={32} />
+                            </div>
+                            <h1 className="text-3xl font-black text-white tracking-tight">Admin Console</h1>
+                            <p className="text-slate-400 mt-2">Aether Lumina Oversight</p>
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Admin ID</label>
+                                <input value={username} onChange={e => setUsername(e.target.value)} className="w-full p-3 rounded-xl glass-input outline-none focus:border-indigo-500 transition" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Password</label>
+                                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 rounded-xl glass-input outline-none focus:border-indigo-500 transition" required />
+                            </div>
+                            <button disabled={loading} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/30">
+                                {loading ? 'Authenticating...' : 'Access Panel'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const Sidebar = ({ view, setView, onLogout }) => {
+            const menu = [
+                { id: 'dashboard', label: 'Dashboard', icon: 'Activity' },
+                { id: 'users', label: 'Users', icon: 'Users' },
+                { id: 'content', label: 'Lumina & Aether', icon: 'Image' },
+                { id: 'unions', label: 'Unions', icon: 'Shield' },
+                { id: 'logs', label: 'Chat Logs', icon: 'MessageSquare' },
+            ];
+
+            return (
+                <div className="w-20 lg:w-64 glass-panel border-r border-white/5 flex flex-col h-full z-20">
+                    <div className="p-6 flex items-center gap-3">
+                        <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 text-white p-2 rounded-lg shadow-lg">
+                            <Icon name="Shield" size={20} />
+                        </div>
+                        <span className="font-bold text-lg hidden lg:block tracking-tight">Admin<span className="text-indigo-400">Panel</span></span>
+                    </div>
+                    <nav className="flex-1 px-4 space-y-2 mt-4">
+                        {menu.map(item => (
+                            <button 
+                                key={item.id} 
+                                onClick={() => setView(item.id)}
+                                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all duration-200 ${view === item.id ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+                            >
+                                <Icon name={item.icon} size={20} />
+                                <span className="hidden lg:block font-medium">{item.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                    <div className="p-4 border-t border-white/5">
+                        <button onClick={onLogout} className="w-full flex items-center gap-4 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition">
+                            <Icon name="LogOut" size={20} />
+                            <span className="hidden lg:block font-bold">Logout</span>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardView = () => {
+            const [stats, setStats] = React.useState({ users: 0, posts: 0, luminas: 0, unions: 0, messages: 0 });
+            
+            React.useEffect(() => {
+                const fetchStats = async () => {
+                    const res = await api.post('admin_get_stats');
+                    if (res && res.stats) setStats(res.stats);
+                };
+                fetchStats();
+            }, []);
+
+            const statCards = [
+                { label: 'Total Users', value: stats.users, color: 'from-blue-500 to-cyan-500' },
+                { label: 'Active Posts & Lumina', value: Number(stats.posts) + Number(stats.luminas), color: 'from-pink-500 to-rose-500' },
+                { label: 'Unions Created', value: stats.unions, color: 'from-emerald-500 to-teal-500' },
+                { label: 'Messages Sent', value: stats.messages, color: 'from-orange-500 to-red-500' },
+            ];
+
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <h2 className="text-3xl font-black mb-8 text-white">Dashboard Overview</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {statCards.map((s, i) => (
+                            <div key={i} className="glass-card p-6 rounded-2xl relative overflow-hidden">
+                                <div className={`absolute top-0 right-0 p-3 opacity-20 bg-gradient-to-br ${s.color} blur-xl w-24 h-24 rounded-full -mr-4 -mt-4`}></div>
+                                <h3 className="text-slate-400 text-sm font-bold uppercase mb-2">{s.label}</h3>
+                                <div className="flex items-end gap-3">
+                                    <span className="text-3xl font-black text-white">{s.value}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="glass-panel p-6 rounded-2xl">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Icon name="Activity" size={18} className="text-indigo-400"/> System Status</h3>
+                            <div className="space-y-4 text-sm text-slate-300">
+                                <p>Database Connection: <span className="text-green-400 font-bold">Active</span></p>
+                                <p>API Endpoint: <span className="text-indigo-400 font-mono text-xs">{API_URL}</span></p>
+                                <p>Last Updated: {new Date().toLocaleTimeString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const UsersView = () => {
+            const [users, setUsers] = React.useState([]);
+            const [query, setQuery] = React.useState('');
+            const [loading, setLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                const fetchUsers = async () => {
+                    const res = await api.post('search', { query: query || '' }); // Empty query fetches default list
+                    if (res && res.users) {
+                        setUsers(res.users);
+                    }
+                    setLoading(false);
+                };
+                const timeout = setTimeout(fetchUsers, 300);
+                return () => clearTimeout(timeout);
+            }, [query]);
+
+            const handleBan = async (uid) => {
+                if(!confirm("Are you sure you want to ban this user?")) return;
+                const res = await api.post('admin_ban_user', { userId: uid });
+                if(res.success) {
+                    alert("User banned.");
+                    setUsers(users.filter(u => u.id !== uid));
+                }
+            };
+
+            const handleVerify = async (uid, level) => {
+                const res = await api.post('admin_set_verify', { userId: uid, level });
+                if(res.success) {
+                    alert("Verification updated.");
+                }
+            };
+
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-3xl font-black text-white">User Management</h2>
+                        <div className="flex gap-2 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
+                            <Icon name="Search" size={18} className="text-slate-400 ml-2 mt-2"/>
+                            <input 
+                                value={query} 
+                                onChange={e => setQuery(e.target.value)} 
+                                placeholder="Search users..." 
+                                className="bg-transparent border-none outline-none text-sm p-2 w-64 text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="glass-panel rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table>
+                                <thead>
+                                    <tr className="bg-white/5">
+                                        <th>User</th>
+                                        <th>ID</th>
+                                        <th>Verified</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map(u => (
+                                        <tr key={u.id}>
+                                            <td>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
+                                                        {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs">{u.username?.[0]}</div>}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white text-sm">{u.username}<VerifiedBadge level={u.verified_level}/></div>
+                                                        <div className="text-xs text-slate-500">Member</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="text-xs text-slate-500 font-mono">{u.id}</td>
+                                            <td>
+                                                <select 
+                                                    onChange={(e) => handleVerify(u.id, e.target.value)}
+                                                    defaultValue={u.verified_level || 0}
+                                                    className="bg-black/20 border border-white/10 rounded-lg text-xs p-1 text-slate-300 outline-none"
+                                                >
+                                                    <option value="0">None</option>
+                                                    <option value="1">Blue</option>
+                                                    <option value="2">Gold</option>
+                                                </select>
+                                            </td>
+                                            <td><span className="status-badge status-active">Active</span></td>
+                                            <td>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleBan(u.id)} className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition" title="Ban User">
+                                                        <Icon name="Ban" size={16}/>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {loading && <div className="p-8 text-center text-slate-500">Loading users...</div>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const UnionsView = () => {
+            const [unions, setUnions] = React.useState([]);
+            
+            React.useEffect(() => {
+                const fetchUnions = async () => {
+                    const res = await api.post('get_user_unions', { targetUserId: 'admin_view' });
+                    if (res && res.unions) setUnions(res.unions);
+                };
+                fetchUnions();
+            }, []);
+
+            const handleDelete = async (id) => {
+                if(confirm("Delete this Union? This cannot be undone.")) {
+                    const res = await api.post('admin_delete_union', { id });
+                    if(res.success) {
+                        setUnions(unions.filter(u => u.id !== id));
+                        alert("Union deleted.");
+                    }
+                }
+            };
+
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <h2 className="text-3xl font-black mb-8 text-white">Unions Oversight</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {unions.map(u => (
+                            <div key={u.id} className="glass-card p-6 rounded-2xl border-t-4" style={{borderColor: u.color || '#6366f1'}}>
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="font-bold text-xl text-white">{u.name}</h3>
+                                    <div className="bg-white/10 px-2 py-1 rounded text-xs text-slate-300">{u.member_count} Members</div>
+                                </div>
+                                <p className="text-sm text-slate-400 mb-6 line-clamp-2">{u.description}</p>
+                                <div className="flex gap-2 border-t border-white/5 pt-4">
+                                    <button onClick={() => handleDelete(u.id)} className="w-full px-3 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg transition flex items-center justify-center gap-2"><Icon name="Trash" size={16}/> Delete Union</button>
+                                </div>
+                            </div>
+                        ))}
+                        {unions.length === 0 && <div className="col-span-full text-center text-slate-500">No unions found.</div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const ContentView = () => {
+            const [posts, setPosts] = React.useState([]);
+            const [luminas, setLuminas] = React.useState([]);
+            const [tab, setTab] = React.useState('aether');
+
+            const fetchData = async () => {
+                if(tab === 'aether') {
+                    const res = await api.post('get_timeline', { userId: 'admin_view' });
+                    if(res.posts) setPosts(res.posts);
+                } else {
+                    const res = await api.post('get_lumina_feed', { userId: 'admin_view' });
+                    if(res.luminas) setLuminas(res.luminas);
+                }
+            };
+
+            React.useEffect(() => { fetchData(); }, [tab]);
+
+            const handleDeletePost = async (type, id) => {
+                if(confirm("Delete this content?")) {
+                    const res = await api.post(`admin_delete_${type === 'post' ? 'post' : 'lumina'}`, { id });
+                    if (res.success) {
+                        fetchData();
+                        alert("Content deleted.");
+                    }
+                }
+            };
+
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-3xl font-black text-white">Content Moderation</h2>
+                        <div className="flex bg-slate-800/50 p-1 rounded-xl">
+                            <button onClick={() => setTab('aether')} className={`px-6 py-2 rounded-lg text-sm font-bold transition ${tab === 'aether' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Aether</button>
+                            <button onClick={() => setTab('lumina')} className={`px-6 py-2 rounded-lg text-sm font-bold transition ${tab === 'lumina' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-white'}`}>Lumina</button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        {tab === 'aether' ? posts.map(p => (
+                            <div key={p.id} className="glass-card p-4 rounded-xl flex gap-4">
+                                <div className="w-10 h-10 rounded-full bg-slate-700 flex-shrink-0 overflow-hidden">
+                                    {p.avatar_url && <img src={p.avatar_url} className="w-full h-full object-cover"/>}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="font-bold text-white text-sm mr-2">{p.username}<VerifiedBadge level={p.verified_level}/></span>
+                                            <span className="text-xs text-slate-500">{new Date(Number(p.created_at)).toLocaleString()}</span>
+                                        </div>
+                                        <button onClick={() => handleDeletePost('post', p.id)} className="text-red-400 hover:bg-red-500/20 p-2 rounded-lg transition"><Icon name="Trash" size={16}/></button>
+                                    </div>
+                                    <p className="text-slate-300 text-sm mt-1">{p.content}</p>
+                                    {p.image_url && <img src={p.image_url} className="mt-2 h-32 rounded-lg border border-white/10"/>}
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {luminas.map(l => (
+                                    <div key={l.id} className="glass-card rounded-xl overflow-hidden group relative">
+                                        <img src={l.image_url} className="w-full h-48 object-cover"/>
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex flex-col justify-between p-3">
+                                            <div className="text-xs text-white truncate"><span className="font-bold">{l.username}</span></div>
+                                            <button onClick={() => handleDeletePost('lumina', l.id)} className="bg-red-600 text-white py-1 rounded text-xs font-bold w-full">Delete</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const LogsView = () => {
+            const [rooms, setRooms] = React.useState([]);
+            const [selectedRoom, setSelectedRoom] = React.useState(null);
+            const [messages, setMessages] = React.useState([]);
+
+            React.useEffect(() => {
+                api.post('admin_get_all_rooms').then(res => { if(res.rooms) setRooms(res.rooms); });
+            }, []);
+
+            React.useEffect(() => {
+                if(selectedRoom) {
+                    api.post('get_messages', { roomId: selectedRoom.id }).then(res => { if(res.messages) setMessages(res.messages); });
+                }
+            }, [selectedRoom]);
+
+            return (
+                <div className="flex h-full">
+                    <div className="w-80 border-r border-white/10 overflow-y-auto p-4">
+                        <h2 className="text-xl font-bold text-white mb-4">Chat Rooms</h2>
+                        <div className="space-y-2">
+                            {rooms.map(r => (
+                                <div key={r.id} onClick={() => setSelectedRoom(r)} className={`p-3 rounded-xl cursor-pointer transition ${selectedRoom?.id === r.id ? 'bg-indigo-600/30 border border-indigo-500/50' : 'bg-white/5 hover:bg-white/10'}`}>
+                                    <div className="text-sm font-bold text-white">{r.name || 'Direct Message'}</div>
+                                    <div className="text-xs text-slate-400">{r.type} • {r.msg_count || 0} msgs</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col">
+                        {!selectedRoom ? (
+                            <div className="flex-1 flex items-center justify-center text-slate-500">Select a room to view logs</div>
+                        ) : (
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                <div className="border-b border-white/10 pb-4 mb-4">
+                                    <h3 className="text-lg font-bold text-white">{selectedRoom.name}</h3>
+                                    <p className="text-xs text-slate-400">ID: {selectedRoom.id}</p>
+                                </div>
+                                {messages.map(m => (
+                                    <div key={m.id} className="flex gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                                            {m.sender_avatar && <img src={m.sender_avatar} className="w-full h-full object-cover"/>}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-bold text-slate-300">{m.sender_name}</span>
+                                                <span className="text-[10px] text-slate-500">{new Date(Number(m.created_at)).toLocaleString()}</span>
+                                            </div>
+                                            {m.type === 'image' ? <img src={m.content} className="h-32 rounded-lg mt-1"/> : <p className="text-sm text-slate-400">{m.content}</p>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminApp = () => {
+            const [admin, setAdmin] = React.useState(null);
+            const [view, setView] = React.useState('dashboard');
+
+            if (!admin) return <AdminAuth onLogin={setAdmin} />;
+
+            return (
+                <div className="flex h-screen w-full overflow-hidden">
+                    <Sidebar view={view} setView={setView} onLogout={() => setAdmin(null)} />
+                    <div className="flex-1 min-w-0 bg-black/20 backdrop-blur-sm h-full relative">
+                        {view === 'dashboard' && <DashboardView />}
+                        {view === 'users' && <UsersView />}
+                        {view === 'unions' && <UnionsView />}
+                        {view === 'content' && <ContentView />}
+                        {view === 'logs' && <LogsView />}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AdminApp />);
+    </script>
+</body>
+</html>
