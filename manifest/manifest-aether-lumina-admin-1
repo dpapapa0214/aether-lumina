@@ -1,0 +1,8 @@
+{
+  "name": "Aether Lumina Admin",
+  "short_name": "Aether Lumina Admin",
+  "start_url": "./aether-lumina-admini-1.html",
+  "display": "standalone",
+  "icons": [
+  ]
+}
