@@ -1,0 +1,8 @@
+{
+  "name": "Prism Store",
+  "short_name": "Prism Store",
+  "start_url": "./prism.html",
+  "display": "standalone",
+  "icons": [
+  ]
+}
