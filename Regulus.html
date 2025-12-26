@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulus Timetable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Reverted to only Zen Maru Gothic -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Dark Mode (Default) */
+            --bg-color: #0f172a;
+            --sidebar-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --input-border: rgba(255, 255, 255, 0.1);
+            
+            /* Regulus Theme: Star Gold */
+            --accent-color: #fcd34d; 
+            --nav-active: rgba(252, 211, 77, 0.15);
+            
+            --toggle-bg: #4b5563;
+            --toggle-dot: #d1d5db;
+        }
+
+        body.light-mode {
+            /* Light Mode */
+            --bg-color: #f8fafc;
+            --sidebar-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(200, 200, 200, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(0, 0, 0, 0.1);
+
+            /* Light Mode Accent: Royal Blue / Gold mix */
+            --accent-color: #d97706; 
+            --nav-active: rgba(217, 119, 6, 0.1);
+
+            --toggle-bg: #cbd5e1;
+            --toggle-dot: #f8fafc;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Branding Font - Reverted to base font */
+        .brand-font {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        /* Ambient Background Animation */
+        .ambient-light {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(252, 211, 77, 0.15), transparent 40%), /* Regulus Gold */
+                radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 40%), /* Star Blue */
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0), transparent 100%);
+            animation: pulseBg 15s ease-in-out infinite alternate;
+            transition: background 0.5s;
+        }
+
+        body.light-mode .ambient-light {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(251, 191, 36, 0.1), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(96, 165, 250, 0.1), transparent 40%);
+        }
+
+        @keyframes pulseBg {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Glassmorphism Cards */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Utility overrides */
+        .text-gray-400 { color: var(--text-sub) !important; }
+        .text-gray-300 { color: var(--text-sub) !important; opacity: 0.9; }
+        body.light-mode .text-white { color: #1e293b !important; }
+        body.light-mode .text-gray-200 { color: #334155 !important; }
+        
+        /* Status Badges Light Mode */
+        body.light-mode .text-green-200 { color: #14532d !important; }
+        body.light-mode .bg-green-500\/20 { background-color: rgba(34, 197, 94, 0.2) !important; border-color: rgba(22, 163, 74, 0.3) !important; }
+        body.light-mode .text-yellow-200 { color: #713f12 !important; }
+        body.light-mode .bg-yellow-500\/20 { background-color: rgba(234, 179, 8, 0.2) !important; border-color: rgba(202, 138, 4, 0.3) !important; }
+        body.light-mode .text-purple-200 { color: #581c87 !important; }
+        body.light-mode .bg-purple-500\/20 { background-color: rgba(168, 85, 247, 0.2) !important; border-color: rgba(147, 51, 234, 0.3) !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+        /* Layout */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            padding: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        /* Navigation */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-sub);
+            transition: all 0.2s;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+        }
+        body.light-mode .nav-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .nav-item.active {
+            background: var(--nav-active);
+            color: var(--accent-color);
+            border-left: 3px solid var(--accent-color);
+        }
+
+        /* Mobile Navigation (Bottom Tab) */
+        @media (max-width: 768px) {
+            .app-layout { flex-direction: column; }
+            .sidebar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 0.75rem;
+                border-right: none;
+                border-top: 1px solid var(--glass-border);
+                background: var(--bg-color);
+            }
+            .sidebar h1 { display: none; }
+            .nav-item {
+                flex-direction: column;
+                gap: 0.25rem;
+                font-size: 0.65rem;
+                padding: 0.5rem;
+                margin: 0;
+                border-left: none;
+            }
+            .nav-item.active { border-bottom: 2px solid var(--accent-color); border-left: none; }
+            .nav-item i { font-size: 1.25rem; }
+            .main-content { padding-bottom: 80px; }
+            .desktop-only { display: none; }
+        }
+
+        /* Input Styles */
+        .input-glass {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-glass:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 1px var(--accent-color);
+        }
+
+        /* Page Transitions */
+        .page-section {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            display: none;
+        }
+        .page-section.active {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+
+        /* Grid & Components */
+        .timetable-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+        
+        /* Regulation Styles */
+        .reg-active {
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        body.light-mode .reg-active {
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            background: rgba(254, 226, 226, 0.8);
+        }
+        body.light-mode .reg-active h5 { color: #991b1b !important; }
+        body.light-mode .reg-active p, body.light-mode .reg-active div { color: #7f1d1d !important; }
+
+        /* Fullscreen Overlay */
+        #fullscreen-overlay {
+            background-color: var(--bg-color);
+            transition: opacity 0.3s ease;
+        }
+        #fullscreen-overlay h1 { color: var(--text-main); }
+        .fs-clock {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+            color: var(--text-main);
+        }
+
+        /* Toggle */
+        .theme-toggle-btn {
+            position: relative; width: 40px; height: 22px;
+            background: var(--toggle-bg); border-radius: 999px; cursor: pointer;
+        }
+        .theme-toggle-dot {
+            position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+            background: var(--toggle-dot); border-radius: 50%; transition: transform 0.3s;
+            display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--toggle-bg);
+        }
+        body.light-mode .theme-toggle-dot { transform: translateX(18px); }
+        
+        /* Chime Toggle */
+        .chime-track { background-color: var(--toggle-bg); }
+        .chime-dot { background-color: var(--toggle-dot); }
+        #chime-toggle:checked ~ .chime-track { background-color: var(--accent-color); } 
+        #chime-toggle:checked ~ .chime-dot { transform: translateX(20px); background-color: #ffffff; }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+
+    <!-- App Layout -->
+    <div class="app-layout">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <!-- Brand Logo -->
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-blue-400 mb-8 px-2 desktop-only brand-font tracking-widest text-center">
+                REGULUS
+            </h1>
+            
+            <button onclick="navigateTo('home')" class="nav-item active" id="nav-home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </button>
+            <button onclick="navigateTo('timetable')" class="nav-item" id="nav-timetable">
+                <i class="fas fa-calendar-alt"></i>
+                <span>TimeTable</span>
+            </button>
+            <button onclick="navigateTo('regulation')" class="nav-item" id="nav-regulation">
+                <i class="fas fa-gavel"></i>
+                <span>Regulation</span>
+            </button>
+            
+            <div class="mt-auto desktop-only space-y-2">
+                <button onclick="openModal('settings-modal')" class="nav-item w-full">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+            
+            <button onclick="openModal('settings-modal')" class="nav-item mobile-only" style="display:none">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Header (Top Bar) -->
+            <header class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-200 brand-font" id="page-title">Dashboard</h2>
+                    <p class="text-xs text-gray-400 mt-1" id="current-date-display">Loading...</p>
+                </div>
+                
+                <div class="flex gap-3 items-center">
+                    <button onclick="toggleTheme()" class="glass px-3 py-2 rounded-full transition-colors flex items-center justify-center" title="テーマ切り替え">
+                        <div class="theme-toggle-btn">
+                            <div class="theme-toggle-dot">
+                                <i class="fas fa-moon" id="theme-icon-dark"></i>
+                                <i class="fas fa-sun hidden" id="theme-icon-light"></i>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button onclick="toggleFullScreen()" class="glass px-3 py-2 text-gray-400 hover:text-white rounded-full transition-colors" title="全画面モード">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    
+                    <button onclick="openModal('settings-modal')" class="glass px-3 py-2 text-gray-400 hover:text-white rounded-full transition-colors lg:hidden">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- PAGE: HOME -->
+            <section id="page-home" class="page-section active">
+                
+                <!-- Hero (Now Playing) -->
+                <div id="hero-card" class="glass p-6 md:p-10 relative overflow-hidden group mb-8 transition-all duration-500">
+                    <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <i class="fas fa-star text-9xl transform -rotate-12 translate-x-4 -translate-y-4 text-amber-300"></i>
+                    </div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-200 border border-amber-500/30" id="hero-status">
+                                NO CLASS
+                            </span>
+                            <span class="text-sm text-gray-400 font-mono" id="hero-clock">00:00</span>
+                        </div>
+
+                        <h2 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight brand-font" id="hero-subject">Free Time</h2>
+                        
+                        <div class="flex flex-wrap gap-6 text-gray-300 mb-6">
+                            <div class="flex items-center bg-white/5 px-4 py-2 rounded-lg backdrop-blur-sm">
+                                <i class="fas fa-map-marker-alt mr-3 text-cyan-400"></i>
+                                <div>
+                                    <span class="text-xs text-gray-500 block uppercase">Room</span>
+                                    <span id="hero-room" class="font-bold">-</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center bg-white/5 px-4 py-2 rounded-lg backdrop-blur-sm">
+                                <i class="far fa-clock mr-3 text-pink-400"></i>
+                                <div>
+                                    <span class="text-xs text-gray-500 block uppercase">Time</span>
+                                    <span id="hero-time" class="font-bold">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p id="hero-memo" class="text-gray-400 italic bg-black/10 p-3 rounded-lg inline-block border border-white/5">
+                            現在予定されている授業はありません。
+                        </p>
+                    </div>
+                    
+                    <div class="absolute bottom-0 left-0 w-full h-1.5 bg-white/10">
+                        <div id="class-progress" class="h-full bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 w-0 transition-all duration-1000"></div>
+                    </div>
+                </div>
+
+                <!-- Active Regulations Summary -->
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-widest flex items-center gap-2 brand-font">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i> Active Regulations
+                    </h3>
+                    <div id="home-active-regulations" class="grid gap-4 md:grid-cols-2">
+                        <!-- Populated by JS -->
+                        <div class="glass p-4 text-center text-gray-500 text-sm italic">有効な禁則はありません。自由を満喫してください。</div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- PAGE: TIMETABLE -->
+            <section id="page-timetable" class="page-section">
+                <div class="flex justify-between items-end mb-4 lg:hidden">
+                    <div id="mobile-day-selector" class="flex gap-2 overflow-x-auto pb-2 w-full no-scrollbar"></div>
+                </div>
+
+                <div class="timetable-overflow">
+                    <div id="desktop-grid-header" class="hidden lg:grid gap-0.5 mb-2 text-center text-gray-400 text-sm font-bold"></div>
+                    <div id="schedule-container" class="timetable-grid"></div>
+                </div>
+            </section>
+
+            <!-- PAGE: REGULATION -->
+            <section id="page-regulation" class="page-section">
+                <div class="grid lg:grid-cols-3 gap-6 h-full">
+                    
+                    <!-- Left: Form -->
+                    <div class="lg:col-span-1">
+                        <div class="glass p-6 sticky top-0 border-t-4 border-t-amber-400">
+                            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 brand-font">
+                                <i class="fas fa-plus-circle text-amber-400"></i> New Oath
+                            </h3>
+                            <p class="text-xs text-gray-400 mb-4">
+                                一度設定した禁則は、期間が終了するまで<span class="text-red-400 font-bold">削除できません</span>。
+                            </p>
+                            <form onsubmit="addRegulation(event)" class="space-y-4">
+                                <div><label class="block text-xs text-gray-400 mb-1">タイトル</label><input type="text" id="reg-title" class="input-glass" placeholder="例: ゲーム禁止" required></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">開始日時</label><input type="datetime-local" id="reg-start" class="input-glass text-sm" required></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">終了日時</label><input type="datetime-local" id="reg-end" class="input-glass text-sm" required></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">詳細・理由</label><textarea id="reg-desc" rows="3" class="input-glass text-sm" placeholder="試験勉強のため..."></textarea></div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold py-3 rounded-lg shadow-lg transition-all transform hover:scale-[1.02]">
+                                    誓約する
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right: List -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div>
+                            <h4 class="text-sm font-bold text-red-400 mb-3 uppercase tracking-widest flex items-center gap-2 brand-font">
+                                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Active Regulations
+                            </h4>
+                            <div id="active-reg-list" class="grid gap-3"></div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-widest brand-font">History & Upcoming</h4>
+                            <div id="other-reg-list" class="grid gap-3 opacity-60 hover:opacity-100 transition-opacity"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Full Screen Overlay -->
+    <div id="fullscreen-overlay" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center p-6 text-center select-none">
+        <div class="ambient-light absolute inset-0 z-[-1] opacity-50"></div>
+        <div class="absolute top-6 right-6 z-50">
+            <button onclick="toggleFullScreen()" class="glass px-4 py-3 text-gray-400 hover:text-white transition-colors rounded-full">
+                <i class="fas fa-compress text-xl"></i>
+            </button>
+        </div>
+        <div class="w-full max-w-6xl flex flex-col items-center justify-center h-full">
+            <div id="fs-clock" class="fs-clock text-7xl md:text-9xl font-bold mb-4 text-amber-200">00:00</div>
+            <div id="fs-date" class="text-xl md:text-3xl text-gray-400 mb-12 font-bold tracking-widest brand-font">Loading...</div>
+            <div class="glass p-8 md:p-12 rounded-3xl w-full max-w-4xl backdrop-blur-xl relative overflow-hidden border border-white/10 shadow-2xl">
+                <div class="mb-6">
+                     <span id="fs-status" class="inline-block px-5 py-2 rounded-full text-lg md:text-xl font-bold uppercase tracking-wider mb-4 shadow-lg border">FREE TIME</span>
+                    <h1 id="fs-subject" class="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight break-words brand-font">Free Time</h1>
+                </div>
+                <div class="grid grid-cols-2 gap-8 text-2xl md:text-3xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="fas fa-map-marker-alt text-cyan-400 text-3xl mb-1"></i>
+                        <span id="fs-room" class="font-bold">-</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="far fa-clock text-pink-400 text-3xl mb-1"></i>
+                        <span id="fs-time" class="font-bold">-</span>
+                    </div>
+                </div>
+                <div class="relative w-full h-3 bg-gray-700/30 rounded-full overflow-hidden mb-6">
+                    <div id="fs-progress" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 transition-all duration-1000"></div>
+                </div>
+                <div class="text-lg md:text-xl text-gray-400 flex items-center justify-center gap-2">
+                    <span id="fs-next">Next: -</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('settings-modal')"></div>
+        <div class="glass w-full max-w-2xl p-6 relative z-10 transform transition-all scale-100 m-4 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold flex items-center gap-2 text-white brand-font">
+                    <i class="fas fa-cog text-amber-400"></i>
+                    <span>App Settings</span>
+                </h3>
+                <button onclick="closeModal('settings-modal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="overflow-y-auto pr-2 custom-scrollbar flex-1">
+                <div class="mb-6 bg-white/5 p-4 rounded-lg space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-sm text-gray-200">チャイム音</p>
+                            <p class="text-xs text-gray-400">授業開始・終了時の通知音</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="playChime(true)" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition text-gray-200"><i class="fas fa-play mr-1"></i>Test</button>
+                            <label for="chime-toggle" class="flex items-center cursor-pointer relative">
+                                <input type="checkbox" id="chime-toggle" class="sr-only" onchange="toggleChime(this.checked)">
+                                <div class="w-10 h-5 chime-track rounded-full shadow-inner transition-colors"></div>
+                                <div class="chime-dot absolute w-5 h-5 rounded-full shadow -left-1 -top-0 transition bg-gray-400"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-white/10 pt-4">
+                        <div>
+                            <p class="font-bold text-sm text-gray-200">時間割タイプ</p>
+                            <p class="text-xs text-gray-400">表示・管理の基準</p>
+                        </div>
+                        <select id="week-mode-select" class="input-glass w-auto py-1 px-3 text-sm cursor-pointer" onchange="changeWeekMode(this.value)">
+                            <option value="weekday">曜日 (月〜日)</option>
+                            <option value="odd_even">偶数・奇数日</option>
+                            <option value="mod3">3の倍数・それ以外</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-6 bg-white/5 p-4 rounded-lg flex flex-col gap-4">
+                    <h4 class="text-sm font-bold text-gray-300 border-b border-white/10 pb-2">クラウド同期 (Spreadsheet)</h4>
+                    <div class="space-y-3">
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-400 mb-1">User ID</label>
+                                <input type="text" id="gas-user" class="input-glass text-xs" placeholder="user01">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-400 mb-1">Password</label>
+                                <input type="password" id="gas-pass" class="input-glass text-xs" placeholder="****">
+                            </div>
+                        </div>
+                        <div class="flex gap-3 pt-2">
+                            <button onclick="uploadToCloud()" class="flex-1 glass py-2 text-sm text-green-300 hover:text-white transition"><i class="fas fa-cloud-upload-alt mr-2"></i>Upload</button>
+                            <button onclick="downloadFromCloud()" class="flex-1 glass py-2 text-sm text-blue-300 hover:text-white transition"><i class="fas fa-cloud-download-alt mr-2"></i>Download</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 bg-white/5 p-4 rounded-lg flex gap-3">
+                     <button onclick="exportData()" class="flex-1 glass py-2 text-sm hover:text-white transition text-gray-300"><i class="fas fa-file-export mr-2"></i>File Export</button>
+                     <button onclick="triggerImport()" class="flex-1 glass py-2 text-sm hover:text-white transition text-gray-300"><i class="fas fa-file-import mr-2"></i>File Import</button>
+                     <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(this)">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
+                        <h4 class="text-sm font-bold text-gray-300">時限設定</h4>
+                        <button onclick="addPeriod()" class="text-xs bg-green-500/20 text-green-300 hover:bg-green-500/30 px-3 py-1 rounded transition"><i class="fas fa-plus mr-1"></i>Add</button>
+                    </div>
+                    <div id="periods-list" class="space-y-3"></div>
+                </div>
+            </div>
+            <div class="pt-6 mt-4 border-t border-white/10 flex justify-between gap-4">
+                 <button onclick="resetAllData()" class="px-4 py-2 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors text-sm"><i class="fas fa-trash-alt mr-2"></i>Reset All</button>
+                <button onclick="saveSettings()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-2 px-8 rounded-xl shadow-lg transition-all">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal (Only for Timetable Grid) -->
+    <div id="edit-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('edit-modal')"></div>
+        <div class="glass w-full max-w-md p-6 relative z-10 transform transition-all scale-100 m-4">
+            <button onclick="closeModal('edit-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-white"><i class="fas fa-pen-fancy text-purple-400"></i><span id="modal-title">Edit Class</span></h3>
+            <form id="edit-form" onsubmit="saveClass(event)">
+                <input type="hidden" id="edit-day"><input type="hidden" id="edit-period">
+                <div class="space-y-4">
+                    <div><label class="block text-xs text-gray-400 mb-1 uppercase">Subject</label><input type="text" id="edit-subject" class="input-glass" placeholder="例: 数学II" required></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs text-gray-400 mb-1 uppercase">Room</label><input type="text" id="edit-room" class="input-glass" placeholder="例: 3-B"></div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 uppercase">Color</label>
+                            <select id="edit-color" class="input-glass cursor-pointer">
+                                <option value="purple">Cosmic Purple</option><option value="blue">Ocean Blue</option><option value="pink">Neon Pink</option><option value="green">Emerald</option><option value="orange">Sunset</option><option value="gray">Ghost</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div><label class="block text-xs text-gray-400 mb-1 uppercase">Memo</label><textarea id="edit-memo" rows="3" class="input-glass" placeholder="課題など..."></textarea></div>
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" onclick="deleteClassData()" class="px-4 py-2 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors text-sm">Clear</button>
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all transform hover:scale-[1.02]">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Data & Config ---
+        const DEFAULT_PERIODS = [
+            { start: '09:00', end: '10:30' }, { start: '10:40', end: '12:10' },
+            { start: '13:00', end: '14:30' }, { start: '14:40', end: '16:10' },
+            { start: '16:20', end: '17:50' }, { start: '18:00', end: '19:30' }
+        ];
+        const MODE_CONFIG = {
+            weekday: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], fullLabels: ['月', '火', '水', '木', '金', '土', '日'], count: 7, storageKey: 'chronoGlassData' },
+            odd_even: { labels: ['Odd', 'Even'], fullLabels: ['奇数日', '偶数日'], count: 2, storageKey: 'chronoGlassData_oddeven' },
+            mod3: { labels: ['Other', 'Mod 3'], fullLabels: ['3の倍数以外', '3の倍数'], count: 2, storageKey: 'chronoGlassData_mod3' }
+        };
+        const ICON_MAP = { '数学': 'fa-square-root-alt', '英語': 'fa-language', 'English': 'fa-language', '国語': 'fa-book-open', '理科': 'fa-flask', '化学': 'fa-atom', '物理': 'fa-rocket', '社会': 'fa-globe-asia', '歴史': 'fa-landmark', '体育': 'fa-running', '音楽': 'fa-music', '美術': 'fa-palette', '情報': 'fa-laptop-code', 'HR': 'fa-users' };
+        
+        // Placeholder for user to enter their deployed GAS URL
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyZKKiwpPmbXWEET_zESTu-HozOypazx9n_wX4KXiNZks3kwGjGbj7wFHZzC7UlUtuqOA/exec"; 
+
+        let scheduleData = {}, periodTimes = [], regulations = [];
+        let currentMobileDay = 0, chimeEnabled = false, lastChimeTime = "", isLightMode = false, weekMode = 'weekday', isFullScreen = false;
+        let currentPage = 'home';
+        let gasConfig = { url: DEFAULT_GAS_URL, user: '', pass: '' };
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            weekMode = localStorage.getItem('chronoGlassWeekMode') || 'weekday';
+            document.getElementById('week-mode-select').value = weekMode;
+            
+            loadData();
+            loadRegulations();
+            loadGasConfig(); // Load Cloud Config
+            updateDateDisplay();
+            initMobileNav();
+            
+            const savedTheme = localStorage.getItem('chronoGlassTheme');
+            if (savedTheme === 'light') toggleTheme(true);
+            else { renderSchedule(); updateHeroSection(); }
+
+            const savedChime = localStorage.getItem('chronoGlassChime');
+            if(savedChime === 'true') {
+                chimeEnabled = true;
+                document.getElementById('chime-toggle').checked = true;
+            }
+            
+            document.body.addEventListener('click', initAudioContext, { once: true });
+
+            setInterval(() => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                if(document.getElementById('hero-clock')) document.getElementById('hero-clock').innerText = timeStr;
+                
+                updateDateDisplay();
+                updateHeroSection();
+                updateActivePeriodIndicator();
+                checkChime();
+                if (isFullScreen) updateFullScreenUI();
+            }, 1000);
+
+            navigateTo('home');
+        });
+
+        // --- Navigation Logic ---
+        function navigateTo(pageId) {
+            currentPage = pageId;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const navBtn = document.getElementById(`nav-${pageId}`);
+            if(navBtn) navBtn.classList.add('active');
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if(targetPage) targetPage.classList.add('active');
+            const titles = { 'home': 'Dashboard', 'timetable': 'Weekly Schedule', 'regulation': 'Rule Management' };
+            document.getElementById('page-title').innerText = titles[pageId] || 'Regulus';
+            if (pageId === 'timetable') renderSchedule();
+            if (pageId === 'regulation') renderRegulations();
+            if (pageId === 'home') { updateHeroSection(); renderRegulations(); }
+        }
+
+        // --- Data & Core Functions ---
+        function getColorClass(colorKey, isEmpty) {
+            if (isEmpty) return isLightMode ? 'bg-transparent border-dashed border-black/10 text-gray-400 hover:bg-black/5' : 'bg-transparent border-dashed border-white/10 text-gray-600 hover:bg-white/5';
+            const colors = {
+                purple: ['from-purple-500/20 to-indigo-500/20 border-purple-500/30 text-purple-200', 'from-purple-500/20 to-indigo-500/20 border-purple-400/50 text-purple-900'],
+                blue:   ['from-blue-500/20 to-cyan-500/20 border-blue-500/30 text-blue-200', 'from-blue-500/20 to-cyan-500/20 border-blue-400/50 text-blue-900'],
+                pink:   ['from-pink-500/20 to-rose-500/20 border-pink-500/30 text-pink-200', 'from-pink-500/20 to-rose-500/20 border-pink-400/50 text-pink-900'],
+                green:  ['from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-200', 'from-emerald-500/20 to-teal-500/20 border-emerald-400/50 text-emerald-900'],
+                orange: ['from-orange-500/20 to-amber-500/20 border-orange-500/30 text-orange-200', 'from-orange-500/20 to-amber-500/20 border-orange-400/50 text-orange-900'],
+                gray:   ['from-gray-700/30 to-gray-600/30 border-gray-500/30 text-gray-300', 'from-gray-300/50 to-gray-200/50 border-gray-400/50 text-gray-800']
+            };
+            const selected = colors[colorKey] || colors['gray'];
+            return isLightMode ? selected[1] : selected[0];
+        }
+
+        function getCurrentDayIndex() {
+            const now = new Date();
+            const date = now.getDate();
+            if (weekMode === 'weekday') { const d = now.getDay(); return d === 0 ? 6 : d - 1; }
+            else if (weekMode === 'odd_even') return (date % 2 !== 0) ? 0 : 1;
+            else if (weekMode === 'mod3') return (date % 3 === 0) ? 1 : 0;
+            return 0;
+        }
+
+        function changeWeekMode(newMode) {
+            if(weekMode !== newMode) {
+                weekMode = newMode;
+                localStorage.setItem('chronoGlassWeekMode', newMode);
+                loadData();
+                initMobileNav();
+                renderSchedule();
+                updateHeroSection();
+            }
+        }
+
+        function loadData() {
+            const savedPeriods = localStorage.getItem('chronoGlassPeriods');
+            periodTimes = savedPeriods ? JSON.parse(savedPeriods) : JSON.parse(JSON.stringify(DEFAULT_PERIODS));
+            const config = MODE_CONFIG[weekMode];
+            const saved = localStorage.getItem(config.storageKey);
+            if (saved) {
+                scheduleData = JSON.parse(saved);
+                for (let d = 0; d < config.count; d++) {
+                    if (!scheduleData[d]) scheduleData[d] = {};
+                    for (let p = 0; p < periodTimes.length; p++) {
+                        if (!scheduleData[d][p]) scheduleData[d][p] = null;
+                    }
+                }
+            } else {
+                scheduleData = {};
+                for (let d = 0; d < config.count; d++) {
+                    scheduleData[d] = {};
+                    for (let p = 0; p < periodTimes.length; p++) {
+                        scheduleData[d][p] = null;
+                    }
+                }
+                if (weekMode === 'weekday') {
+                    scheduleData[0][0] = { subject: '数学I', room: '1-A', color: 'blue', memo: '教科書P.42〜' };
+                    scheduleData[0][1] = { subject: '英語Com', room: 'LL教室', color: 'pink', memo: '単語テストあり' };
+                }
+                saveData();
+            }
+        }
+
+        function saveData() {
+            const config = MODE_CONFIG[weekMode];
+            localStorage.setItem(config.storageKey, JSON.stringify(scheduleData));
+            updateHeroSection();
+            if(isFullScreen) updateFullScreenUI();
+        }
+
+        // --- GAS / Cloud Sync ---
+        function loadGasConfig() {
+            const saved = localStorage.getItem('chronoGlassGasConfig');
+            if (saved) gasConfig = JSON.parse(saved);
+            else gasConfig.url = DEFAULT_GAS_URL;
+            // Always ensure the URL is the constant if it was somehow overwritten or not set correctly from storage
+            if (gasConfig.url !== DEFAULT_GAS_URL) gasConfig.url = DEFAULT_GAS_URL;
+        }
+
+        function saveGasConfigFromUI() {
+            // gasConfig.url is fixed
+            gasConfig.user = document.getElementById('gas-user').value;
+            gasConfig.pass = document.getElementById('gas-pass').value;
+            localStorage.setItem('chronoGlassGasConfig', JSON.stringify(gasConfig));
+        }
+
+        async function uploadToCloud() {
+            saveGasConfigFromUI();
+            if (!gasConfig.url || !gasConfig.user || !gasConfig.pass) {
+                alert('User ID and Password are required.'); return;
+            }
+            
+            const payload = {
+                version: 1.1, weekMode, data: scheduleData, periods: periodTimes, regulations
+            };
+
+            const body = JSON.stringify({
+                action: 'save',
+                id: gasConfig.user,
+                pass: gasConfig.pass,
+                data: payload
+            });
+
+            try {
+                // Using text/plain to avoid CORS preflight which GAS Web App doesn't handle well in some cases
+                const response = await fetch(gasConfig.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: body
+                });
+                const res = await response.json();
+                if (res.status === 'success') alert('Upload Successful!');
+                else alert('Upload Failed: ' + res.message);
+            } catch (e) {
+                alert('Connection Error: Check URL and Console.');
+                console.error(e);
+            }
+        }
+
+        async function downloadFromCloud() {
+            saveGasConfigFromUI();
+            if (!gasConfig.url || !gasConfig.user || !gasConfig.pass) {
+                alert('User ID and Password are required.'); return;
+            }
+
+            const body = JSON.stringify({
+                action: 'load',
+                id: gasConfig.user,
+                pass: gasConfig.pass
+            });
+
+            try {
+                const response = await fetch(gasConfig.url, {
+                    method: 'POST', // GAS doPost handles both save/load
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: body
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    if(confirm('Overwrite local data with cloud data?')) {
+                        const d = res.data;
+                        if(d.periods) { periodTimes=d.periods; localStorage.setItem('chronoGlassPeriods', JSON.stringify(periodTimes)); }
+                        if(d.weekMode) { weekMode=d.weekMode; localStorage.setItem('chronoGlassWeekMode', weekMode); }
+                        if(d.data) { scheduleData=d.data; saveData(); }
+                        if(d.regulations) { regulations=d.regulations; saveRegulations(); }
+                        location.reload();
+                    }
+                }
+                else alert('Download Failed: ' + res.message);
+            } catch (e) {
+                alert('Connection Error: Check URL and Console.');
+                console.error(e);
+            }
+        }
+
+        // --- Regulation Functions ---
+        function loadRegulations() {
+            const saved = localStorage.getItem('chronoGlassRegulations');
+            regulations = saved ? JSON.parse(saved) : [];
+            renderRegulations();
+        }
+        function saveRegulations() {
+            localStorage.setItem('chronoGlassRegulations', JSON.stringify(regulations));
+            renderRegulations();
+        }
+        function addRegulation(e) {
+            e.preventDefault();
+            const title = document.getElementById('reg-title').value;
+            const start = document.getElementById('reg-start').value;
+            const end = document.getElementById('reg-end').value;
+            const desc = document.getElementById('reg-desc').value;
+            if (new Date(start) >= new Date(end)) { alert('終了日時は開始日時より後に設定してください。'); return; }
+            if (confirm('この禁則を登録しますか？\n登録後は期間が終了するまで削除できません。')) {
+                regulations.push({ id: Date.now(), title, start, end, desc });
+                saveRegulations();
+                e.target.reset();
+            }
+        }
+        function renderRegulations() {
+            const homeList = document.getElementById('home-active-regulations');
+            const activeList = document.getElementById('active-reg-list');
+            const otherList = document.getElementById('other-reg-list');
+            if(homeList) homeList.innerHTML = '';
+            if(activeList) activeList.innerHTML = '';
+            if(otherList) otherList.innerHTML = '';
+
+            const now = new Date();
+            regulations.sort((a, b) => new Date(a.start) - new Date(b.start));
+            let activeCount = 0;
+
+            regulations.forEach(reg => {
+                const start = new Date(reg.start);
+                const end = new Date(reg.end);
+                const isActive = now >= start && now <= end;
+                const timeFormat = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                const timeStr = `${start.toLocaleString('ja-JP', timeFormat)} ~ ${end.toLocaleString('ja-JP', timeFormat)}`;
+
+                const html = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h5 class="font-bold text-xl ${isActive ? 'text-red-400' : 'text-gray-300'}">${reg.title}</h5>
+                        ${isActive ? '<span class="px-2 py-0.5 bg-red-500 text-white text-xs rounded animate-pulse font-bold">ACTIVE</span>' : ''}
+                    </div>
+                    <div class="text-xs text-gray-400 mb-2 flex items-center gap-1"><i class="far fa-calendar-alt"></i> ${timeStr}</div>
+                    <p class="text-sm text-gray-300 opacity-90">${reg.desc || ''}</p>
+                `;
+                
+                const el = document.createElement('div');
+                el.className = `p-4 rounded-xl border border-white/10 ${isActive ? 'reg-active' : 'bg-white/5'}`;
+                el.innerHTML = html;
+
+                if (isActive) {
+                    if(activeList) activeList.appendChild(el.cloneNode(true));
+                    if(homeList) homeList.appendChild(el.cloneNode(true));
+                    activeCount++;
+                } else {
+                    if(otherList) otherList.appendChild(el);
+                }
+            });
+
+            if (activeCount === 0 && homeList) {
+                homeList.innerHTML = '<div class="col-span-2 glass p-6 text-center text-gray-500 text-sm italic">現在有効な禁則はありません。<br>自由な時間を有意義に使いましょう。</div>';
+            }
+            if (activeCount === 0 && activeList) {
+                activeList.innerHTML = '<div class="text-gray-500 text-sm italic text-center py-4">現在有効な禁則はありません</div>';
+            }
+        }
+
+        // --- Timetable Rendering ---
+        function renderSchedule() {
+            const container = document.getElementById('schedule-container');
+            const header = document.getElementById('desktop-grid-header');
+            if(!container) return;
+            
+            container.innerHTML = '';
+            header.innerHTML = '';
+            
+            const config = MODE_CONFIG[weekMode];
+            const cols = config.count;
+            const gridStyle = `60px repeat(${cols}, 1fr)`;
+            container.style.gridTemplateColumns = gridStyle;
+            header.style.gridTemplateColumns = gridStyle;
+
+            header.innerHTML = `<div></div>` + config.labels.map(l => `<div class="py-2">${l}</div>`).join('');
+
+            for (let p = 0; p < periodTimes.length; p++) {
+                const timeCol = document.createElement('div');
+                timeCol.className = 'desktop-only flex flex-col justify-center items-center text-xs text-gray-400 font-mono';
+                timeCol.innerHTML = `<span>${p + 1}</span><span class="text-[10px] mt-1 opacity-50">${periodTimes[p].start}</span>`;
+                container.appendChild(timeCol);
+
+                for (let d = 0; d < cols; d++) {
+                    const cellData = scheduleData[d] ? scheduleData[d][p] : null;
+                    const cell = createCell(d, p, cellData);
+                    if (window.innerWidth > 768) container.appendChild(cell);
+                }
+            }
+            renderMobileView(container);
+        }
+
+        function renderMobileView(container) {
+            if (window.innerWidth > 768) return;
+            container.innerHTML = '';
+            const dayIndex = currentMobileDay; 
+            for (let p = 0; p < periodTimes.length; p++) {
+                const cellWrapper = document.createElement('div');
+                cellWrapper.className = 'flex gap-4 items-stretch';
+                const timeInd = document.createElement('div');
+                timeInd.className = 'w-12 flex flex-col justify-center items-center text-gray-500 text-xs font-mono border-r border-white/10 pr-2';
+                timeInd.innerHTML = `<span class="text-lg font-bold text-gray-300">${p + 1}</span><span>${periodTimes[p].start}</span>`;
+                const cellData = scheduleData[dayIndex] ? scheduleData[dayIndex][p] : null;
+                const card = createCell(dayIndex, p, cellData, true);
+                card.classList.add('flex-1');
+                cellWrapper.appendChild(timeInd);
+                cellWrapper.appendChild(card);
+                container.appendChild(cellWrapper);
+            }
+        }
+
+        function createCell(day, period, data, isMobile = false) {
+            const div = document.createElement('div');
+            const isEmpty = !data || !data.subject;
+            const colorClass = getColorClass(data ? (data.color || 'gray') : 'gray', isEmpty);
+            let classes = `glass p-4 min-h-[100px] flex flex-col justify-between cursor-pointer group relative overflow-hidden transition-all duration-300 `;
+            classes += isEmpty ? ' ' : 'hover:scale-[1.02] shadow-lg ';
+            if (!isEmpty) classes += `bg-gradient-to-br ${colorClass} `;
+            else classes += `${colorClass} `;
+
+            div.className = classes;
+            div.onclick = () => openModal('edit-modal', day, period);
+            div.dataset.day = day;
+            div.dataset.period = period;
+
+            if (isEmpty) div.innerHTML = `<div class="h-full flex items-center justify-center opacity-0 group-hover:opacity-50 transition-opacity"><i class="fas fa-plus text-2xl text-gray-400"></i></div>`;
+            else {
+                let icon = 'fa-book';
+                for (const key in ICON_MAP) if (data.subject.includes(key)) icon = ICON_MAP[key];
+                div.innerHTML = `
+                    <div class="absolute top-[-10px] right-[-10px] text-6xl opacity-10 pointer-events-none transform rotate-12"><i class="fas ${icon}"></i></div>
+                    <div><h4 class="font-bold text-lg leading-tight mb-1 truncate">${data.subject}</h4><p class="text-xs opacity-70 flex items-center gap-1"><i class="fas fa-map-marker-alt text-[10px]"></i> ${data.room || 'No Room'}</p></div>
+                    ${data.memo ? '<div class="mt-2"><div class="w-1.5 h-1.5 rounded-full bg-white/50"></div></div>' : ''}
+                `;
+            }
+            return div;
+        }
+
+        // --- Hero / Focus Logic ---
+        function updateHeroSection() {
+            const now = new Date();
+            const day = getCurrentDayIndex();
+            const currentTimeVal = now.getHours() * 60 + now.getMinutes();
+            let status = "FREE TIME", subject = "自由時間", room = "-", time = "-", memo = "現在、予定されている授業はありません。", progress = 0, currentP = -1, nextP = -1;
+
+            for (let i = 0; i < periodTimes.length; i++) {
+                const [sh, sm] = periodTimes[i].start.split(':').map(Number);
+                const [eh, em] = periodTimes[i].end.split(':').map(Number);
+                const startVal = sh * 60 + sm;
+                const endVal = eh * 60 + em;
+                if (currentTimeVal >= startVal && currentTimeVal <= endVal) { currentP = i; progress = ((currentTimeVal - startVal) / (endVal - startVal)) * 100; break; }
+                else if (currentTimeVal < startVal && nextP === -1) nextP = i;
+            }
+
+            if (currentP !== -1) {
+                const data = scheduleData[day] ? scheduleData[day][currentP] : null;
+                status = "IN PROGRESS";
+                document.getElementById('hero-status').className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-200 border border-green-500/30 animate-pulse";
+                if (data) { subject = data.subject; room = data.room || 'Unknown'; memo = data.memo || '授業に集中しましょう。'; time = `${periodTimes[currentP].start} - ${periodTimes[currentP].end}`; }
+                else { subject = "空きコマ"; time = `${periodTimes[currentP].start} - ${periodTimes[currentP].end}`; }
+            } else if (nextP !== -1) {
+                const data = scheduleData[day] ? scheduleData[day][nextP] : null;
+                status = "UP NEXT";
+                document.getElementById('hero-status').className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-200 border border-yellow-500/30";
+                if (data) { subject = data.subject; room = data.room || 'Unknown'; memo = `次は${data.subject}です。`; time = `${periodTimes[nextP].start} Starts`; }
+                else { subject = "次の授業なし"; time = `${periodTimes[nextP].start}`; }
+            } else {
+                document.getElementById('hero-status').className = "inline-block px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-200 border border-purple-500/30";
+            }
+
+            document.getElementById('hero-status').innerText = status;
+            document.getElementById('hero-subject').innerText = subject;
+            document.getElementById('hero-room').innerText = room;
+            document.getElementById('hero-time').innerText = time;
+            document.getElementById('hero-memo').innerText = memo;
+            document.getElementById('class-progress').style.width = `${progress}%`;
+        }
+
+        // --- Other Logic (Settings, Fullscreen, etc) ---
+        function updateDateDisplay() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+            let suffix = "";
+            if (weekMode === 'odd_even') suffix = (now.getDate() % 2 !== 0) ? " [奇数日]" : " [偶数日]";
+            else if (weekMode === 'mod3') suffix = (now.getDate() % 3 === 0) ? " [3の倍数日]" : " [通常日]";
+            document.getElementById('current-date-display').textContent = now.toLocaleDateString('ja-JP', options) + suffix;
+        }
+
+        function toggleTheme(forceLight = null) {
+            isLightMode = forceLight === true ? true : (forceLight === false ? false : !isLightMode);
+            document.body.className = isLightMode ? 'light-mode' : '';
+            document.getElementById('theme-icon-dark').classList.toggle('hidden', isLightMode);
+            document.getElementById('theme-icon-light').classList.toggle('hidden', !isLightMode);
+            localStorage.setItem('chronoGlassTheme', isLightMode ? 'light' : 'dark');
+            renderSchedule();
+            updateHeroSection();
+            if (isFullScreen) updateFullScreenUI();
+        }
+
+        function toggleFullScreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            const doc = document.documentElement;
+            if (!isFullScreen) {
+                overlay.classList.remove('hidden'); isFullScreen = true; updateFullScreenUI();
+                if(doc.requestFullscreen) doc.requestFullscreen().catch(e=>console.log("FS Blocked"));
+            } else {
+                overlay.classList.add('hidden'); isFullScreen = false;
+                if(document.exitFullscreen) document.exitFullscreen().catch(e=>{});
+            }
+        }
+        
+        function updateFullScreenUI() {
+            try {
+                const now = new Date();
+                document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+                let suffix = "";
+                if (weekMode === 'odd_even') suffix = (now.getDate() % 2 !== 0) ? " [奇数日]" : " [偶数日]";
+                else if (weekMode === 'mod3') suffix = (now.getDate() % 3 === 0) ? " [3の倍数日]" : " [通常日]";
+                
+                document.getElementById('fs-date').innerText = now.toLocaleDateString('ja-JP', options) + suffix;
+                
+                const day = getCurrentDayIndex();
+                const currentTimeVal = now.getHours() * 60 + now.getMinutes();
+                let status = "FREE TIME", subject = "自由時間", room = "-", time = "-", nextText = "Next: -", progress = 0, currentP = -1, nextP = -1;
+                
+                for (let i = 0; i < periodTimes.length; i++) {
+                    const [sh, sm] = periodTimes[i].start.split(':').map(Number);
+                    const [eh, em] = periodTimes[i].end.split(':').map(Number);
+                    const startVal = sh * 60 + sm;
+                    const endVal = eh * 60 + em;
+                    if (currentTimeVal >= startVal && currentTimeVal <= endVal) { currentP = i; progress = ((currentTimeVal - startVal) / (endVal - startVal)) * 100; break; }
+                    else if (currentTimeVal < startVal && nextP === -1) nextP = i;
+                }
+
+                if (currentP !== -1) {
+                    const data = scheduleData[day] ? scheduleData[day][currentP] : null;
+                    status = "IN PROGRESS";
+                    if (data) { subject = data.subject; room = data.room || 'Unknown'; time = `${periodTimes[currentP].start} - ${periodTimes[currentP].end}`; }
+                    else { subject = "空きコマ"; time = `${periodTimes[currentP].start} - ${periodTimes[currentP].end}`; }
+                } else if (nextP !== -1) {
+                    const data = scheduleData[day] ? scheduleData[day][nextP] : null;
+                    status = "UP NEXT";
+                    if (data) { subject = data.subject; room = data.room || 'Unknown'; time = `${periodTimes[nextP].start} Starts`; }
+                    else { subject = "次の授業なし"; time = `${periodTimes[nextP].start}`; }
+                }
+
+                document.getElementById('fs-status').innerText = status;
+                document.getElementById('fs-subject').innerText = subject;
+                document.getElementById('fs-room').innerText = room;
+                document.getElementById('fs-time').innerText = time;
+                document.getElementById('fs-progress').style.width = `${progress}%`;
+                
+            } catch(e) {
+                console.error("FS Update Error", e);
+            }
+        }
+
+        // --- Modals & Popups ---
+        function openModal(id, day, period) {
+            const modal = document.getElementById(id);
+            if (id === 'edit-modal') {
+                document.getElementById('edit-day').value = day;
+                document.getElementById('edit-period').value = period;
+                const data = scheduleData[day] ? scheduleData[day][period] : null;
+                if (data) {
+                    document.getElementById('edit-subject').value = data.subject;
+                    document.getElementById('edit-room').value = data.room || '';
+                    document.getElementById('edit-color').value = data.color || 'purple';
+                    document.getElementById('edit-memo').value = data.memo || '';
+                } else {
+                    document.getElementById('edit-form').reset();
+                    document.getElementById('edit-color').value = 'purple';
+                }
+            } else if (id === 'settings-modal') {
+                renderSettingsPeriods();
+                document.getElementById('week-mode-select').value = weekMode;
+                // Pre-fill GAS inputs
+                // document.getElementById('gas-url').value = gasConfig.url || ''; // Removed
+                document.getElementById('gas-user').value = gasConfig.user || '';
+                document.getElementById('gas-pass').value = gasConfig.pass || '';
+            }
+            modal.classList.remove('hidden');
+            modal.querySelector('div.transform').classList.add('modal-enter');
+            setTimeout(() => {
+                modal.querySelector('div.transform').classList.remove('modal-enter');
+                modal.querySelector('div.transform').classList.add('modal-enter-active');
+            }, 10);
+        }
+        
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.querySelector('div.transform').classList.remove('modal-enter-active');
+            modal.querySelector('div.transform').classList.add('modal-exit-active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.querySelector('div.transform').classList.remove('modal-exit-active');
+            }, 200);
+        }
+
+        // --- Settings Logic (Periods, etc) ---
+        function renderSettingsPeriods() {
+            const list = document.getElementById('periods-list');
+            list.innerHTML = '';
+            periodTimes.forEach((p, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-3 bg-white/5 p-3 rounded-lg';
+                row.innerHTML = `<span class="text-gray-400 font-mono w-6">${index+1}</span><input type="time" class="p-start input-glass py-1 px-2 text-sm" value="${p.start}"><span>~</span><input type="time" class="p-end input-glass py-1 px-2 text-sm" value="${p.end}"><button onclick="removePeriod(this)" class="text-red-400 hover:bg-red-500/20 p-2 rounded"><i class="fas fa-trash"></i></button>`;
+                list.appendChild(row);
+            });
+        }
+        function addPeriod() { periodTimes.push({start:'12:00', end:'13:00'}); renderSettingsPeriods(); }
+        function removePeriod(btn) { 
+            const idx = Array.from(btn.closest('#periods-list').children).indexOf(btn.parentNode);
+            if(periodTimes.length>1) { periodTimes.splice(idx,1); renderSettingsPeriods(); }
+        }
+        function saveSettings() {
+            const inputs = document.getElementById('periods-list').querySelectorAll('div');
+            const newP = [];
+            inputs.forEach(row => {
+                newP.push({ start: row.querySelector('.p-start').value, end: row.querySelector('.p-end').value });
+            });
+            periodTimes = newP;
+            localStorage.setItem('chronoGlassPeriods', JSON.stringify(periodTimes));
+            closeModal('settings-modal');
+            renderSchedule();
+            updateHeroSection();
+        }
+        function resetAllData() { if(confirm('Reset all data?')) { localStorage.clear(); location.reload(); } }
+
+        // --- Active Period Highlight ---
+        function updateActivePeriodIndicator() {
+            const now = new Date();
+            const day = getCurrentDayIndex();
+            const currentTimeVal = now.getHours() * 60 + now.getMinutes();
+            document.querySelectorAll('.active-period').forEach(el => el.classList.remove('active-period'));
+            for (let i = 0; i < periodTimes.length; i++) {
+                const [sh, sm] = periodTimes[i].start.split(':').map(Number);
+                const [eh, em] = periodTimes[i].end.split(':').map(Number);
+                if (currentTimeVal >= sh * 60 + sm && currentTimeVal <= eh * 60 + em) {
+                    const el = document.querySelector(`div[data-day="${day}"][data-period="${i}"]`);
+                    if (el) el.classList.add('active-period');
+                }
+            }
+        }
+
+        // --- Improved Chime Logic ---
+        let audioCtx = null;
+        function initAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        
+        function playTone(freq, duration, startTime, volume = 0.2) {
+            if (!audioCtx) initAudioContext();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, startTime);
+            
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(volume, startTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playChime(isTest=false) {
+            initAudioContext(); // Ensure context is ready
+            if (isTest || chimeEnabled) {
+                const now = audioCtx.currentTime;
+                // Westminster Chime Key C: E4, C4, D4, G3
+                const E4=329.63, C4=261.63, D4=293.66, G3=196.00;
+                const beat = 0.6;
+                // Phrase 1: Mi-Do-Re-So
+                playTone(E4, 1.8, now, 0.3);
+                playTone(C4, 1.8, now + beat, 0.3);
+                playTone(D4, 1.8, now + beat*2, 0.3);
+                playTone(G3, 2.5, now + beat*3, 0.3);
+                
+                // Phrase 2: So-Re-Mi-Do
+                const s2 = now + beat*4 + 0.8;
+                playTone(G3, 1.8, s2, 0.3);
+                playTone(D4, 1.8, s2 + beat, 0.3);
+                playTone(E4, 1.8, s2 + beat*2, 0.3);
+                playTone(C4, 3.0, s2 + beat*3, 0.3);
+            }
+        }
+
+        function toggleChime(enabled) { 
+            chimeEnabled = enabled; 
+            localStorage.setItem('chronoGlassChime', enabled); 
+            if(enabled) initAudioContext(); 
+        }
+
+        function checkChime() {
+            if(!chimeEnabled) return;
+            const now = new Date();
+            const t = now.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+            if(t===lastChimeTime) return;
+            // Check start/end times
+            if(periodTimes.some(p=>p.start===t||p.end===t)) { 
+                playChime(); 
+                lastChimeTime=t; 
+            }
+        }
+        
+        function initMobileNav() {
+            const navContainer = document.getElementById('mobile-day-selector');
+            if(!navContainer) return;
+            navContainer.innerHTML = '';
+            const config = MODE_CONFIG[weekMode];
+            config.fullLabels.forEach((label, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'day-btn glass px-4 py-2 text-sm whitespace-nowrap';
+                btn.dataset.day = index;
+                btn.innerText = label;
+                btn.onclick = (e) => { currentMobileDay = parseInt(e.target.dataset.day); renderMobileView(document.getElementById('schedule-container')); updateMobileNavUI(); };
+                navContainer.appendChild(btn);
+            });
+            currentMobileDay = getCurrentDayIndex();
+            updateMobileNavUI();
+        }
+        function updateMobileNavUI() {
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const d = parseInt(btn.dataset.day);
+                if (d === currentMobileDay) { btn.classList.add('bg-purple-500/40', 'border-purple-400'); btn.classList.remove('glass'); }
+                else { btn.classList.remove('bg-purple-500/40', 'border-purple-400'); btn.classList.add('glass'); }
+            });
+        }
+        function saveClass(e) {
+            e.preventDefault();
+            const d=document.getElementById('edit-day').value, p=document.getElementById('edit-period').value;
+            if(!scheduleData[d]) scheduleData[d]={};
+            scheduleData[d][p] = {
+                subject: document.getElementById('edit-subject').value,
+                room: document.getElementById('edit-room').value,
+                color: document.getElementById('edit-color').value,
+                memo: document.getElementById('edit-memo').value
+            };
+            saveData(); renderSchedule(); closeModal('edit-modal'); updateHeroSection();
+        }
+        function deleteClassData() {
+            const d=document.getElementById('edit-day').value, p=document.getElementById('edit-period').value;
+            if(scheduleData[d]) scheduleData[d][p]=null;
+            saveData(); renderSchedule(); closeModal('edit-modal'); updateHeroSection();
+        }
+        function exportData() {
+            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({version:1.1, weekMode, data:scheduleData, periods:periodTimes, regulations}));
+            const a = document.createElement('a'); a.href = d; a.download = 'chrono_backup.json'; document.body.appendChild(a); a.click(); a.remove();
+        }
+        function triggerImport() { document.getElementById('import-file').click(); }
+        function importData(input) {
+            const file = input.files[0]; if(!file) return;
+            const r = new FileReader();
+            r.onload = (e) => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    if(confirm('Import data?')) {
+                        if(d.periods) { periodTimes=d.periods; localStorage.setItem('chronoGlassPeriods', JSON.stringify(periodTimes)); }
+                        if(d.weekMode) { weekMode=d.weekMode; localStorage.setItem('chronoGlassWeekMode', weekMode); }
+                        if(d.data) { scheduleData=d.data; saveData(); }
+                        if(d.regulations) { regulations=d.regulations; saveRegulations(); }
+                        location.reload();
+                    }
+                } catch(err){ alert('Error'); }
+            };
+            r.readAsText(file);
+        }
+    </script>
+</body>
+</html>
