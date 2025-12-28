@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcane Echoes - アーケインエコーズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a1a;
+            --primary-color: #1a1a3a;
+            --secondary-color: #2a2a5a;
+            --accent-color: #c0a0ff;
+            --text-color: #e0e0ff;
+            --gold-color: #ffd700;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans JP', sans-serif;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 1rem;
+        }
+        
+        /* ガラス風UI */
+        .glassmorphism {
+            background: rgba(26, 26, 58, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(192, 160, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* グラデーションボーダー */
+        .gradient-border {
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: -1;
+            margin: -2px;
+            border-radius: inherit;
+            background: linear-gradient(to right, var(--accent-color), #8a2be2);
+        }
+
+        /* 装飾的なボタン */
+        .magic-button {
+            position: relative;
+            border: 1px solid var(--accent-color);
+            background: linear-gradient(145deg, var(--secondary-color), var(--primary-color));
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px rgba(192, 160, 255, 0.3), inset 0 0 5px rgba(26, 26, 58, 0.5);
+            clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+        }
+
+        .magic-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 0 15px var(--accent-color), inset 0 0 10px rgba(192, 160, 255, 0.3);
+            color: white;
+        }
+        .magic-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* タブ */
+        .tab-button {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            color: var(--gold-color);
+            border-bottom-color: var(--gold-color);
+        }
+
+        /* スクロールバー */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-color); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a080ff; }
+        
+        /* モーダル */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        /* レアリティ色 */
+        .rarity-Normal { color: #ffffff; }
+        .rarity-Rare { color: #87cefa; }
+        .rarity-Epic { color: #da70d6; }
+        .rarity-Legendary { color: var(--gold-color); }
+
+        /* レアリティボーダー */
+        .card-border { border: 2px solid; }
+        .border-rarity-Normal { border-color: rgba(170, 170, 170, 0.5); }
+        .border-rarity-Rare { border-color: #87cefa; }
+        .border-rarity-Epic { border-color: #da70d6; }
+        .border-rarity-Legendary { border-color: var(--gold-color); }
+        
+        .bg-rarity-Normal { background-color: rgba(100, 100, 100, 0.3); }
+        .bg-rarity-Rare { background-color: rgba(70, 130, 180, 0.3); }
+        .bg-rarity-Epic { background-color: rgba(138, 43, 226, 0.3); }
+        .bg-rarity-Legendary { background-color: rgba(255, 215, 0, 0.3); }
+
+        /* フェードインアニメーション */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ガチャLegendary演出 */
+        .legendary-animation {
+            animation: legendary-glow 0.8s ease-in-out;
+            box-shadow: 0 0 30px var(--gold-color), 0 0 50px white;
+        }
+        @keyframes legendary-glow {
+            0% { transform: scale(1.1); box-shadow: 0 0 10px var(--gold-color); }
+            50% { transform: scale(1.15); box-shadow: 0 0 60px var(--gold-color), 0 0 80px white; }
+            100% { transform: scale(1.1); box-shadow: 0 0 10px var(--gold-color); }
+        }
+
+        .effect-icon {
+            position: relative;
+            font-size: 1.5rem;
+        }
+        .turn-counter {
+            position: absolute;
+            bottom: -2px;
+            right: -4px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            font-size: 0.7rem;
+            line-height: 1rem;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .enemy-card.targeting {
+            cursor: pointer;
+            outline: 2px solid red;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- タイトル画面 -->
+    <div id="title-screen" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
+        <h1 class="text-6xl md:text-8xl font-cinzel text-shadow-lg" style="text-shadow: 0 0 15px var(--accent-color);">Arcane Echoes</h1>
+        <p class="mt-4 text-xl text-gray-300">アーケインエコーズ</p>
+        <button id="start-game-button" class="mt-12 magic-button px-10 py-4 text-2xl font-cinzel">START</button>
+        <div class="mt-8 flex gap-4">
+            <label for="import-save" class="magic-button px-6 py-2 cursor-pointer">データ引継ぎ</label>
+            <input type="file" id="import-save" class="hidden" accept=".json">
+            <button id="reset-game-button" class="magic-button px-6 py-2">ゲームリセット</button>
+        </div>
+    </div>
+
+    <!-- ゲーム本体 -->
+    <div id="game-container" class="hidden game-container">
+        <!-- ヘッダー -->
+        <header class="flex justify-between items-center p-4 glassmorphism rounded-xl mb-4">
+            <div>
+                <span id="player-level" class="font-bold"></span>
+                <span id="player-potential" class="text-xs text-yellow-300 ml-2"></span>
+                <div id="player-trait" class="text-xs text-cyan-300 mt-1 h-4"></div>
+                <div class="w-40 h-2 bg-gray-700 rounded-full overflow-hidden mt-1">
+                    <div id="player-exp-bar" class="h-full bg-yellow-400"></div>
+                </div>
+            </div>
+            <div class="text-center">
+                 <h1 class="text-3xl font-cinzel">Home</h1>
+            </div>
+            <div class="text-right">
+                <div id="player-mp" class="font-bold text-blue-300"></div>
+                <div id="player-gacha-stones" class="font-bold text-pink-400"></div>
+                <div id="player-materials" class="font-bold text-gray-400"></div>
+                <div id="player-tomes" class="font-bold text-yellow-400"></div>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main id="main-content" class="fade-in">
+            <!-- ホーム画面 -->
+            <div id="home-screen">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button data-screen="dungeon-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">⚔️</span>
+                        <span class="mt-2 text-lg font-cinzel">Dungeon</span>
+                    </button>
+                     <button data-screen="infinite-tower-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">🗼</span>
+                        <span class="mt-2 text-lg font-cinzel">Infinite Tower</span>
+                    </button>
+                    <button data-screen="rift-challenge-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">🌀</span>
+                        <span class="mt-2 text-lg font-cinzel">Rift Challenge</span>
+                    </button>
+                    <button data-screen="gacha-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">✨</span>
+                        <span class="mt-2 text-lg font-cinzel">Gacha</span>
+                    </button>
+                    <button data-screen="magic-school-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">🏫</span>
+                        <span class="mt-2 text-lg font-cinzel">Magic School</span>
+                    </button>
+                    <button data-screen="magic-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">📖</span>
+                        <span class="mt-2 text-lg font-cinzel">Magic</span>
+                    </button>
+                    <button data-screen="equipment-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">🛡️</span>
+                        <span class="mt-2 text-lg font-cinzel">Equipment</span>
+                    </button>
+                    <button data-screen="encyclopedia-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">📚</span>
+                        <span class="mt-2 text-lg font-cinzel">Encyclopedia</span>
+                    </button>
+                    <button id="export-save-button" class="h-32 md:h-40 magic-button flex flex-col justify-center items-center">
+                        <span class="text-5xl">💾</span>
+                        <span class="mt-2 text-lg font-cinzel">Save Data</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ダンジョン選択画面 -->
+            <div id="dungeon-screen" class="hidden">
+                 <h2 class="text-3xl font-cinzel mb-4 text-center">Dungeons</h2>
+                 <div id="dungeon-list" class="space-y-4"></div>
+            </div>
+            
+            <!-- 次元ノ裂け目画面 -->
+            <div id="rift-challenge-screen" class="hidden text-center">
+                <h2 class="text-3xl font-cinzel mb-4">次元の裂け目</h2>
+                <p class="mb-6 text-gray-400">次元の狭間から現れた強敵に挑め。挑戦は1日1度のみ。</p>
+                <div id="rift-boss-list" class="space-y-4"></div>
+            </div>
+
+            <!-- 魔法学校画面 -->
+            <div id="magic-school-screen" class="hidden">
+                 <h2 class="text-3xl font-cinzel mb-4 text-center">Magic School</h2>
+                 <p class="text-center mb-4 text-gray-400">教師との訓練で新たな力を手に入れよう。</p>
+                 <div id="teacher-list" class="space-y-4"></div>
+            </div>
+
+            <!-- 無限の塔画面 -->
+            <div id="infinite-tower-screen" class="hidden text-center">
+                <h2 class="text-3xl font-cinzel mb-4">無限の塔</h2>
+                <div class="p-8 glassmorphism rounded-xl">
+                    <p class="mb-4">己の限界に挑み、階層を踏破せよ。</p>
+                    <p class="mb-6 text-lg">自己最高記録: <span id="highest-floor" class="font-bold text-yellow-400">0</span>階</p>
+                    <button id="start-tower-button" class="magic-button px-10 py-4 text-xl">挑戦開始</button>
+                    <div class="mt-6 text-sm text-gray-400">
+                        <p>・敗北するまで戦闘は続きます。</p>
+                        <p>・階層突破時にHP・MPが全回復します。</p>
+                        <p>・5階層ごとに強化素材、10階層ごとに魔法石が手に入ります。</p>
+                        <p>・戦闘中に「撤退」することで、そこまでの報酬を確保できます。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 戦闘画面 -->
+            <div id="battle-screen" class="hidden">
+                <div class="flex flex-col items-center">
+                    <div id="battle-header" class="w-full text-center text-2xl font-cinzel mb-4"></div>
+                    <div id="enemies-area" class="mb-8 w-full flex justify-center items-start gap-4 flex-wrap">
+                        <!-- 敵カードはここに動的に生成されます -->
+                    </div>
+
+                    <div id="player-area" class="mb-8 text-center">
+                        <p class="text-2xl font-bold">Player</p>
+                         <div class="flex justify-center items-center gap-4 mt-4">
+                             <div class="relative w-48 h-4 bg-gray-700 rounded-full overflow-hidden border border-green-900">
+                                <div id="battle-player-hp-bar" class="h-full bg-green-500 transition-all duration-500"></div>
+                                <div id="battle-player-shield-bar" class="absolute top-0 left-0 h-full bg-cyan-400 bg-opacity-70 transition-all duration-500"></div>
+                             </div>
+                            <div class="w-48 h-4 bg-gray-700 rounded-full overflow-hidden border border-blue-900">
+                                 <div id="battle-player-mp-bar" class="h-full bg-blue-500 transition-all duration-500"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center gap-4 mt-1 text-sm">
+                            <p id="battle-player-hp-text"></p>
+                            <p id="battle-player-mp-text"></p>
+                        </div>
+                        <div id="player-shield-text" class="text-sm text-cyan-300 mt-1 h-5"></div>
+                        <div id="player-effects" class="flex justify-center gap-2 mt-2 h-8"></div>
+                    </div>
+                    
+                    <div id="battle-log" class="w-full h-24 p-2 mb-4 bg-black bg-opacity-50 rounded-lg overflow-y-auto text-sm"></div>
+
+                    <div id="magic-slots" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-w-4xl"></div>
+                    
+                    <div id="battle-controls" class="mt-4"></div>
+                </div>
+            </div>
+
+            <!-- ガチャ画面 -->
+            <div id="gacha-screen" class="hidden">
+                 <div class="flex justify-center mb-4">
+                     <button id="magic-gacha-tab" class="tab-button active">魔法ガチャ</button>
+                     <button id="equipment-gacha-tab" class="tab-button">装備ガチャ</button>
+                 </div>
+                 <div id="magic-gacha-content">
+                    <div class="text-center p-8 glassmorphism rounded-xl">
+                        <h3 class="text-2xl font-cinzel mb-4">Summon Magic</h3>
+                        <p class="mb-6">魔法石を消費して新たな魔法を召喚します。</p>
+                        <div class="flex justify-center gap-4">
+                            <button data-gacha-type="magic" data-amount="1" class="gacha-button magic-button px-6 py-3">1回召喚<br/>(石x10)</button>
+                            <button data-gacha-type="magic" data-amount="10" class="gacha-button magic-button px-6 py-3">10回召喚<br/>(石x100)</button>
+                            <button data-gacha-type="magic" data-amount="50" class="gacha-button magic-button px-6 py-3">50回召喚<br/>(石x500)</button>
+                        </div>
+                    </div>
+                 </div>
+                 <div id="equipment-gacha-content" class="hidden">
+                     <div class="text-center p-8 glassmorphism rounded-xl">
+                        <h3 class="text-2xl font-cinzel mb-4">Forge Equipment</h3>
+                        <p class="mb-6">魔法石を消費して新たな装備を鍛造します。</p>
+                        <div class="flex justify-center gap-4">
+                            <button data-gacha-type="equipment" data-amount="1" class="gacha-button magic-button px-6 py-3">1回鍛造<br/>(石x10)</button>
+                            <button data-gacha-type="equipment" data-amount="10" class="gacha-button magic-button px-6 py-3">10回鍛造<br/>(石x100)</button>
+                             <button data-gacha-type="equipment" data-amount="50" class="gacha-button magic-button px-6 py-3">50回鍛造<br/>(石x500)</button>
+                        </div>
+                    </div>
+                 </div>
+                 <div id="gacha-rates" class="mt-4 text-center text-sm text-gray-400"></div>
+            </div>
+
+            <!-- 魔法管理画面 -->
+            <div id="magic-screen" class="hidden">
+                <h2 class="text-2xl font-cinzel mb-4 text-center">Magic Management</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-cinzel mb-4 text-center">Equipped Magic</h3>
+                        <div id="equipped-magic-list" class="grid grid-cols-2 gap-4"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-cinzel mb-4 text-center">Inventory</h3>
+                        <div id="magic-inventory-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 h-[60vh] overflow-y-auto p-2 bg-black bg-opacity-30 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 装備管理画面 -->
+             <div id="equipment-screen" class="hidden">
+                <h2 class="text-2xl font-cinzel mb-4 text-center">Equipment Management</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-cinzel mb-4 text-center">Equipped</h3>
+                        <div id="equipped-equipment-list" class="space-y-4"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-cinzel mb-4 text-center">Inventory</h3>
+                        <div id="equipment-inventory-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 h-[60vh] overflow-y-auto p-2 bg-black bg-opacity-30 rounded-lg"></div>
+                    </div>
+                </div>
+             </div>
+             
+            <!-- 図鑑画面 -->
+            <div id="encyclopedia-screen" class="hidden">
+                <div class="flex justify-center mb-4">
+                    <button id="magic-encyclopedia-tab" class="tab-button active">魔法図鑑</button>
+                    <button id="equipment-encyclopedia-tab" class="tab-button">装備図鑑</button>
+                </div>
+                <div id="magic-encyclopedia-content">
+                    <div id="magic-encyclopedia-list" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+                </div>
+                <div id="equipment-encyclopedia-content" class="hidden">
+                    <div id="equipment-encyclopedia-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- フッター/ナビゲーション -->
+        <footer class="mt-4">
+            <button id="back-to-home" class="magic-button px-6 py-2 hidden">Home</button>
+        </footer>
+    </div>
+    
+    <!-- モーダルウィンドウ -->
+    <div id="modal-container" class="hidden"></div>
+    
+    <!-- ツールチップ -->
+    <div id="tooltip" class="hidden absolute p-2 text-sm bg-gray-800 text-white rounded-md shadow-lg z-50 pointer-events-none"></div>
+
+<script>
+// ここからゲームの全ロジックが始まります
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 定数定義
+    const ELEMENTS = {
+        WATER: { name: '水', icon: '💧' },
+        FIRE: { name: '炎', icon: '🔥' },
+        GRASS: { name: '草', icon: '🌿' },
+        THUNDER: { name: '雷', icon: '⚡' },
+        WIND: { name: '風', icon: '💨' },
+        LIGHT: { name: '光', icon: '🌟' },
+        VOID: { name: '虚無', icon: '🌌' },
+        EARTH: { name: '地', icon: '🌍' },
+        TIME: { name: '時空', icon: '⏳' },
+        NEUTRAL: { name: '無', icon: '💫' },
+    };
+
+    const RARITIES = {
+        NORMAL: { name: 'Normal', color: 'text-white' },
+        RARE: { name: 'Rare', color: 'text-blue-300' },
+        EPIC: { name: 'Epic', color: 'text-purple-400' },
+        LEGENDARY: { name: 'Legendary', color: 'text-yellow-400' },
+    };
+
+    const MAGIC_TYPES = {
+        ATTACK: '攻撃',
+        HEAL: '回復',
+        BUFF: '強化',
+        DEFENSE: '防御',
+        DEBUFF: '弱体',
+    };
+    
+    const SINGULARITY_TRAITS = {
+        MORE_SLOTS: { name: '魔力過多', description: '魔法の装備スロットが2つ増加する。' },
+        BLOOD_MAGIC: { name: '生命転換', description: 'MPが足りない時、HPを消費して魔法を使用できる。(消費MPの2倍のHPが必要)' }
+    };
+    
+    // マスターデータ
+    const MAGIC_MASTER = {
+        // Normal - 初期魔法
+        m000: { name: 'マジックアロー', element: 'NEUTRAL', rarity: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '魔力の矢を放つ基本魔法。' },
+        m009: { name: 'マジックガード', element: 'NEUTRAL', rarity: 'NORMAL', type: 'DEFENSE', basePower: 15, baseCost: 8, duration: 3, description: '魔力の盾で身を守る基本魔法。' },
+        // Normal
+        m001: { name: 'ウォーターショット', element: 'WATER', rarity: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 5, description: '水の弾丸を発射する。' },
+        m002: { name: 'ファイアボール', element: 'FIRE', rarity: 'NORMAL', type: 'ATTACK', basePower: 12, baseCost: 6, description: '小さな火球を放つ。' },
+        m003: { name: 'ウィンドカッター', element: 'WIND', rarity: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '風の刃で切り裂く。' },
+        m004: { name: 'ヒール', element: 'GRASS', rarity: 'NORMAL', type: 'HEAL', basePower: 20, baseCost: 10, description: 'HPを少し回復する。' },
+        m005: { name: 'プロテクション', element: 'LIGHT', rarity: 'NORMAL', type: 'DEFENSE', basePower: 10, baseCost: 8, duration: 3, description: '3ターンの間、シールドを張る。' },
+        m006: { name: 'ストーンブラスト', element: 'EARTH', rarity: 'NORMAL', type: 'ATTACK', basePower: 15, baseCost: 8, description: '石の礫を飛ばす。' },
+        m007: { name: 'フラッシュ', element: 'LIGHT', rarity: 'NORMAL', type: 'DEBUFF', basePower: 0.8, baseCost: 7, duration: 2, description: '2ターンの間、敵の攻撃力を20%減少させる。' },
+        m008: { name: 'ダークアロー', element: 'VOID', rarity: 'NORMAL', type: 'ATTACK', basePower: 13, baseCost: 7, description: '闇の矢を放つ。' },
+        
+        // Rare
+        m101: { name: 'アクアストリーム', element: 'WATER', rarity: 'RARE', type: 'ATTACK', basePower: 25, baseCost: 12, description: '激しい水流で攻撃する。' },
+        m102: { name: 'フレイムランス', element: 'FIRE', rarity: 'RARE', type: 'ATTACK', basePower: 30, baseCost: 15, description: '炎の槍を突き刺す。' },
+        m103: { name: 'サンダーボルト', element: 'THUNDER', rarity: 'RARE', type: 'ATTACK', basePower: 28, baseCost: 14, description: '雷を落とす。' },
+        m104: { name: 'リジェネレーション', element: 'GRASS', rarity: 'RARE', type: 'HEAL', basePower: 15, baseCost: 20, duration: 3, description: '3ターンの間、HPが徐々に回復する。' },
+        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 3, description: '3ターンの間、ダメージが20%増加する。' },
+        m106: { name: 'アクアバリア', element: 'WATER', rarity: 'RARE', type: 'DEFENSE', basePower: 30, baseCost: 15, duration: 3, description: '水の障壁で身を守る。' },
+        m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 3, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
+        m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 2, description: '2ターンの間、強固な土の壁で身を守る。' },
+        m109: { name: 'ホーリーライト', element: 'LIGHT', rarity: 'RARE', type: 'HEAL', basePower: 50, baseCost: 25, description: '聖なる光でHPを中程度回復する。' },
+        m110: { name: 'カオスボルト', element: 'VOID', rarity: 'RARE', type: 'ATTACK', basePower: 35, baseCost: 18, description: '混沌の力で予測不能なダメージを与える。' },
+
+        // Epic
+        m201: { name: 'メイルストロム', element: 'WATER', rarity: 'EPIC', type: 'ATTACK', basePower: 60, baseCost: 30, isAoe: true, description: '巨大な渦潮を発生させ、敵全体を攻撃する。' },
+        m202: { name: 'インフェルノ', element: 'FIRE', rarity: 'EPIC', type: 'ATTACK', basePower: 75, baseCost: 35, description: '業火で敵を焼き尽くす。' },
+        m203: { name: 'ソーラービーム', element: 'GRASS', rarity: 'EPIC', type: 'ATTACK', basePower: 85, baseCost: 40, description: '太陽の光を収束させて放つ。' },
+        m204: { name: 'グレートヒール', element: 'GRASS', rarity: 'EPIC', type: 'HEAL', basePower: 100, baseCost: 45, description: 'HPを大幅に回復する。' },
+        m205: { name: 'ギガスパーク', element: 'THUNDER', rarity: 'EPIC', type: 'ATTACK', basePower: 80, baseCost: 38, description: '強力な電撃を広範囲に放つ。' },
+        m206: { name: '生命の恵み', element: 'GRASS', rarity: 'EPIC', type: 'HEAL', basePower: 60, baseCost: 50, duration: 5, description: '5ターンの間、HPが大きく回復し続ける。' },
+        m207: { name: 'トルネード', element: 'WIND', rarity: 'EPIC', type: 'ATTACK', basePower: 90, baseCost: 48, isAoe: true, description: '巨大な竜巻で敵全体を攻撃する。' },
+        m208: { name: 'ドレインソウル', element: 'VOID', rarity: 'EPIC', type: 'ATTACK', basePower: 65, baseCost: 40, drain: 0.3, description: '敵にダメージを与え、そのダメージの30%を吸収してHPを回復する。' },
+        m209: { name: 'プラズマフィールド', element: 'THUNDER', rarity: 'EPIC', type: 'ATTACK', basePower: 25, baseCost: 38, duration: 3, isDot: true, isAoe: true, description: '3ターンの間、プラズマフィールドで敵全体に継続ダメージを与える。' },
+        m210: { name: 'アースクエイク', element: 'EARTH', rarity: 'EPIC', type: 'ATTACK', basePower: 100, baseCost: 55, isAoe: true, description: '大地震で敵全体にダメージを与える。' },
+        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 3, description: '3ターンの間、攻撃力を30%増加させる。' },
+        m212: { name: 'ヴォイドテンタクル', element: 'VOID', rarity: 'EPIC', type: 'ATTACK', basePower: 70, baseCost: 42, duration: 2, description: '虚無の触手で攻撃し、2ターンの間、敵の行動を封じることがある。' },
+        m213: { name: 'ブリザード', element: 'WATER', rarity: 'EPIC', type: 'ATTACK', basePower: 80, baseCost: 50, isAoe: true, description: '激しい吹雪で敵全体を凍てつかせる。' },
+        m214: { name: 'フレア', element: 'FIRE', rarity: 'EPIC', type: 'ATTACK', basePower: 120, baseCost: 60, description: '爆発的な炎で大ダメージを与える。' },
+
+        // Legendary
+        m301: { name: 'ジャッジメント', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 250, baseCost: 80, isAoe: true, description: '聖なる光で敵全体に裁きを下す。' },
+        m302: { name: 'メテオストライク', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 350, baseCost: 100, isAoe: true, description: '巨大な隕石を落下させ、敵全体を攻撃する。'},
+        m303: { name: 'アビスゲート', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 300, baseCost: 90, description: '深淵への門を開き、敵を引きずり込む。' },
+        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', type: 'DEFENSE', basePower: 250, baseCost: 70, duration: 5, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
+        m305: { name: 'ワールドエンド', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 600, baseCost: 250, isAoe: true, description: '世界の終わりを告げる虚無の波動を敵全体に放つ。' },
+        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', type: 'HEAL', basePower: 200, baseCost: 120, duration: 3, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
+        m307: { name: 'エレメンタルバースト', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 400, baseCost: 120, isAoe: true, description: '全属性の力を凝縮して敵全体に放つ。' },
+        m308: { name: 'ガイアズラース', element: 'EARTH', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 450, baseCost: 150, isAoe: true, description: '大地の怒りを呼び起こし、敵全体を粉砕する。' },
+        m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 180, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
+        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 300, baseCost: 110, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
+        m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 480, baseCost: 160, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
+        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', type: 'BUFF', basePower: 2.0, baseCost: 150, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
+        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 200, baseCost: 150, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+
+        // Boss Unique
+        b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
+        b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
+    };
+
+    const EQUIPMENT_MASTER = {
+        // Normal
+        e001: { name: '魔力の指輪', rarity: 'NORMAL', type: 'MP', value: 0.05, description: '最大MPが5%増加する。' },
+        e002: { name: '見習いの杖', rarity: 'NORMAL', type: 'POWER', value: 0.05, description: '魔法威力が5%増加する。' },
+
+        // Rare
+        e101: { name: '賢者の指輪', rarity: 'RARE', type: 'MP', value: 0.1, description: '最大MPが10%増加する。' },
+        e102: { name: '魔術師の杖', rarity: 'RARE', type: 'POWER', value: 0.1, description: '魔法威力が10%増加する。' },
+        e103: { name: '守りのアミュレット', rarity: 'RARE', type: 'HP', value: 0.1, description: '最大HPが10%増加する。' },
+        e104: { name: '速詠のチャーム', rarity: 'RARE', type: 'COST_REDUCTION', value: 0.1, description: '魔法の消費MPが10%減少する。' },
+        e105: { name: '精霊のアミュレット', rarity: 'RARE', type: 'MP', value: 0.12, description: '最大MPが12%増加する。' },
+        
+        // Epic
+        e201: { name: '大賢者の指輪', rarity: 'EPIC', type: 'MP', value: 0.2, description: '最大MPが20%増加する。' },
+        e202: { name: '大魔術師の杖', rarity: 'EPIC', type: 'POWER', value: 0.2, description: '魔法威力が20%増加する。' },
+        e203: { name: '精霊の腕輪', rarity: 'EPIC', type: 'MP_REGEN', value: 0.05, description: '戦闘中、ターン終了時に最大MPの5%を回復する。' },
+        e204: { name: '吸血の宝珠', rarity: 'EPIC', type: 'DRAIN', value: 0.1, description: '与えたダメージの10%分HPを吸収する。' },
+        e205: { name: '竜鱗の盾', rarity: 'EPIC', type: 'HP', value: 0.25, description: '最大HPが25%増加する。' },
+
+        // Legendary
+        e301: { name: '世界樹の指輪', rarity: 'LEGENDARY', type: 'MP', value: 0.5, description: '最大MPが50%増加する。' },
+        e302: { name: '根源の杖', rarity: 'LEGENDARY', type: 'POWER', value: 0.5, description: '魔法威力が50%増加する。' },
+        e303: { name: '賢者の石', rarity: 'LEGENDARY', type: 'ALL', value: 0.15, description: '最大HP、最大MP、魔法威力が15%増加する。'},
+        e304: { name: '生命のオーブ', rarity: 'LEGENDARY', type: 'HP_REGEN', value: 0.1, description: '戦闘中、ターン終了時に最大HPの10%を回復する。' },
+        e305: { name: 'クロノマンサーのペンダント', rarity: 'LEGENDARY', type: 'COST_REDUCTION', value: 0.25, description: '魔法の消費MPが25%減少し、デバフ効果を短縮する。' },
+        e306: { name: '支配の王錫', rarity: 'LEGENDARY', type: 'POWER', value: 0.60, description: '魔法威力が60%増加する。' },
+    };
+    
+    const ENEMY_MASTER = {
+        en001: { name: 'スライム', icon: '💧', rarity: 'NORMAL', baseHp: 50, baseMp: 10, magics: ['m001'] },
+        en002: { name: 'ゴブリン', icon: '👺', rarity: 'NORMAL', baseHp: 80, baseMp: 20, magics: ['m006'] },
+        en101: { name: 'オーク', icon: '👹', rarity: 'RARE', baseHp: 200, baseMp: 50, magics: ['m102', 'm005'] },
+        en102: { name: 'サンダーバード', icon: '🦅', rarity: 'RARE', baseHp: 150, baseMp: 80, magics: ['m103', 'm105'] },
+        en103: { name: 'グリフィン', icon: '🦁', rarity: 'RARE', baseHp: 180, baseMp: 60, magics: ['m003', 'm105'] },
+        en201: { name: 'ゴーレム', icon: '🗿', rarity: 'EPIC', baseHp: 500, baseMp: 100, magics: ['m210', 'm108'] },
+        en202: { name: 'キマイラ', icon: '🦄', rarity: 'EPIC', baseHp: 400, baseMp: 200, magics: ['m202', 'm107', 'm104'] },
+        en203: { name: 'ヒュドラ', icon: '🐍', rarity: 'EPIC', baseHp: 600, baseMp: 150, magics: ['m201', 'm104'] },
+        en204: { name: 'リッチ', icon: '💀', rarity: 'EPIC', baseHp: 600, baseMp: 300, magics: ['m208', 'm212', 'm110'] },
+        en205: { name: 'サイクロプス', icon: '👁️‍🗨️', rarity: 'EPIC', baseHp: 800, baseMp: 80, magics: ['m210'] },
+        en301: { name: 'ドラゴン', icon: '🐉', rarity: 'LEGENDARY', baseHp: 2000, baseMp: 500, magics: ['m202', 'm302'] },
+        en302: { name: '虚無の監視者', icon: '👁️', rarity: 'LEGENDARY', baseHp: 5000, baseMp: 1000, magics: ['m303', 'm305', 'm304'] },
+        en303: { name: 'ベヒーモス', icon: '🐗', rarity: 'LEGENDARY', baseHp: 3000, baseMp: 300, magics: ['m308', 'm108'] },
+        boss001: { name: 'クロノス', icon: '⏳', rarity: 'LEGENDARY', baseHp: 75000, baseMp: 15000, magics: ['b001', 'b002', 'm310'], isBoss: true },
+        boss002: { name: 'ニャルラトホテプ', icon: '🐙', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 20000, magics: ['m303', 'm305', 'm212'], isBoss: true },
+        boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 10000, magics: ['m308', 'm210', 'm108'], isBoss: true },
+        boss004: { name: 'ヨグ＝ソトース', icon: '✨', rarity: 'LEGENDARY', baseHp: 250000, baseMp: 50000, magics: ['m307', 'm313', 'b002'], isBoss: true },
+    };
+    
+    const DUNGEON_MASTER = [
+        { name: '始まりの森', levelRange: [1, 5], enemies: ['en001', 'en002'], boss: 'en101' },
+        { name: '湿地の洞窟', levelRange: [6, 10], enemies: ['en001', 'en002'], boss: 'en101' },
+        { name: '雷鳴の平原', levelRange: [11, 20], enemies: ['en002', 'en102', 'en103'], boss: 'en102' },
+        { name: '忘れられた神殿', levelRange: [21, 30], enemies: ['en101', 'en102'], boss: 'en201' },
+        { name: '古代遺跡', levelRange: [31, 45], enemies: ['en101', 'en201', 'en202'], boss: 'en202' },
+        { name: '灼熱の火山', levelRange: [46, 60], enemies: ['en201', 'en203'], boss: 'en301' },
+        { name: '竜の巣', levelRange: [61, 80], enemies: ['en202', 'en301'], boss: 'en301' },
+        { name: '深淵の門', levelRange: [81, 100], enemies: ['en301', 'en302'], boss: 'en302' },
+        { name: '月光の森', levelRange: [101, 120], enemies: ['en202', 'en104'], boss: 'en204' },
+        { name: '巨人の山脈', levelRange: [121, 140], enemies: ['en201', 'en205'], boss: 'en303' },
+        { name: '終焉の地', levelRange: [141, 160], enemies: ['en301', 'en302', 'en303'], boss: 'boss002' },
+    ];
+    
+    const TEACHER_MASTER = {
+        t001: { name: 'ルナ先生 (初級)', icon: '👩‍🏫', level: 10, baseHp: 500, baseMp: 200, magics: ['m001', 'm002', 'm004'], reward: { type: 'magic', id: 'm107' }, description: '毒魔法の基礎を教えてくれる。' },
+        t002: { name: 'グレイ先生 (中級)', icon: '🧑‍🏫', level: 30, baseHp: 2500, baseMp: 800, magics: ['m101', 'm103', 'm106'], reward: { type: 'equipment', id: 'e203' }, description: 'MP管理の極意を教えてくれる。' },
+        t003: { name: 'ソフィア先生 (上級)', icon: '🧙‍♀️', level: 50, baseHp: 8000, baseMp: 2000, magics: ['m201', 'm202', 'm205'], reward: { type: 'magic', id: 'm208' }, description: '攻防一体の戦闘術を教えてくれる。' },
+        t004: { name: '校長 (伝説)', icon: '🧙‍♂️', level: 80, baseHp: 20000, baseMp: 5000, magics: ['m301', 'm304', 'm302'], reward: { type: 'equipment', id: 'e303' }, description: '全ての魔法の根源に触れる試練。' },
+        t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。' },
+        t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。' },
+    };
+
+    // ゲームデータ
+    let gameData;
+
+    const defaultGameData = {
+        player: {
+            level: 1,
+            exp: 0,
+            hp: 100,
+            mp: 50,
+            potentialLevel: 0,
+            singularityTrait: null,
+            gachaStones: 400,
+            materials: 0,
+            tomesOfSecrets: 0,
+            equippedMagic: [null, null, null, null], // masterIds
+            equippedEquipment: [null, null], // masterIds, 0: weapon, 1: accessory
+            permanentMpBonus: 0,
+        },
+        magicInventory: [], // {masterId: 'm001', level: 0, awakening: 0}
+        equipmentInventory: [], // {masterId: 'e001', awakening: 0}
+        unlockedDungeon: 0,
+        infiniteTower: {
+            highestFloor: 0,
+            lastChallenge: null,
+        },
+        defeatedTeachers: [], // teacherIds
+        lastRiftChallenge: null, // Date string
+    };
+    
+    // 戦闘状態
+    let battleState = {};
+
+    // DOM要素
+    const dom = {
+        titleScreen: document.getElementById('title-screen'),
+        gameContainer: document.getElementById('game-container'),
+        startGameButton: document.getElementById('start-game-button'),
+        resetGameButton: document.getElementById('reset-game-button'),
+        mainContent: document.getElementById('main-content'),
+        backToHomeButton: document.getElementById('back-to-home'),
+        headerTitle: document.querySelector('#game-container h1'),
+        modalContainer: document.getElementById('modal-container'),
+        tooltip: document.getElementById('tooltip'),
+        importSaveInput: document.getElementById('import-save'),
+        exportSaveButton: document.getElementById('export-save-button'),
+    };
+
+    // 初期化
+    function init() {
+        loadGame();
+        
+        dom.startGameButton.addEventListener('click', startGame);
+        dom.resetGameButton.addEventListener('click', confirmResetGame);
+        dom.backToHomeButton.addEventListener('click', () => showScreen('home-screen'));
+        dom.importSaveInput.addEventListener('change', importData);
+        dom.exportSaveButton.addEventListener('click', exportData);
+        
+        document.querySelectorAll('.nav-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const screen = e.currentTarget.dataset.screen;
+                if (screen) showScreen(screen);
+            });
+        });
+
+        // ガチャタブ
+        document.getElementById('magic-gacha-tab').addEventListener('click', () => switchGachaTab('magic'));
+        document.getElementById('equipment-gacha-tab').addEventListener('click', () => switchGachaTab('equipment'));
+
+        // 図鑑タブ
+        document.getElementById('magic-encyclopedia-tab').addEventListener('click', () => switchEncyclopediaTab('magic'));
+        document.getElementById('equipment-encyclopedia-tab').addEventListener('click', () => switchEncyclopediaTab('equipment'));
+        
+        // 無限の塔
+        document.getElementById('start-tower-button').addEventListener('click', () => startInfiniteTowerBattle(1));
+
+        // ガチャボタン
+        document.querySelectorAll('.gacha-button').forEach(btn => {
+            btn.addEventListener('click', handleGacha);
+        });
+        
+        // オートセーブ
+        setInterval(saveGame, 30000); // 30秒ごとに保存
+    }
+    
+    // ゲーム開始
+    function startGame() {
+        dom.titleScreen.classList.add('hidden');
+        dom.gameContainer.classList.remove('hidden');
+        showScreen('home-screen');
+    }
+
+    // セーブ＆ロード
+    function saveGame() {
+        localStorage.setItem('arcaneEchoesSave', JSON.stringify(gameData));
+        console.log("Game saved automatically.");
+    }
+
+    function loadGame() {
+        const savedData = localStorage.getItem('arcaneEchoesSave');
+        if (savedData) {
+            gameData = JSON.parse(savedData);
+            // 下位互換性のため、新しいデータ構造がない場合は追加
+             if (!gameData.player.tomesOfSecrets) gameData.player.tomesOfSecrets = 0;
+            if (!gameData.infiniteTower) gameData.infiniteTower = { highestFloor: 0, lastChallenge: null };
+            if (!gameData.infiniteTower.lastChallenge) gameData.infiniteTower.lastChallenge = null;
+            if (gameData.player.singularityTrait === undefined) gameData.player.singularityTrait = null;
+            if (!gameData.player.permanentMpBonus) gameData.player.permanentMpBonus = 0;
+            if (!gameData.defeatedTeachers) gameData.defeatedTeachers = [];
+            if (!gameData.lastRiftChallenge) gameData.lastRiftChallenge = null;
+            if (!gameData.player.potentialLevel) {
+                // 複数回乱数を生成し、最小値を取ることで高い値が出にくくなるようにする
+                const p1 = Math.pow(Math.random(), 2) * 200;
+                const p2 = Math.random() * 200;
+                gameData.player.potentialLevel = Math.floor(Math.min(p1, p2)) + 1;
+            }
+        } else {
+            gameData = JSON.parse(JSON.stringify(defaultGameData));
+            // 複数回乱数を生成し、最小値を取ることで高い値が出にくくなるようにする
+            const p1 = Math.pow(Math.random(), 2) * 200; // Skew even more
+            const p2 = Math.random() * 200;
+            gameData.player.potentialLevel = Math.floor(Math.min(p1, p2)) + 1;
+
+            // Singularity Trait
+            let magicSlots = 4;
+            if (Math.random() < 0.01) { // 1% chance
+                const traits = Object.keys(SINGULARITY_TRAITS);
+                const chosenTrait = traits[Math.floor(Math.random() * traits.length)];
+                gameData.player.singularityTrait = chosenTrait;
+                if (chosenTrait === 'MORE_SLOTS') {
+                    magicSlots = 6;
+                }
+            }
+            gameData.player.equippedMagic = Array(magicSlots).fill(null);
+
+            // 初期アイテム
+            addMagicToInventory('m000');
+            addMagicToInventory('m009');
+            addMagicToInventory('m001');
+            addMagicToInventory('m004');
+            addEquipmentToInventory('e001');
+            const initialEquipped = ['m000', 'm001', 'm004', 'm009'];
+            for(let i=0; i<initialEquipped.length && i<gameData.player.equippedMagic.length; i++) {
+                gameData.player.equippedMagic[i] = initialEquipped[i];
+            }
+            gameData.player.equippedEquipment = [null, 'e001'];
+            saveGame();
+        }
+    }
+    
+    function exportData() {
+        const dataStr = JSON.stringify(gameData);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'arcane_echoes_save.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showModal('データエクスポート', 'セーブデータをファイルに保存しました。');
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                // 簡単なバリデーション
+                if (importedData.player && importedData.magicInventory) {
+                    gameData = importedData;
+                    saveGame();
+                    showModal('データインポート', 'データのインポートに成功しました。ページをリロードします。', () => {
+                       location.reload();
+                    });
+                } else {
+                    throw new Error('Invalid save file format.');
+                }
+            } catch (error) {
+                showModal('エラー', 'セーブファイルの読み込みに失敗しました。');
+                console.error(error);
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function confirmResetGame() {
+        showModal(
+            '確認', 
+            '本当にゲームデータをリセットしますか？この操作は元に戻せません。',
+            () => {
+                localStorage.removeItem('arcaneEchoesSave');
+                location.reload();
+            },
+            true
+        );
+    }
+
+
+    // 画面遷移
+    function showScreen(screenId) {
+        dom.mainContent.querySelectorAll(':scope > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(screenId).classList.remove('hidden');
+        
+        dom.backToHomeButton.classList.toggle('hidden', screenId === 'home-screen' || screenId === 'battle-screen');
+        dom.headerTitle.textContent = screenId.replace('-screen', '').replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase());
+
+
+        // 各画面のレンダリング
+        switch (screenId) {
+            case 'home-screen':
+                updatePlayerStatsUI();
+                break;
+            case 'dungeon-screen':
+                renderDungeonList();
+                break;
+            case 'rift-challenge-screen':
+                renderRiftChallengeScreen();
+                break;
+            case 'magic-school-screen':
+                renderMagicSchoolScreen();
+                break;
+            case 'gacha-screen':
+                updatePlayerStatsUI();
+                switchGachaTab('magic'); // デフォルト表示
+                break;
+            case 'magic-screen':
+                renderMagicScreen();
+                break;
+            case 'equipment-screen':
+                renderEquipmentScreen();
+                break;
+            case 'encyclopedia-screen':
+                renderEncyclopediaScreen();
+                break;
+            case 'infinite-tower-screen':
+                renderInfiniteTowerScreen();
+                break;
+        }
+    }
+
+    // UI更新
+    function updatePlayerStatsUI() {
+        const player = gameData.player;
+        const maxExp = getNextLevelExp(player.level);
+        const maxMp = calculateMaxMp();
+        
+        document.getElementById('player-level').textContent = `Lv. ${player.level}`;
+        document.getElementById('player-potential').textContent = `ポテンシャル: ${player.potentialLevel}`;
+        document.getElementById('player-exp-bar').style.width = `${(player.exp / maxExp) * 100}%`;
+        document.getElementById('player-mp').textContent = `MP: ${player.mp}/${maxMp}`;
+        document.getElementById('player-gacha-stones').textContent = `💎 ${player.gachaStones}`;
+        document.getElementById('player-materials').textContent = `🧱 ${player.materials}`;
+        document.getElementById('player-tomes').textContent = `📖 ${player.tomesOfSecrets}`;
+
+        const trait = gameData.player.singularityTrait;
+        const traitEl = document.getElementById('player-trait');
+        if (trait) {
+            traitEl.textContent = `特異体質: ${SINGULARITY_TRAITS[trait].name}`;
+            traitEl.title = SINGULARITY_TRAITS[trait].description;
+        } else {
+            traitEl.textContent = '';
+            traitEl.title = '';
+        }
+    }
+
+    // プレイヤー関連の計算
+    function getNextLevelExp(level) {
+        return Math.floor(10 * Math.pow(level, 1.8));
+    }
+    
+    function calculateMaxHp() {
+         let baseHp = 100 + (gameData.player.level - 1) * 50;
+         const hpBoost = getEquipmentEffect('HP') + getEquipmentEffect('ALL');
+         return Math.floor(baseHp * (1 + hpBoost));
+    }
+
+    function calculateMaxMp() {
+        let baseMp = 50 + (gameData.player.level - 1) * 5 + (gameData.player.permanentMpBonus || 0);
+        const mpBoost = getEquipmentEffect('MP') + getEquipmentEffect('ALL');
+        return Math.floor(baseMp * (1 + mpBoost));
+    }
+
+    function levelUp() {
+        const player = gameData.player;
+        const maxExp = getNextLevelExp(player.level);
+        if (player.exp >= maxExp) {
+            player.level++;
+            player.exp -= maxExp;
+            // レベルアップボーナス
+            player.hp = calculateMaxHp();
+            player.mp = calculateMaxMp();
+            showModal("LEVEL UP!", `レベルが ${player.level} に上がった！`);
+            if (player.exp >= getNextLevelExp(player.level)) {
+                levelUp(); // 連続レベルアップ
+            }
+        }
+    }
+    
+    // ダンジョン画面
+    function renderDungeonList() {
+        const listEl = document.getElementById('dungeon-list');
+        listEl.innerHTML = '';
+        DUNGEON_MASTER.forEach((dungeon, index) => {
+            const isLocked = index > gameData.unlockedDungeon;
+            const button = document.createElement('button');
+            button.className = `w-full p-6 text-left magic-button flex justify-between items-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`;
+            button.disabled = isLocked;
+            button.innerHTML = `
+                <div>
+                    <h3 class="text-xl font-cinzel">${dungeon.name}</h3>
+                    <p class="text-sm text-gray-400">推奨 Lv: ${dungeon.levelRange[0]} - ${dungeon.levelRange[1]}</p>
+                </div>
+                <span class="text-3xl">${isLocked ? '🔒' : '▶'}</span>
+            `;
+            if (!isLocked) {
+                button.addEventListener('click', () => startBattle('dungeon', index));
+            }
+            listEl.appendChild(button);
+        });
+    }
+
+    // Rift Challenge Screen
+    function renderRiftChallengeScreen() {
+        const listEl = document.getElementById('rift-boss-list');
+        listEl.innerHTML = '';
+
+        const lastChallengeDate = gameData.lastRiftChallenge ? new Date(gameData.lastRiftChallenge).toDateString() : null;
+        const todayDate = new Date().toDateString();
+        const canChallenge = lastChallengeDate !== todayDate;
+
+        Object.keys(ENEMY_MASTER).filter(id => ENEMY_MASTER[id].isBoss).forEach(bossId => {
+            const boss = ENEMY_MASTER[bossId];
+            const card = document.createElement('div');
+            card.className = 'p-6 glassmorphism rounded-xl flex justify-between items-center';
+
+            card.innerHTML = `
+                <div class="text-left">
+                    <p class="text-2xl font-bold text-purple-300">${boss.name}</p>
+                    <p class="text-sm text-gray-400">HP: ${boss.baseHp}, MP: ${boss.baseMp}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-8xl">${boss.icon}</p>
+                    <button data-boss-id="${bossId}" class="start-rift-button magic-button px-8 py-2 mt-2" ${!canChallenge ? 'disabled' : ''}>
+                        ${canChallenge ? '挑戦' : '挑戦済み'}
+                    </button>
+                </div>
+            `;
+            listEl.appendChild(card);
+        });
+
+        document.querySelectorAll('.start-rift-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const bossId = e.currentTarget.dataset.bossId;
+                startBattle('rift', bossId);
+            });
+        });
+    }
+
+    // 魔法学校画面
+    function renderMagicSchoolScreen() {
+        const listEl = document.getElementById('teacher-list');
+        listEl.innerHTML = '';
+        Object.keys(TEACHER_MASTER).forEach(teacherId => {
+            const teacher = TEACHER_MASTER[teacherId];
+            const button = document.createElement('button');
+            button.className = `w-full p-6 text-left magic-button flex justify-between items-center`;
+            
+            let rewardHtml = '';
+            if (teacher.reward.type === 'magic') {
+                const magic = MAGIC_MASTER[teacher.reward.id];
+                rewardHtml = `<p class="text-sm rarity-${magic.rarity}">報酬: ${magic.name}</p>`;
+            } else {
+                const equipment = EQUIPMENT_MASTER[teacher.reward.id];
+                rewardHtml = `<p class="text-sm rarity-${equipment.rarity}">報酬: ${equipment.name}</p>`;
+            }
+            
+            button.innerHTML = `
+                <div>
+                    <h3 class="text-xl font-cinzel">${teacher.name}</h3>
+                    <p class="text-sm text-gray-400">推奨 Lv: ${teacher.level}</p>
+                    <p class="text-sm text-gray-300 mt-1">${teacher.description}</p>
+                    ${rewardHtml}
+                </div>
+                <span class="text-3xl">${teacher.icon}</span>
+            `;
+            button.addEventListener('click', () => startBattle('school', teacherId));
+            listEl.appendChild(button);
+        });
+    }
+
+    // バトル
+    function startBattle(mode, id) {
+        battleState = {
+            mode,
+            player: createInitialPlayerBattleState(),
+            turn: 'player',
+            log: [],
+            enemies: [],
+            originalEnemies: []
+        };
+
+        if (mode === 'dungeon') {
+            const dungeonIndex = id;
+            const dungeon = DUNGEON_MASTER[dungeonIndex];
+            const isBossFloor = Math.random() < 0.2;
+            const numEnemies = isBossFloor ? 1 : Math.floor(Math.random() * 3) + 1;
+            
+            for(let i=0; i<numEnemies; i++) {
+                const enemyLevel = dungeon.levelRange[0] + Math.floor(Math.random() * (dungeon.levelRange[1] - dungeon.levelRange[0] + 1));
+                const enemyMasterId = isBossFloor ? dungeon.boss : dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
+                const enemyMaster = ENEMY_MASTER[enemyMasterId];
+                const maxHp = Math.floor(enemyMaster.baseHp * (1 + enemyLevel * 0.1));
+                const maxMp = Math.floor(enemyMaster.baseMp * (1 + enemyLevel * 0.1));
+                const enemy = { ...enemyMaster, level: enemyLevel, maxHp, currentHp: maxHp, maxMp, currentMp: maxMp, shield: 0, effects: [] };
+                battleState.enemies.push(enemy);
+            }
+            battleState.originalEnemies = [...battleState.enemies];
+            battleState.dungeonIndex = dungeonIndex;
+        } else {
+            // School, Rift, Tower are 1v1
+            let enemyMaster;
+            let enemyLevel;
+            if (mode === 'school') {
+                enemyMaster = TEACHER_MASTER[id];
+                enemyLevel = enemyMaster.level;
+                battleState.teacherId = id;
+            } else if (mode === 'rift') {
+                enemyMaster = ENEMY_MASTER[id];
+                enemyLevel = 150;
+                battleState.riftBossId = id;
+                gameData.lastRiftChallenge = new Date().toISOString();
+            }
+            const maxHp = enemyMaster.isBoss ? enemyMaster.baseHp : Math.floor(enemyMaster.baseHp * (1 + enemyLevel * 0.1));
+            const maxMp = enemyMaster.isBoss ? enemyMaster.baseMp : Math.floor(enemyMaster.baseMp * (1 + enemyLevel * 0.1));
+            const enemy = { ...enemyMaster, level: enemyLevel, maxHp, currentHp: maxHp, maxMp, currentMp: maxMp, shield: 0, effects: [] };
+            battleState.enemies.push(enemy);
+            battleState.originalEnemies.push(enemy);
+        }
+        
+        addLog('戦闘開始！');
+        showScreen('battle-screen');
+        updateBattleUI();
+    }
+
+
+    function createInitialPlayerBattleState() {
+        return {
+            maxHp: calculateMaxHp(), currentHp: calculateMaxHp(),
+            maxMp: calculateMaxMp(), currentMp: calculateMaxMp(),
+            shield: 0, effects: [],
+        };
+    }
+    
+    function updateBattleUI() {
+        const { player, enemies, mode, currentFloor } = battleState;
+
+        const battleHeader = document.getElementById('battle-header');
+        if (mode === 'infinite') {
+            battleHeader.textContent = `無限の塔 - ${currentFloor}階`;
+            battleHeader.classList.remove('hidden');
+        } else {
+            battleHeader.classList.add('hidden');
+        }
+
+        // 敵情報
+        const enemiesArea = document.getElementById('enemies-area');
+        enemiesArea.innerHTML = '';
+        enemies.forEach((enemy, index) => {
+            if (enemy.currentHp > 0) {
+                const enemyCard = document.createElement('div');
+                enemyCard.id = `enemy-card-${index}`;
+                enemyCard.className = 'enemy-card text-center p-2 transition-transform duration-200';
+                enemyCard.innerHTML = `
+                    <p class="text-lg font-bold">${enemy.name} Lv.${enemy.level}</p>
+                    <p class="text-6xl my-2">${enemy.icon}</p>
+                    <div class="w-32 h-3 bg-gray-700 rounded-full overflow-hidden border border-red-900">
+                         <div style="width: ${Math.max(0, (enemy.currentHp / enemy.maxHp) * 100)}%" class="h-full bg-red-500 transition-all duration-500"></div>
+                    </div>
+                    <p class="mt-1 text-xs">HP: ${enemy.currentHp} / ${enemy.maxHp}</p>
+                `;
+                enemiesArea.appendChild(enemyCard);
+            }
+        });
+        
+        // プレイヤー情報
+        document.getElementById('battle-player-hp-bar').style.width = `${Math.max(0, (player.currentHp / player.maxHp) * 100)}%`;
+        document.getElementById('battle-player-shield-bar').style.width = `${Math.min(100, (player.shield / player.maxHp) * 100)}%`;
+        document.getElementById('battle-player-mp-bar').style.width = `${Math.max(0, (player.currentMp / player.maxMp) * 100)}%`;
+        document.getElementById('battle-player-hp-text').textContent = `HP: ${player.currentHp} / ${player.maxHp}`;
+        document.getElementById('battle-player-mp-text').textContent = `MP: ${player.currentMp} / ${player.maxMp}`;
+        
+        const playerShieldEl = document.getElementById('player-shield-text');
+        playerShieldEl.textContent = player.shield > 0 ? `シールド: ${player.shield}` : '';
+
+        // プレイヤーエフェクト
+        const playerEffectsEl = document.getElementById('player-effects');
+        playerEffectsEl.innerHTML = '';
+        player.effects.forEach(effect => {
+            let icon = '';
+            let master = MAGIC_MASTER[effect.magicId];
+            let title = `${master.name} (残り ${effect.turnsLeft} ターン)`;
+            switch(effect.type) {
+                case 'BUFF': icon = '⚔️'; break;
+                case 'DEFENSE': icon = '🛡️'; break;
+                case 'HEAL': icon = '➕'; break;
+                case 'DEBUFF': icon = '💀'; break;
+            }
+            playerEffectsEl.innerHTML += `<div class="effect-icon" title="${title}">${icon}<span class="turn-counter">${effect.turnsLeft}</span></div>`;
+        });
+        
+        // 魔法スロット
+        const magicSlotsEl = document.getElementById('magic-slots');
+        magicSlotsEl.innerHTML = '';
+        gameData.player.equippedMagic.forEach(masterId => {
+            const slot = document.createElement('button');
+            if (masterId) {
+                const magicInstance = getMagicInstanceByMasterId(masterId);
+                const magicMaster = MAGIC_MASTER[magicInstance.masterId];
+                const cost = getMagicCost(magicInstance);
+                
+                slot.className = 'magic-button h-24 flex flex-col justify-center items-center';
+                slot.innerHTML = `
+                    <div class="text-2xl">${ELEMENTS[magicMaster.element].icon}</div>
+                    <div class="text-sm">${magicMaster.name}</div>
+                    <div class="text-xs">MP: ${cost}</div>
+                `;
+                slot.disabled = player.currentMp < cost || battleState.turn !== 'player';
+                slot.onclick = () => playerTurn(masterId);
+            } else {
+                slot.className = 'h-24 border border-dashed border-gray-600 rounded-lg flex justify-center items-center text-gray-600';
+                slot.textContent = 'Empty';
+                slot.disabled = true;
+            }
+            magicSlotsEl.appendChild(slot);
+        });
+
+        // 精神集中ボタン
+        const recoverMpButton = document.createElement('button');
+        recoverMpButton.className = 'magic-button h-24 flex flex-col justify-center items-center';
+        recoverMpButton.innerHTML = `
+            <div class="text-2xl">🧘</div>
+            <div class="text-sm">精神集中</div>
+            <div class="text-xs">MP回復</div>
+        `;
+        recoverMpButton.disabled = battleState.turn !== 'player';
+        recoverMpButton.onclick = () => playerRecoverMpTurn();
+        magicSlotsEl.appendChild(recoverMpButton);
+        
+        // 戦闘コントロール
+        const battleControls = document.getElementById('battle-controls');
+        battleControls.innerHTML = '';
+        if (mode === 'infinite') {
+            const retreatButton = document.createElement('button');
+            retreatButton.id = 'retreat-button';
+            retreatButton.className = 'magic-button px-8 py-2';
+            retreatButton.textContent = '撤退';
+            retreatButton.onclick = () => endInfiniteTowerRun(false);
+            battleControls.appendChild(retreatButton);
+        }
+
+        // ログ
+        const logEl = document.getElementById('battle-log');
+        logEl.innerHTML = battleState.log.join('<br>');
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+    
+    function addLog(message) {
+        battleState.log.unshift(message);
+        if (battleState.log.length > 20) battleState.log.pop();
+    }
+
+    function playerRecoverMpTurn() {
+        if (battleState.turn !== 'player') return;
+        battleState.turn = 'processing';
+        updateBattleUI();
+
+        const recoverAmount = Math.floor(battleState.player.maxMp * 0.2);
+        battleState.player.currentMp = Math.min(battleState.player.maxMp, battleState.player.currentMp + recoverAmount);
+        
+        addLog(`プレイヤーは精神を集中し、MPが ${recoverAmount} 回復した！`);
+        
+        applyTurnEffects(battleState.player);
+        updateBattleUI();
+
+        setTimeout(enemyTurn, 1500);
+    }
+
+    function playerTurn(masterId) {
+        if (battleState.turn !== 'player') return;
+
+        const magicInstance = getMagicInstanceByMasterId(masterId);
+        const magicMaster = MAGIC_MASTER[magicInstance.masterId];
+        const cost = getMagicCost(magicInstance);
+        const isBloodMagicPossible = gameData.player.singularityTrait === 'BLOOD_MAGIC' && battleState.player.currentHp > cost * 2;
+
+        if (battleState.player.currentMp < cost) {
+            if (isBloodMagicPossible) {
+                if (magicMaster.type === 'ATTACK' && !magicMaster.isAoe) {
+                    enterTargetingMode(masterId, true); // Targeting for blood magic
+                } else {
+                    confirmAndExecuteBloodMagic(masterId, -1); // No target needed
+                }
+            } else {
+                addLog(isBloodMagicPossible ? "HPが足りない！" : "MPが足りない！");
+            }
+            return;
+        }
+
+        // Normal cast
+        if (magicMaster.type === 'ATTACK' && !magicMaster.isAoe) {
+            enterTargetingMode(masterId, false);
+        } else {
+            executePlayerAction(masterId, -1, false);
+        }
+    }
+
+    function confirmAndExecuteBloodMagic(masterId, targetIndex) {
+        const magicInstance = getMagicInstanceByMasterId(masterId);
+        const magicMaster = MAGIC_MASTER[magicInstance.masterId];
+        const cost = getMagicCost(magicInstance);
+        const hpCost = cost * 2;
+
+        showModal(
+            '生命転換',
+            `MPが不足しています。<br>HPを ${hpCost} 消費して「${magicMaster.name}」を唱えますか？`,
+            () => executePlayerAction(masterId, targetIndex, true),
+            true
+        );
+    }
+
+    function enterTargetingMode(masterId, isBloodMagic = false) {
+        addLog("ターゲットを選択してください。");
+        updateBattleUI();
+        battleState.enemies.forEach((enemy, index) => {
+            if (enemy.currentHp > 0) {
+                const card = document.getElementById(`enemy-card-${index}`);
+                card.classList.add('targeting');
+                if (isBloodMagic) {
+                    card.onclick = () => confirmAndExecuteBloodMagic(masterId, index);
+                } else {
+                    card.onclick = () => executePlayerAction(masterId, index, false);
+                }
+            }
+        });
+    }
+
+    function executePlayerAction(masterId, targetIndex, useHp = false) {
+        // Cleanup targeting UI
+        document.querySelectorAll('.enemy-card').forEach(card => {
+            card.classList.remove('targeting');
+            card.onclick = null;
+        });
+
+        battleState.turn = 'processing';
+        updateBattleUI(); // Disable buttons
+
+        const magicInstance = getMagicInstanceByMasterId(masterId);
+        const magicMaster = MAGIC_MASTER[magicInstance.masterId];
+        const cost = getMagicCost(magicInstance);
+
+        if (useHp) {
+            const hpCost = cost * 2;
+            battleState.player.currentHp -= hpCost;
+            addLog(`プレイヤーはHPを ${hpCost} 消費して ${magicMaster.name} を唱えた！`);
+        } else {
+            battleState.player.currentMp -= cost;
+            addLog(`プレイヤーは ${magicMaster.name} を唱えた！`);
+        }
+        
+        const target = targetIndex !== -1 ? battleState.enemies[targetIndex] : null;
+        applyMagicEffect(magicInstance, battleState.player, target);
+        
+        updateBattleUI();
+        
+        const allEnemiesDefeated = battleState.enemies.every(e => e.currentHp <= 0);
+        if (allEnemiesDefeated) {
+            setTimeout(() => endBattle(true), 1000);
+            return;
+        }
+        
+        applyTurnEffects(battleState.player);
+        updateBattleUI();
+        
+        setTimeout(enemyTurn, 1500);
+    }
+    
+    function enemyTurn() {
+        battleState.turn = 'processing';
+        processSingleEnemyTurn(0);
+    }
+
+    function processSingleEnemyTurn(enemyIndex) {
+        // Find next living enemy
+        while(enemyIndex < battleState.enemies.length && battleState.enemies[enemyIndex].currentHp <= 0) {
+            enemyIndex++;
+        }
+
+        if (enemyIndex >= battleState.enemies.length) {
+            // All enemies have taken their turn
+            battleState.turn = 'player';
+            updateBattleUI();
+            return;
+        }
+
+        const enemy = battleState.enemies[enemyIndex];
+        
+        applyTurnEffects(enemy);
+        if (enemy.currentHp <= 0) { // Check if enemy died from DoT
+             updateBattleUI();
+             setTimeout(() => processSingleEnemyTurn(enemyIndex + 1), 1000);
+             return;
+        }
+
+        const availableMagics = enemy.magics.filter(id => {
+            const instance = { masterId: id, level: enemy.level, awakening: 0 };
+            return getMagicCost(instance) <= enemy.currentMp;
+        });
+
+        if (availableMagics.length > 0 && Math.random() > 0.3) {
+            const magicId = availableMagics[Math.floor(Math.random() * availableMagics.length)];
+            const magicInstance = { masterId: magicId, level: enemy.level, awakening: 0 };
+            const magicMaster = MAGIC_MASTER[magicInstance.masterId];
+            const cost = getMagicCost(magicInstance);
+            
+            enemy.currentMp -= cost;
+            addLog(`${enemy.name} は ${magicMaster.name} を使った！`);
+            applyMagicEffect(magicInstance, enemy, battleState.player);
+        } else {
+            addLog(`${enemy.name} の通常攻撃！`);
+            const damage = Math.floor(enemy.level * 3 * (Math.random() * 0.4 + 0.8));
+            takeDamage(battleState.player, damage);
+        }
+        
+        updateBattleUI();
+
+        if (battleState.player.currentHp <= 0) {
+            setTimeout(() => endBattle(false), 1000);
+            return;
+        }
+
+        // Process next enemy after a delay
+        setTimeout(() => processSingleEnemyTurn(enemyIndex + 1), 1500);
+    }
+    
+    function applyMagicEffect(magicInstance, caster, target) {
+        const master = MAGIC_MASTER[magicInstance.masterId];
+        let power = getMagicPower(magicInstance);
+        
+        let powerMultiplier = 1;
+        caster.effects.forEach(effect => {
+            if (effect.type === 'BUFF') powerMultiplier *= MAGIC_MASTER[effect.magicId].basePower;
+        });
+
+        if (caster === battleState.player) {
+            powerMultiplier *= (1 + getEquipmentEffect('POWER') + getEquipmentEffect('ALL'));
+        }
+        
+        let finalPower = Math.floor(power * powerMultiplier);
+        
+        if (caster === battleState.player && (master.type === 'ATTACK' || master.type === 'HEAL' || master.type === 'DEFENSE')) {
+            const levelBonus = 1 + (gameData.player.level * 0.05);
+            finalPower = Math.floor(finalPower * levelBonus);
+        }
+
+        const applyToTarget = (t) => {
+            if (t.currentHp <= 0) return;
+            let targetPowerMultiplier = 1;
+            t.effects.forEach(effect => {
+                if (effect.type === 'DEBUFF') targetPowerMultiplier *= MAGIC_MASTER[effect.magicId].basePower;
+            });
+            let finalTargetPower = Math.floor(finalPower * targetPowerMultiplier);
+
+            switch (master.type) {
+                case 'ATTACK':
+                    const damageDealt = takeDamage(t, finalTargetPower);
+                    const drainBonus = caster === battleState.player ? getEquipmentEffect('DRAIN') : 0;
+                    const totalDrainRate = (master.drain || 0) + drainBonus;
+                    if (totalDrainRate > 0) {
+                        const healedAmount = Math.floor(damageDealt * totalDrainRate);
+                        caster.currentHp = Math.min(caster.maxHp, caster.currentHp + healedAmount);
+                        addLog(`HPが ${healedAmount} 回復した。`);
+                    }
+                    if(master.isDot){
+                        t.effects.push({ magicId: magicInstance.masterId, type: 'DOT', power: finalTargetPower, turnsLeft: master.duration });
+                    }
+                    break;
+                case 'DEBUFF':
+                     t.effects.push({ magicId: magicInstance.masterId, type: master.type, turnsLeft: master.duration });
+                    break;
+            }
+        };
+
+        if (master.type === 'ATTACK' || master.type === 'DEBUFF') {
+            if (master.isAoe) {
+                const targets = caster === battleState.player ? battleState.enemies : [battleState.player];
+                targets.forEach(applyToTarget);
+            } else {
+                applyToTarget(target);
+            }
+        } else { // HEAL, BUFF, DEFENSE always apply to caster
+            switch (master.type) {
+                case 'HEAL':
+                    if (master.masterId === 'm306') { //創生の光
+                        caster.currentHp = caster.maxHp;
+                        addLog(`${caster.name || 'プレイヤー'}のHPが完全に回復した！`);
+                    } else if (!master.duration) {
+                        caster.currentHp = Math.min(caster.maxHp, caster.currentHp + finalPower);
+                        addLog(`${caster.name || 'プレイヤー'}のHPが ${finalPower} 回復した。`);
+                    }
+                    if (master.duration) {
+                        caster.effects.push({ magicId: magicInstance.masterId, type: 'HEAL', power: finalPower, turnsLeft: master.duration });
+                    }
+                    break;
+                case 'DEFENSE':
+                    caster.shield += finalPower;
+                    if (master.duration) {
+                        caster.effects.push({ magicId: magicInstance.masterId, type: 'DEFENSE', power: finalPower, turnsLeft: master.duration });
+                    }
+                    break;
+                case 'BUFF':
+                    const type = master.masterId === 'b001' ? 'STUN' : master.type; // タイムストップ
+                    caster.effects.push({ magicId: magicInstance.masterId, type: type, turnsLeft: master.duration });
+                    addLog(`${caster.name || 'プレイヤー'}の攻撃力が ${Math.round((master.basePower - 1) * 100)}% 増加した！`);
+                    break;
+            }
+        }
+    }
+    
+    function takeDamage(target, damage) {
+        let actualDamage = damage;
+        if (target.shield > 0) {
+            const shieldDamage = Math.min(target.shield, actualDamage);
+            target.shield -= shieldDamage;
+            actualDamage -= shieldDamage;
+            addLog(`シールドが ${shieldDamage} のダメージを吸収した！`);
+        }
+        target.currentHp = Math.max(0, target.currentHp - actualDamage);
+        const targetName = target.name || 'プレイヤー';
+        addLog(`${targetName} は ${actualDamage} のダメージを受けた！`);
+        if (target.currentHp <= 0) {
+            addLog(`${targetName} を倒した！`);
+        }
+        return actualDamage;
+    }
+    
+    function applyTurnEffects(actor) {
+        actor.effects = actor.effects.filter(effect => {
+            const master = MAGIC_MASTER[effect.magicId];
+            if (effect.type === 'HEAL') {
+                const healAmount = Math.floor(effect.power / master.duration);
+                actor.currentHp = Math.min(actor.maxHp, actor.currentHp + healAmount);
+                addLog(`${actor.name || 'プレイヤー'}は再生効果でHPが${healAmount}回復した。`);
+            }
+            if (effect.type === 'DOT') {
+                const dotDamage = Math.floor(effect.power / master.duration);
+                takeDamage(actor, dotDamage);
+                 addLog(`${actor.name || 'プレイヤー'}は継続ダメージを受けた。`);
+            }
+            if (effect.magicId === 'm304') { // 聖域
+                const healAmount = Math.floor(actor.maxHp * 0.05);
+                actor.currentHp = Math.min(actor.maxHp, actor.currentHp + healAmount);
+                addLog(`聖域の力でHPが${healAmount}回復した。`);
+            }
+            effect.turnsLeft--;
+            return effect.turnsLeft > 0;
+        });
+
+        if (actor === battleState.player) {
+            const mpRegenBonus = getEquipmentEffect('MP_REGEN');
+            if (mpRegenBonus > 0) {
+                const mpRecovered = Math.floor(actor.maxMp * mpRegenBonus);
+                actor.currentMp = Math.min(actor.maxMp, actor.currentMp + mpRecovered);
+                addLog(`装備効果でMPが ${mpRecovered} 回復した。`);
+            }
+            const hpRegenBonus = getEquipmentEffect('HP_REGEN');
+            if (hpRegenBonus > 0) {
+                const hpRecovered = Math.floor(actor.maxHp * hpRegenBonus);
+                actor.currentHp = Math.min(actor.maxHp, actor.currentHp + hpRecovered);
+                addLog(`装備効果でHPが ${hpRecovered} 回復した。`);
+            }
+        }
+    }
+
+    function endBattle(isWin) {
+        // 無限の塔
+        if (battleState.mode === 'infinite') {
+            if (isWin) {
+                const floor = battleState.currentFloor;
+                battleState.player.currentHp = battleState.player.maxHp;
+                battleState.player.currentMp = battleState.player.maxMp;
+                battleState.player.shield = 0;
+                battleState.player.effects = [];
+                showModal(`第${floor}階層 突破`, `HPとMPが全回復した！`, () => { dom.modalContainer.classList.add('hidden'); startInfiniteTowerBattle(floor + 1); });
+            } else {
+                endInfiniteTowerRun(true); // Player was defeated
+            }
+            return;
+        }
+
+        // それ以外のモード
+        let title = '', message = '', onConfirm = () => {};
+
+        if (isWin) {
+            title = "勝利！";
+            switch(battleState.mode) {
+                case 'dungeon':
+                    let totalExp = 0, totalStones = 0, totalMaterials = 0;
+                    battleState.originalEnemies.forEach(enemy => {
+                        const potentialMultiplier = gameData.player.potentialLevel * 0.1;
+                        const baseExp = enemy.level * 10;
+                        totalExp += Math.floor(baseExp + (baseExp * potentialMultiplier));
+                        totalStones += enemy.level * 5 + Math.floor(Math.random() * 25);
+                        totalMaterials += enemy.level * 2 + Math.floor(Math.random() * 10);
+                    });
+                    
+                    gameData.player.exp += totalExp;
+                    gameData.player.gachaStones += totalStones;
+                    gameData.player.materials += totalMaterials;
+                    if (battleState.dungeonIndex === gameData.unlockedDungeon && gameData.unlockedDungeon < DUNGEON_MASTER.length - 1) {
+                        gameData.unlockedDungeon++;
+                    }
+                    message = `経験値+${totalExp}, 魔法石+${totalStones}, 素材+${totalMaterials}`;
+                    onConfirm = () => { dom.modalContainer.classList.add('hidden'); levelUp(); saveGame(); showScreen('dungeon-screen'); };
+                    break;
+                case 'school':
+                    const teacher = TEACHER_MASTER[battleState.teacherId];
+                    const reward = teacher.reward;
+                    message = '';
+                    if (reward.type === 'magic') {
+                        addMagicToInventory(reward.id);
+                        message = `新たな魔法「${MAGIC_MASTER[reward.id].name}」を習得した！`;
+                    } else {
+                        addEquipmentToInventory(reward.id);
+                        message = `新たな装備「${EQUIPMENT_MASTER[reward.id].name}」を入手した！`;
+                    }
+                    if (!gameData.defeatedTeachers.includes(battleState.teacherId)) {
+                        gameData.defeatedTeachers.push(battleState.teacherId);
+                        let mpBonus = {t001:50, t002:75, t003:100, t004:150, t005:200, t006:250}[battleState.teacherId] || 0;
+                        if (mpBonus > 0) {
+                            gameData.player.permanentMpBonus += mpBonus;
+                            message += `<br>初回勝利ボーナスとして最大MPが ${mpBonus} 増加した！`;
+                        }
+                    }
+                    onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('magic-school-screen'); };
+                    break;
+                case 'rift':
+                    gameData.player.gachaStones += 5000;
+                    gameData.player.materials += 2500;
+                    gameData.player.tomesOfSecrets += 5;
+                    message = `魔法石+5000, 魔力の欠片+2500, 秘伝の書+5 を獲得！`;
+                    onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('rift-challenge-screen'); };
+                    break;
+            }
+        } else {
+            title = "敗北...";
+            message = "拠地に戻された。";
+            let screenMap = {'dungeon': 'dungeon-screen', 'school': 'magic-school-screen', 'rift': 'rift-challenge-screen', 'infinite': 'infinite-tower-screen'};
+            onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen(screenMap[battleState.mode]); };
+        }
+        
+        gameData.player.hp = Math.max(1, battleState.player.currentHp);
+        gameData.player.mp = battleState.player.currentMp;
+        
+        showModal(title, message, onConfirm);
+    }
+    
+    // ガチャ
+    function switchGachaTab(tab) {
+        const ratesEl = document.getElementById('gacha-rates');
+        if (tab === 'magic') {
+            document.getElementById('magic-gacha-tab').classList.add('active');
+            document.getElementById('equipment-gacha-tab').classList.remove('active');
+            document.getElementById('magic-gacha-content').classList.remove('hidden');
+            document.getElementById('equipment-gacha-content').classList.add('hidden');
+            ratesEl.innerHTML = `<p>排出確率: Legendary(0.1%) / Epic(1%) / Rare(10%) / Normal(20%)</p>`;
+        } else {
+            document.getElementById('magic-gacha-tab').classList.remove('active');
+            document.getElementById('equipment-gacha-tab').classList.add('active');
+            document.getElementById('magic-gacha-content').classList.add('hidden');
+            document.getElementById('equipment-gacha-content').classList.remove('hidden');
+            ratesEl.innerHTML = `<p>排出確率: Legendary(0.2%) / Epic(2%) / Rare(20%) / Normal(20%)</p>`;
+        }
+    }
+    
+    function handleGacha(e) {
+        const type = e.currentTarget.dataset.gachaType;
+        const amount = parseInt(e.currentTarget.dataset.amount);
+        const cost = amount * 10;
+        
+        if (gameData.player.gachaStones < cost) {
+            showModal("魔法石不足", "魔法石が足りません。");
+            return;
+        }
+        
+        gameData.player.gachaStones -= cost;
+        
+        const rates = type === 'magic' 
+            ? { LEGENDARY: 0.1, EPIC: 1.1, RARE: 11.1, NORMAL: 31.1 }
+            : { LEGENDARY: 0.2, EPIC: 2.2, RARE: 22.2, NORMAL: 42.2 };
+        
+        const results = [];
+        for (let i = 0; i < amount; i++) {
+            const rand = Math.random() * 100;
+            let rarity;
+            if (rand < rates.LEGENDARY) rarity = 'LEGENDARY';
+            else if (rand < rates.EPIC) rarity = 'EPIC';
+            else if (rand < rates.RARE) rarity = 'RARE';
+            else if (rand < rates.NORMAL) rarity = 'NORMAL';
+            else rarity = 'MATERIAL';
+
+            if (rarity !== 'MATERIAL') {
+                const master = type === 'magic' ? MAGIC_MASTER : EQUIPMENT_MASTER;
+                const possibleItems = Object.keys(master).filter(id => master[id].rarity === rarity && !master[id].isBoss);
+                const itemId = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                let isNew = true;
+                if (type === 'magic') {
+                    isNew = !gameData.magicInventory.some(item => item.masterId === itemId);
+                    addMagicToInventory(itemId);
+                } else {
+                    isNew = !gameData.equipmentInventory.some(item => item.masterId === itemId);
+                    addEquipmentToInventory(itemId);
+                }
+                results.push({ item: master[itemId], type: 'item', isNew: isNew });
+            } else {
+                const materialAmount = 10 + Math.floor(Math.random() * 10);
+                gameData.player.materials += materialAmount;
+                results.push({ item: { name: `魔力の欠片x${materialAmount}`, rarity: 'NORMAL'}, type: 'material' });
+            }
+        }
+        
+        showGachaResultModal(results);
+        saveGame();
+        updatePlayerStatsUI();
+    }
+    
+    function showGachaResultModal(results) {
+        let content = '<div class="max-h-[60vh] overflow-y-auto p-2 bg-black bg-opacity-20 rounded-lg"><div id="gacha-result-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div></div>';
+        showModal("召喚結果", content);
+
+        const grid = document.getElementById('gacha-result-grid');
+        results.forEach((result, index) => {
+            setTimeout(() => {
+                const rarity = result.item.rarity;
+                const rarityClass = `rarity-${rarity}`;
+                let newTag = '';
+                if (result.type === 'item') {
+                    newTag = result.isNew ? '<span class="text-xs text-yellow-300">NEW!</span>' : '<span class="text-xs text-green-300">覚醒!</span>';
+                }
+
+                const card = document.createElement('div');
+                card.className = `text-center p-2 rounded-lg bg-rarity-${rarity} card-border border-rarity-${rarity} ${rarity === 'Legendary' ? 'legendary-animation' : ''}`;
+                card.innerHTML = `
+                    <div class="text-2xl">${result.type === 'item' ? ELEMENTS[result.item.element]?.icon || '🛡️' : '🧱'}</div>
+                    <div class="text-xs ${rarityClass} font-bold">${result.item.name}</div>
+                    <div class="text-xs ${rarityClass}">${RARITIES[rarity].name}</div>
+                    <div>${newTag}</div>
+                `;
+                grid.appendChild(card);
+            }, index * 100);
+        });
+    }
+
+    // 魔法管理
+    function renderMagicScreen() {
+        renderEquippedMagicList();
+        renderMagicInventoryList();
+    }
+    
+    function renderEquippedMagicList() {
+        const listEl = document.getElementById('equipped-magic-list');
+        listEl.innerHTML = '';
+        listEl.classList.toggle('sm:grid-cols-3', gameData.player.equippedMagic.length > 4);
+        for (let i = 0; i < gameData.player.equippedMagic.length; i++) {
+            const masterId = gameData.player.equippedMagic[i];
+            const slot = document.createElement('div');
+            if (masterId) {
+                const instance = getMagicInstanceByMasterId(masterId);
+                const master = MAGIC_MASTER[instance.masterId];
+                slot.className = `h-32 rounded-lg relative p-2 card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} flex flex-col justify-center items-center cursor-pointer`;
+                slot.innerHTML = `
+                    <div class="text-4xl">${ELEMENTS[master.element].icon}</div>
+                    <p class="font-bold text-sm ${`rarity-${master.rarity}`}">${master.name}</p>
+                    <p class="text-xs">Lv.${instance.level} / 覚醒+${instance.awakening}</p>
+                `;
+                slot.onclick = () => showMagicDetailModal(instance, 'equipped', i);
+            } else {
+                slot.className = 'h-32 border border-dashed border-gray-600 rounded-lg flex justify-center items-center text-gray-500 relative p-2 cursor-pointer';
+                slot.textContent = '空スロット';
+            }
+            listEl.appendChild(slot);
+        }
+    }
+    
+    function renderMagicInventoryList() {
+        const listEl = document.getElementById('magic-inventory-list');
+        listEl.innerHTML = '';
+        gameData.magicInventory.forEach(instance => {
+            const master = MAGIC_MASTER[instance.masterId];
+            const card = document.createElement('div');
+            card.className = `h-32 rounded-lg p-2 card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} flex flex-col justify-center items-center cursor-pointer`;
+            card.innerHTML = `
+                <div class="text-4xl">${ELEMENTS[master.element].icon}</div>
+                <p class="font-bold text-sm text-center ${`rarity-${master.rarity}`}">${master.name}</p>
+                <p class="text-xs">Lv.${instance.level} / 覚醒+${instance.awakening}</p>
+            `;
+            card.onclick = () => showMagicDetailModal(instance, 'inventory');
+            listEl.appendChild(card);
+        });
+    }
+    
+    // 装備管理
+    function renderEquipmentScreen() {
+        renderEquippedEquipmentList();
+        renderEquipmentInventoryList();
+    }
+    
+    function renderEquippedEquipmentList() {
+        const listEl = document.getElementById('equipped-equipment-list');
+        listEl.innerHTML = '';
+        const types = ['武器 (威力)', '装飾品 (MP/HP)'];
+        for (let i = 0; i < 2; i++) {
+             const masterId = gameData.player.equippedEquipment[i];
+             const slot = document.createElement('div');
+             if (masterId) {
+                const instance = getEquipmentInstanceByMasterId(masterId);
+                const master = EQUIPMENT_MASTER[instance.masterId];
+                slot.className = `p-4 rounded-lg flex flex-col justify-center items-center card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} cursor-pointer h-32`;
+                slot.innerHTML = `
+                    <p class="font-bold text-center ${RARITIES[master.rarity].color}">${master.name}</p>
+                    <p class="text-green-400">覚醒+${instance.awakening}</p>
+                `;
+                slot.onclick = () => showEquipmentDetailModal(instance, 'equipped', i);
+             } else {
+                 slot.className = 'p-4 border border-dashed border-gray-600 rounded-lg flex flex-col justify-center items-center text-gray-500 cursor-pointer h-32';
+                 slot.innerHTML = `<span>${types[i]} スロット</span>`;
+             }
+             listEl.appendChild(slot);
+        }
+    }
+    
+    function renderEquipmentInventoryList() {
+        const listEl = document.getElementById('equipment-inventory-list');
+        listEl.innerHTML = '';
+        gameData.equipmentInventory.forEach(instance => {
+            const master = EQUIPMENT_MASTER[instance.masterId];
+            const card = document.createElement('div');
+            card.className = `p-3 rounded-lg card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} cursor-pointer flex flex-col justify-center items-center h-32`;
+            card.innerHTML = `
+                <p class="font-bold text-center ${RARITIES[master.rarity].color}">${master.name}</p>
+                <p class="text-green-400">覚醒+${instance.awakening}</p>
+            `;
+            card.onclick = () => showEquipmentDetailModal(instance, 'inventory');
+            listEl.appendChild(card);
+        });
+    }
+
+    // アイテム操作
+    function addMagicToInventory(masterId) {
+        let instance = getMagicInstanceByMasterId(masterId);
+        if (instance) {
+            instance.awakening++;
+        } else {
+            gameData.magicInventory.push({ masterId, level: 0, awakening: 0 });
+        }
+    }
+    function addEquipmentToInventory(masterId) {
+        let instance = getEquipmentInstanceByMasterId(masterId);
+        if (instance) {
+            instance.awakening++;
+        } else {
+            gameData.equipmentInventory.push({ masterId, awakening: 0 });
+        }
+    }
+    function getMagicInstanceByMasterId(masterId) {
+        return gameData.magicInventory.find(m => m.masterId === masterId);
+    }
+    function getEquipmentInstanceByMasterId(masterId) {
+        return gameData.equipmentInventory.find(e => e.masterId === masterId);
+    }
+    
+    function equipMagic(masterId) {
+        if (gameData.player.equippedMagic.includes(masterId)) {
+            showModal("エラー", "その魔法はすでに装備されています。");
+            return;
+        }
+        const emptySlot = gameData.player.equippedMagic.findIndex(id => id === null);
+        if (emptySlot !== -1) {
+            gameData.player.equippedMagic[emptySlot] = masterId;
+            renderMagicScreen();
+            saveGame();
+            dom.modalContainer.classList.add('hidden'); // Close detail modal
+        } else {
+            showModal("エラー", "装備スロットに空きがありません。");
+        }
+    }
+    
+    function unequipMagic(slotIndex) {
+        gameData.player.equippedMagic[slotIndex] = null;
+        renderMagicScreen();
+        saveGame();
+        dom.modalContainer.classList.add('hidden'); // Close detail modal
+    }
+    
+    function upgradeMagic(instance) {
+        const master = MAGIC_MASTER[instance.masterId];
+        const nextLevel = instance.level + 1;
+        
+        let materialCost = nextLevel * 50;
+        if (master.rarity === 'LEGENDARY') materialCost *= 2;
+        if (master.rarity === 'EPIC') materialCost *= 1.5;
+
+        let tomeCost = 0;
+        if (nextLevel % 10 === 0) {
+            tomeCost = 1 + Math.floor(instance.level / 10);
+        }
+
+        if (gameData.player.materials < materialCost) {
+            showModal("素材不足", `強化には魔力の欠片が ${materialCost} 必要です。`);
+            return;
+        }
+        if (gameData.player.tomesOfSecrets < tomeCost) {
+            showModal("素材不足", `限界突破には秘伝の書が ${tomeCost} 必要です。`);
+            return;
+        }
+
+        gameData.player.materials -= materialCost;
+        gameData.player.tomesOfSecrets -= tomeCost;
+        instance.level++;
+        
+        renderMagicScreen(); // Re-render main screen
+        // Re-render the modal with updated info
+        showMagicDetailModal(instance, 'inventory');
+    }
+
+    function equipEquipment(masterId) {
+        if (gameData.player.equippedEquipment.includes(masterId)) {
+            showModal("エラー", "その装備はすでに装備されています。");
+            return;
+        }
+        const master = EQUIPMENT_MASTER[masterId];
+        const slotIndex = master.type === 'POWER' || master.type === 'ALL' ? 0 : 1;
+        gameData.player.equippedEquipment[slotIndex] = masterId;
+        renderEquipmentScreen();
+        saveGame();
+        dom.modalContainer.classList.add('hidden');
+    }
+    
+    function unequipEquipment(slotIndex) {
+        gameData.player.equippedEquipment[slotIndex] = null;
+        renderEquipmentScreen();
+        saveGame();
+        dom.modalContainer.classList.add('hidden');
+    }
+
+    // 計算ヘルパー
+    function getMagicPower(instance) {
+        const master = MAGIC_MASTER[instance.masterId];
+        let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00 }[master.rarity] || 0;
+        const awakeningBonus = 1 + instance.awakening * bonusPerAwakening;
+        const level = instance.level || 0; // level can be 0 for newly acquired magic
+        return Math.floor(master.basePower * (1 + level * 0.1) * awakeningBonus);
+    }
+
+    function getMagicCost(instance) {
+        const master = MAGIC_MASTER[instance.masterId];
+        const costReduction = getEquipmentEffect('COST_REDUCTION');
+        return Math.max(1, Math.floor(master.baseCost * (1 - costReduction)));
+    }
+    
+    function getEquipmentEffect(type) {
+        let totalValue = 0;
+        gameData.player.equippedEquipment.forEach(masterId => {
+            if (!masterId) return;
+            const instance = getEquipmentInstanceByMasterId(masterId);
+            const master = EQUIPMENT_MASTER[instance.masterId];
+            let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00 }[master.rarity] || 0;
+            const awakeningBonus = 1 + instance.awakening * bonusPerAwakening;
+            if (master.type === type || (type !== 'MP_REGEN' && type !== 'HP_REGEN' && type !== 'COST_REDUCTION' && type !== 'DRAIN' && master.type === 'ALL')) {
+                totalValue += master.value * awakeningBonus;
+            }
+        });
+        return totalValue;
+    }
+    
+    // 図鑑
+    function switchEncyclopediaTab(tab) {
+        if (tab === 'magic') {
+            document.getElementById('magic-encyclopedia-tab').classList.add('active');
+            document.getElementById('equipment-encyclopedia-tab').classList.remove('active');
+            document.getElementById('magic-encyclopedia-content').classList.remove('hidden');
+            document.getElementById('equipment-encyclopedia-content').classList.add('hidden');
+        } else {
+            document.getElementById('magic-encyclopedia-tab').classList.remove('active');
+            document.getElementById('equipment-encyclopedia-tab').classList.add('active');
+            document.getElementById('magic-encyclopedia-content').classList.add('hidden');
+            document.getElementById('equipment-encyclopedia-content').classList.remove('hidden');
+        }
+    }
+
+    function renderEncyclopediaScreen() {
+        const magicListEl = document.getElementById('magic-encyclopedia-list');
+        const equipmentListEl = document.getElementById('equipment-encyclopedia-list');
+        magicListEl.innerHTML = '';
+        equipmentListEl.innerHTML = '';
+
+        Object.keys(MAGIC_MASTER).forEach(masterId => {
+            const master = MAGIC_MASTER[masterId];
+            const isOwned = !!getMagicInstanceByMasterId(masterId);
+            const card = document.createElement('div');
+            card.className = `p-2 rounded-lg cursor-pointer card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} ${!isOwned ? 'opacity-50' : ''}`;
+            card.innerHTML = `
+                <div class="flex items-center">
+                    <div class="text-3xl mr-3">${ELEMENTS[master.element].icon}</div>
+                    <div>
+                        <p class="font-bold rarity-${master.rarity}">${isOwned ? master.name : '???'}</p>
+                        <p class="text-xs text-gray-400">${ELEMENTS[master.element].name} / ${master.type}</p>
+                        <p class="text-xs rarity-${master.rarity}">${RARITIES[master.rarity].name}</p>
+                    </div>
+                </div>
+            `;
+            card.onclick = () => showEncyclopediaDetail(master);
+            magicListEl.appendChild(card);
+        });
+
+        Object.keys(EQUIPMENT_MASTER).forEach(masterId => {
+            const master = EQUIPMENT_MASTER[masterId];
+            const isOwned = !!getEquipmentInstanceByMasterId(masterId);
+            const card = document.createElement('div');
+            card.className = `p-3 rounded-lg flex justify-between items-center card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} ${!isOwned ? 'opacity-50' : ''}`;
+            card.innerHTML = `
+                <div>
+                    <p class="font-bold rarity-${master.rarity}">${isOwned ? master.name : '???'}</p>
+                    <p class="text-xs rarity-${master.rarity}">${RARITIES[master.rarity].name}</p>
+                    <p class="text-sm text-gray-400 mt-1">${isOwned ? master.description : '---'}</p>
+                </div>
+            `;
+            card.onclick = () => showEncyclopediaDetail(master);
+            equipmentListEl.appendChild(card);
+        });
+        
+        switchEncyclopediaTab('magic');
+    }
+    
+    function showEncyclopediaDetail(master) {
+        const isMagic = !!master.basePower;
+        const masterId = isMagic 
+            ? Object.keys(MAGIC_MASTER).find(key => MAGIC_MASTER[key] === master)
+            : Object.keys(EQUIPMENT_MASTER).find(key => EQUIPMENT_MASTER[key] === master);
+        const isOwned = isMagic ? !!getMagicInstanceByMasterId(masterId) : !!getEquipmentInstanceByMasterId(masterId);
+
+        if (!isOwned) {
+            showModal("詳細", "このアイテムはまだ所持していません。");
+            return;
+        }
+        let content = `<p class="font-bold text-lg rarity-${master.rarity}">${master.name}</p>`;
+        if (isMagic) {
+            content += `<p>基本威力: ${master.basePower}</p><p>基本消費MP: ${master.baseCost}</p>`;
+        }
+        content += `<p class="mt-2 text-gray-400">${master.description}</p>`;
+        showModal("詳細", content);
+    }
+
+    // 無限の塔
+    function renderInfiniteTowerScreen() {
+        document.getElementById('highest-floor').textContent = gameData.infiniteTower.highestFloor;
+        const lastChallengeDate = gameData.infiniteTower.lastChallenge ? new Date(gameData.infiniteTower.lastChallenge).toDateString() : null;
+        const todayDate = new Date().toDateString();
+        const canChallenge = lastChallengeDate !== todayDate;
+
+        const startButton = document.getElementById('start-tower-button');
+        startButton.disabled = !canChallenge;
+        startButton.textContent = canChallenge ? '挑戦開始' : '挑戦済み';
+    }
+
+    function startInfiniteTowerBattle(floor) {
+        if (floor === 1) { // 初回のみ
+            gameData.infiniteTower.lastChallenge = new Date().toISOString();
+            saveGame();
+            battleState = {
+                mode: 'infinite',
+                currentFloor: 1,
+                player: createInitialPlayerBattleState(),
+                rewards: { stones: 0, materials: 0 },
+                log: [],
+                enemies: [],
+                originalEnemies: []
+            };
+        }
+        battleState.enemies = [];
+        battleState.originalEnemies = [];
+
+        let enemyPool = [];
+        if (floor <= 10) enemyPool = Object.keys(ENEMY_MASTER).filter(id => ENEMY_MASTER[id].rarity === 'NORMAL');
+        else if (floor <= 30) enemyPool = Object.keys(ENEMY_MASTER).filter(id => ['NORMAL', 'RARE'].includes(ENEMY_MASTER[id].rarity));
+        else if (floor <= 60) enemyPool = Object.keys(ENEMY_MASTER).filter(id => ['RARE', 'EPIC'].includes(ENEMY_MASTER[id].rarity));
+        else enemyPool = Object.keys(ENEMY_MASTER).filter(id => ['EPIC', 'LEGENDARY'].includes(ENEMY_MASTER[id].rarity) && !ENEMY_MASTER[id].isBoss);
+        if (enemyPool.length === 0) enemyPool = Object.keys(ENEMY_MASTER).filter(id => !ENEMY_MASTER[id].isBoss);
+
+        const enemyMasterId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
+        const enemyMaster = ENEMY_MASTER[enemyMasterId];
+
+        const enemyLevel = floor;
+        const statMultiplier = 1 + floor * 0.12;
+        const maxHp = Math.floor(enemyMaster.baseHp * statMultiplier);
+        const maxMp = Math.floor(enemyMaster.baseMp * statMultiplier);
+
+        const enemy = { ...enemyMaster, level: enemyLevel, maxHp, currentHp: maxHp, maxMp, currentMp: maxMp, shield: 0, effects: [] };
+        battleState.enemies.push(enemy);
+        battleState.originalEnemies.push(enemy);
+        battleState.currentFloor = floor;
+        battleState.turn = 'player';
+        
+        addLog(`第${floor}階層`);
+        showScreen('battle-screen');
+        updateBattleUI();
+    }
+
+    function endInfiniteTowerRun(wasDefeated) {
+        const floorsCleared = wasDefeated ? battleState.currentFloor - 1 : battleState.currentFloor;
+        if (floorsCleared > gameData.infiniteTower.highestFloor) {
+            gameData.infiniteTower.highestFloor = floorsCleared;
+        }
+
+        let totalStones = 0, totalMaterials = 0, totalTomes = 0;
+        for (let i = 1; i <= floorsCleared; i++) {
+            totalMaterials += i * 5;
+            if (i % 5 === 0) totalMaterials += i * 20;
+            if (i % 10 === 0) totalStones += i * 50;
+            if (i % 25 === 0) totalTomes += 1;
+        }
+        
+        gameData.player.gachaStones += totalStones;
+        gameData.player.materials += totalMaterials;
+        gameData.player.tomesOfSecrets += totalTomes;
+        
+        const message = `
+            到達階層: ${floorsCleared}階<br>
+            獲得魔法石: ${totalStones}個<br>
+            獲得素材: ${totalMaterials}個<br>
+            獲得した秘伝の書: ${totalTomes}冊
+        `;
+        showModal(wasDefeated ? "挑戦失敗" : "撤退", message, () => {
+            dom.modalContainer.classList.add('hidden');
+            saveGame();
+            showScreen('home-screen');
+        });
+    }
+
+    // --- Modal Functions ---
+    function showModal(title, content, onConfirm = null, showCancel = false, customButtonsHTML = '') {
+        let buttonsHTML = customButtonsHTML;
+        if (buttonsHTML === '') {
+            buttonsHTML = `<button id="modal-confirm-button" class="magic-button px-8 py-2">${showCancel ? 'OK' : '閉じる'}</button>`;
+            if (showCancel) {
+                buttonsHTML += `<button id="modal-cancel-button" class="magic-button px-8 py-2">キャンセル</button>`;
+            }
+        }
+
+        dom.modalContainer.innerHTML = `
+            <div class="modal fade-in">
+                <div class="modal-content glassmorphism gradient-border rounded-xl">
+                    <h2 class="text-2xl font-cinzel mb-4 text-center">${title}</h2>
+                    <div>${content}</div>
+                    <div class="text-center mt-6 flex justify-center gap-4">
+                        ${buttonsHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+        dom.modalContainer.classList.remove('hidden');
+        
+        if (customButtonsHTML === '') {
+            const confirmBtn = document.getElementById('modal-confirm-button');
+            if(confirmBtn) {
+                confirmBtn.onclick = () => {
+                    if (onConfirm) onConfirm();
+                    else dom.modalContainer.classList.add('hidden');
+                };
+            }
+
+            const cancelBtn = document.getElementById('modal-cancel-button');
+            if (cancelBtn) {
+                cancelBtn.onclick = () => {
+                    dom.modalContainer.classList.add('hidden');
+                };
+            }
+        }
+    }
+    
+    function showMagicDetailModal(instance, context, slotIndex = -1) {
+        const master = MAGIC_MASTER[instance.masterId];
+        const nextLevel = instance.level + 1;
+        let materialCost = nextLevel * 50;
+        if (master.rarity === 'LEGENDARY') materialCost *= 2;
+        if (master.rarity === 'EPIC') materialCost *= 1.5;
+
+        let tomeCost = 0;
+        if (nextLevel % 10 === 0) {
+            tomeCost = 1 + Math.floor(instance.level / 10);
+        }
+
+        let buttonsHTML = '';
+        if (context === 'inventory') {
+            buttonsHTML += `<button id="equip-btn" class="magic-button px-4 py-2">装備</button>`;
+        } else if (context === 'equipped') {
+            buttonsHTML += `<button id="unequip-btn" class="magic-button px-4 py-2">外す</button>`;
+        }
+        buttonsHTML += `<button id="upgrade-btn" class="magic-button px-4 py-2">強化</button>`;
+        buttonsHTML += `<button id="close-modal-btn" class="magic-button px-4 py-2">閉じる</button>`;
+        
+        const content = `
+            <div class="text-center">
+                <p class="text-2xl">${ELEMENTS[master.element].icon}</p>
+                <p class="font-bold text-lg ${`rarity-${master.rarity}`}">${master.name}</p>
+                <p class="text-sm">${RARITIES[master.rarity].name} / ${ELEMENTS[master.element].name} / ${master.type}</p>
+                <p class="text-gray-300 my-2">${master.description}</p>
+                <div class="bg-black bg-opacity-30 p-2 rounded-lg text-left text-sm space-y-1">
+                    <p>Lv: ${instance.level} / 覚醒: +${instance.awakening}</p>
+                    <p>威力: ${Math.floor(getMagicPower(instance) * (1 + gameData.player.level * 0.05))} (基本: ${getMagicPower(instance)})</p>
+                    <p>消費MP: ${getMagicCost(instance)}</p>
+                    <hr class="border-gray-600 my-1">
+                    <p class="font-bold">次のレベルへの強化コスト:</p>
+                    <p>魔力の欠片: ${materialCost}</p>
+                    ${tomeCost > 0 ? `<p>秘伝の書: ${tomeCost}</p>` : ''}
+                </div>
+            </div>
+        `;
+        showModal("魔法詳細", content, null, false, buttonsHTML);
+
+        document.getElementById('upgrade-btn').onclick = () => upgradeMagic(instance);
+        document.getElementById('close-modal-btn').onclick = () => dom.modalContainer.classList.add('hidden');
+        if (context === 'inventory') {
+            document.getElementById('equip-btn').onclick = () => equipMagic(instance.masterId);
+        } else if(context === 'equipped') {
+            document.getElementById('unequip-btn').onclick = () => unequipMagic(slotIndex);
+        }
+    }
+    
+    function showEquipmentDetailModal(instance, context, slotIndex = -1) {
+        const master = EQUIPMENT_MASTER[instance.masterId];
+        let buttonsHTML = '';
+        if (context === 'inventory') {
+            buttonsHTML += `<button id="equip-eq-btn" class="magic-button px-4 py-2">装備</button>`;
+        } else if (context === 'equipped') {
+            buttonsHTML += `<button id="unequip-eq-btn" class="magic-button px-4 py-2">外す</button>`;
+        }
+        buttonsHTML += `<button id="close-modal-btn" class="magic-button px-4 py-2">閉じる</button>`;
+        
+        const content = `
+            <div class="text-center">
+                <p class="font-bold text-lg ${RARITIES[master.rarity].color}">${master.name}</p>
+                <p class="text-sm">${RARITIES[master.rarity].name}</p>
+                <p class="text-gray-300 my-2">${master.description}</p>
+                 <div class="bg-black bg-opacity-30 p-2 rounded-lg text-left text-sm space-y-1">
+                    <p>覚醒: +${instance.awakening}</p>
+                </div>
+            </div>
+        `;
+        showModal("装備詳細", content, null, false, buttonsHTML);
+        
+        document.getElementById('close-modal-btn').onclick = () => dom.modalContainer.classList.add('hidden');
+        if (context === 'inventory') {
+            document.getElementById('equip-eq-btn').onclick = () => equipEquipment(instance.masterId);
+        } else if (context === 'equipped') {
+            document.getElementById('unequip-eq-btn').onclick = () => unequipEquipment(slotIndex);
+        }
+    }
+
+    // ツールチップ
+    function addTooltipListener(element, content) {
+        element.addEventListener('mouseenter', (e) => {
+            dom.tooltip.innerHTML = content;
+            dom.tooltip.classList.remove('hidden');
+            moveTooltip(e);
+        });
+        element.addEventListener('mousemove', moveTooltip);
+        element.addEventListener('mouseleave', () => {
+            dom.tooltip.classList.add('hidden');
+        });
+    }
+
+    function moveTooltip(e) {
+        let x = e.clientX + 15;
+        let y = e.clientY + 15;
+        if (x + dom.tooltip.offsetWidth > window.innerWidth) {
+            x = e.clientX - dom.tooltip.offsetWidth - 15;
+        }
+        if (y + dom.tooltip.offsetHeight > window.innerHeight) {
+            y = e.clientY - dom.tooltip.offsetHeight - 15;
+        }
+        dom.tooltip.style.left = `${x}px`;
+        dom.tooltip.style.top = `${y}px`;
+    }
+    
+    // 実行
+    init();
+});
+</script>
+</body>
+</html>
+
+
+
