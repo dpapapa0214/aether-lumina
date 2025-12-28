@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>異界戦記クロニクル Ver. 27.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 基本的なスタイル設定 */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #0a0a1a;
+            color: #e0e0e0;
+            overscroll-behavior: none;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* カスタムクラス */
+        .screen { display: none; width: 100%; height: 100vh; overflow: auto; }
+        .active-screen { display: flex; flex-direction: column; }
+        .glass-panel {
+            background-color: rgba(10, 10, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 100, 220, 0.3);
+            border-radius: 1rem;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.8);
+        }
+        .btn-primary:disabled {
+            background: #333; box-shadow: none; cursor: not-allowed; opacity: 0.5;
+        }
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.2); }
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-danger:hover { background-color: rgba(239, 68, 68, 0.4); }
+        .btn-limit-break {
+            background: linear-gradient(45deg, #f59e0b, #ef4444);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hub-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .hub-btn:hover {
+            border-color: rgba(129, 140, 248, 0.7);
+            transform: scale(1.02);
+        }
+
+        /* 属性ごとの色 */
+        .attr-erosion { color: #f43f5e; border-color: #f43f5e; } /* 侵食 */
+        .attr-void { color: #8b5cf6; border-color: #8b5cf6; } /* 虚無 */
+        .attr-quantum { color: #22d3ee; border-color: #22d3ee; } /* 量子 */
+        .attr-causality { color: #facc15; border-color: #facc15; } /* 因果 */
+
+        /* レアリティごとの色 */
+        .rarity-3 { color: #60a5fa; } /* blue-400 */
+        .rarity-4 { color: #c084fc; } /* purple-400 */
+        .rarity-5 { color: #facc15; } /* yellow-400 */
+        .rarity-6 { color: #f87171; } /* red-400 */
+
+        /* マップタイルのスタイル */
+        .map-tile { transition: all 0.3s ease; cursor: pointer; }
+        .map-tile.unexplored { background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .map-tile.unexplored:hover { background-color: rgba(255,255,255,0.15); border-color: #22d3ee; }
+        .map-tile.conquered { background-color: rgba(34, 211, 238, 0.2); border: 1px solid rgba(34, 211, 238, 0.5); cursor: default;}
+        .map-tile.elite { background-color: rgba(192, 132, 252, 0.2); border: 1px solid rgba(192, 132, 252, 0.5); }
+        .map-tile.elite:hover { background-color: rgba(192, 132, 252, 0.4); border-color: #c084fc; }
+        .map-tile.mid-boss { background-color: rgba(250, 204, 21, 0.2); border: 1px solid rgba(250, 204, 21, 0.5); }
+        .map-tile.mid-boss:hover { background-color: rgba(250, 204, 21, 0.4); border-color: #facc15; }
+        .map-tile.boss { background-color: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.5); }
+        .map-tile.boss:hover { background-color: rgba(244, 63, 94, 0.4); border-color: #f43f5e; }
+
+        /* 戦闘アニメーション */
+        @keyframes attack-animation { 0% { transform: translate(0, 0); } 50% { transform: translate(10px, -5px) scale(1.05); } 100% { transform: translate(0, 0); } }
+        .attacking { animation: attack-animation 0.3s ease-in-out; }
+        @keyframes damage-animation { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; color: #ef4444; } }
+        .damage-popup { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 1.5rem; font-weight: bold; pointer-events: none; animation: damage-animation 0.7s forwards; }
+        .btn-enhanced {
+            background: linear-gradient(45deg, #fde047, #f59e0b);
+            color: #422006;
+            box-shadow: 0 0 15px rgba(252, 211, 77, 0.7);
+        }
+    </style>
+</head>
+<body class="w-full h-screen overflow-hidden">
+
+    <div id="game-container" class="w-full h-full max-w-5xl mx-auto p-4 flex flex-col items-center justify-center">
+        <input type="file" id="load-file-input" class="hidden" accept=".txt,text/plain">
+
+        <!-- タイトル画面 -->
+        <div id="title-screen" class="screen active-screen items-center justify-center text-center">
+            <h1 class="text-5xl md:text-7xl font-orbitron mb-4 tracking-widest">異界戦記クロニクル</h1>
+            <p class="text-lg md:text-xl text-cyan-300 mb-8">Ver. 27.0</p>
+            <p class="max-w-2xl mb-12">異次元の侵攻により、世界は終焉の淵に立たされた。<br>人類最後の希望、異界戦士として、地球を浄化せよ。</p>
+            <button id="start-game-btn" class="btn-primary font-bold text-2xl py-4 px-12 rounded-lg">GAME START</button>
+            <p class="text-sm mt-12 text-gray-500">この物語の結末は、あなたの選択に委ねられる。</p>
+        </div>
+
+        <!-- ハブ画面 -->
+        <div id="hub-screen" class="screen">
+             <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full glass-panel p-4 mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-orbitron">司令室</h2>
+                        <p>浄化率: <span id="purification-rate">0</span>% / 精神汚染: <span id="mental-pollution">0</span>%</p>
+                    </div>
+                    <div class="text-right">
+                        <p>資源: <span id="player-resources">1000</span></p>
+                        <p>降臨チケット: <span id="gacha-tickets">100</span></p>
+                        <p class="text-sm">エーテル結晶: <span id="limit-break-materials-display">0</span></p>
+                    </div>
+                </header>
+                <main class="w-full flex-grow flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow flex flex-col gap-4">
+                        <div data-screen="map-screen" class="hub-btn glass-panel flex-grow flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-5xl font-orbitron mb-2">出撃</h3><p class="text-sm text-gray-400">支配域を拡大する</p></div>
+                        <div class="flex gap-4 h-2/5">
+                            <div data-screen="god-slay-screen" class="hub-btn glass-panel w-1/3 flex flex-col justify-center items-center cursor-pointer p-2 text-center"><h3 class="text-2xl font-orbitron mb-2">異神討伐</h3><p class="text-xs text-gray-400">世界の理を超えた存在に挑む</p></div>
+                            <div data-screen="relic-hunt-screen" class="hub-btn glass-panel w-1/3 flex flex-col justify-center items-center cursor-pointer p-2 text-center"><h3 class="text-2xl font-orbitron mb-2">遺跡探索</h3><p class="text-xs text-gray-400">聖遺物を入手する</p></div>
+                            <div data-screen="infinite-corridor-screen" class="hub-btn glass-panel w-1/3 flex flex-col justify-center items-center cursor-pointer p-2 text-center"><h3 class="text-2xl font-orbitron mb-2">無限回廊</h3><p class="text-xs text-gray-400">果てなき試練に挑む</p></div>
+                        </div>
+                    </div>
+                    <div class="md:w-1/3 flex flex-col gap-4">
+                        <div data-screen="character-screen" class="hub-btn glass-panel h-1/4 flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-2xl font-orbitron mb-2">部隊</h3><p class="text-sm text-gray-400">編成と強化</p></div>
+                        <div data-screen="relic-screen" class="hub-btn glass-panel h-1/4 flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-2xl font-orbitron mb-2">聖遺物</h3><p class="text-sm text-gray-400">聖遺物を装備・強化</p></div>
+                        <div data-screen="gacha-screen" class="hub-btn glass-panel h-1/4 flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-2xl font-orbitron mb-2">降臨</h3><p class="text-sm text-gray-400">新たな戦力を得る</p></div>
+                        <div class="flex gap-4 h-1/4">
+                            <div id="save-game-btn" class="hub-btn glass-panel w-1/2 flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-xl font-orbitron">セーブ</h3></div>
+                            <div id="load-game-btn" class="hub-btn glass-panel w-1/2 flex flex-col justify-center items-center cursor-pointer p-4"><h3 class="text-xl font-orbitron">ロード</h3></div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        
+        <!-- キャラクター・編成画面 -->
+        <div id="character-screen" class="screen">
+            <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 class="text-3xl font-orbitron">部隊管理</h2></header>
+                <main class="w-full flex-grow flex flex-col md:flex-row gap-4">
+                    <div class="md:w-2/5 h-full glass-panel p-4 flex flex-col"><h3 class="text-xl font-bold mb-2 text-center">戦闘部隊</h3><div id="current-party" class="grid grid-cols-1 gap-2 flex-grow"></div></div>
+                    <div class="md:w-3/5 h-full glass-panel p-4 flex flex-col"><h3 class="text-xl font-bold mb-2 text-center">所持キャラクター</h3><div id="character-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto"></div></div>
+                </main>
+            </div>
+        </div>
+
+        <!-- マップ画面 -->
+        <div id="map-screen" class="screen items-center">
+            <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 id="map-name" class="text-3xl font-orbitron"></h2></header>
+                <div class="w-full flex-grow glass-panel p-4"><div id="map-grid" class="w-full h-full grid grid-cols-8 gap-1"></div></div>
+                <footer class="w-full flex justify-center items-center mt-4 space-x-2">
+                    <button class="map-change-btn btn-secondary px-3 py-1 rounded" data-map="ground">地上</button>
+                    <button class="map-change-btn btn-secondary px-3 py-1 rounded" data-map="underground">地下</button>
+                    <button class="map-change-btn btn-secondary px-3 py-1 rounded" data-map="heaven">天界</button>
+                    <button class="map-change-btn btn-secondary px-3 py-1 rounded" data-map="abyss">淵界</button>
+                    <button class="map-change-btn btn-secondary px-3 py-1 rounded" data-map="soukai">蒼界</button>
+                </footer>
+            </div>
+        </div>
+        
+        <!-- 異神討伐画面 -->
+        <div id="god-slay-screen" class="screen">
+            <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 class="text-3xl font-orbitron">異神討伐</h2></header>
+                <main id="god-list" class="w-full flex-grow grid grid-cols-1 md:grid-cols-2 gap-4"></main>
+            </div>
+        </div>
+        
+        <!-- 遺跡探索画面 -->
+        <div id="relic-hunt-screen" class="screen">
+             <div class="w-full h-full flex flex-col p-4">
+                 <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 class="text-3xl font-orbitron">遺跡探索</h2></header>
+                 <main class="w-full flex-grow flex flex-col md:flex-row gap-4 overflow-hidden">
+                    <div id="relic-dungeon-list" class="md:w-1/3 h-full glass-panel p-4 overflow-y-auto space-y-2"></div>
+                    <div id="relic-dungeon-detail" class="md:w-2/3 h-full glass-panel p-4 flex flex-col"></div>
+                 </main>
+            </div>
+        </div>
+
+        <!-- 無限回廊画面 -->
+        <div id="infinite-corridor-screen" class="screen">
+            <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4">
+                    <button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button>
+                    <h2 class="text-3xl font-orbitron">無限回廊</h2>
+                </header>
+                <main class="w-full flex-grow flex flex-col md:flex-row gap-4 overflow-hidden">
+                    <div class="md:w-1/3 h-full glass-panel p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-2xl font-bold mb-4">現在の記録</h3>
+                        <p class="text-6xl font-orbitron text-cyan-300 mb-6"><span id="highest-floor-display">0</span>階</p>
+                        <button id="start-corridor-btn" class="btn-primary font-bold text-xl py-3 px-10 rounded-lg w-full">挑戦開始</button>
+                        <p class="text-xs text-gray-400 mt-2">現在の最高記録+1階から開始します</p>
+                    </div>
+                    <div class="md:w-2/3 h-full glass-panel p-4 flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-center">階層達成報酬</h3>
+                        <div id="corridor-rewards-list" class="flex-grow overflow-y-auto space-y-2 pr-2">
+                            <!-- 報酬リストはJSで生成 -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        
+        <!-- 聖遺物画面 -->
+        <div id="relic-screen" class="screen">
+             <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 class="text-3xl font-orbitron">聖遺物</h2></header>
+                <main class="w-full flex-grow flex flex-col md:flex-row gap-4 overflow-hidden">
+                    <div class="md:w-1/3 h-full glass-panel p-4 flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-center">装備中の聖遺物</h3>
+                        <div id="equipped-relics-container" class="grid grid-cols-2 gap-4 flex-grow"></div>
+                        <div id="active-set-bonus-container" class="mt-4 glass-panel p-3"></div>
+                    </div>
+                    <div class="md:w-2/3 h-full glass-panel p-4 flex flex-col">
+                        <div class="flex items-center justify-between mb-2">
+                           <h3 class="text-xl font-bold text-center">所持聖遺物</h3>
+                           <div id="relic-filter-buttons" class="flex gap-1"></div>
+                        </div>
+                        <div id="relic-inventory-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 overflow-y-auto"></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- 戦闘画面 -->
+        <div id="battle-screen" class="screen items-center justify-center p-4">
+            <div class="w-full h-full flex flex-col glass-panel p-6">
+                <div id="battle-header" class="h-8 text-center text-2xl font-orbitron text-yellow-400"></div>
+                <div id="turn-order-display" class="h-16 w-full flex justify-center items-center gap-2 mb-2"></div>
+                <div id="enemy-area" class="flex-grow flex justify-around items-center"></div>
+                <div id="party-shield-bar-container" class="w-full my-2"></div>
+                <div id="battle-log" class="h-24 bg-black bg-opacity-50 rounded-lg p-2 my-2 overflow-y-auto text-sm"></div>
+                <div id="party-buff-display" class="h-6 text-center font-bold"></div>
+                <div id="player-area" class="flex justify-around items-center"></div>
+                <div id="command-area" class="h-40 mt-4 flex justify-between items-center">
+                    <div id="character-status-area" class="w-2/5 h-full flex flex-col justify-around"></div>
+                    <div class="w-3/5 h-full flex flex-col items-center justify-center space-y-2">
+                         <div id="action-point-display" class="flex items-center gap-1 text-2xl font-orbitron mb-2"></div>
+                         <div id="action-buttons-area" class="w-full flex flex-col items-center justify-center space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ガチャ画面 -->
+        <div id="gacha-screen" class="screen items-center justify-center">
+             <div class="w-full h-full flex flex-col p-4">
+                <header class="w-full flex justify-between items-center mb-4"><button class="back-to-hub btn-secondary px-4 py-2 rounded-lg">&lt; 司令室へ</button><h2 class="text-3xl font-orbitron">降臨システム</h2></header>
+                <main class="w-full flex-grow glass-panel flex flex-col items-center justify-around p-8">
+                    <p class="text-xl">降臨チケット: <span id="gacha-tickets-display"></span>枚</p>
+                    <div class="flex w-full gap-4">
+                        <div class="w-1/2 flex flex-col items-center glass-panel p-4">
+                            <h3 class="text-2xl font-orbitron mb-4">戦士降臨</h3>
+                            <p class="text-center text-sm mb-4"><span class="rarity-6">★6: 0.2%</span> / <span class="rarity-5">★5: 2%</span> / <span class="rarity-4">★4: 10%</span></p>
+                            <div class="w-full grid grid-cols-1 gap-2">
+                                <button data-gacha-type="character" data-gacha-count="1" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">1回降臨</button>
+                                <button data-gacha-type="character" data-gacha-count="10" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">10回降臨</button>
+                                <button data-gacha-type="character" data-gacha-count="100" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">100回降臨</button>
+                            </div>
+                        </div>
+                        <div class="w-1/2 flex flex-col items-center glass-panel p-4">
+                            <h3 class="text-2xl font-orbitron mb-4">兵装顕現</h3>
+                            <p class="text-center text-sm mb-4"><span class="rarity-6">★6: 0.3%</span> / <span class="rarity-5">★5: 3%</span> / <span class="rarity-4">★4: 15%</span></p>
+                            <div class="w-full grid grid-cols-1 gap-2">
+                                <button data-gacha-type="weapon" data-gacha-count="1" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">1回顕現</button>
+                                <button data-gacha-type="weapon" data-gacha-count="10" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">10回顕現</button>
+                                <button data-gacha-type="weapon" data-gacha-count="100" class="gacha-btn btn-primary font-bold text-lg py-2 px-6 rounded-lg">100回顕現</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        
+        <!-- エンディング画面 -->
+        <div id="ending-screen" class="screen items-center justify-center text-center p-8">
+            <div id="ending-content" class="glass-panel p-8 max-w-3xl"><h2 id="ending-title" class="text-4xl font-orbitron mb-6"></h2><p id="ending-text" class="text-lg leading-relaxed mb-8"></p><button class="back-to-hub btn-primary px-6 py-3 rounded-lg">記録を閉じる</button></div>
+        </div>
+
+        <!-- モーダル群 -->
+        <div id="character-detail-modal" class="modal hidden"><div class="glass-panel w-11/12 max-w-4xl h-5/6 p-6 rounded-lg flex flex-col"><div id="character-detail-content" class="flex-grow overflow-y-auto"></div><button id="close-character-detail-btn" class="btn-secondary mt-4 py-2 px-4 rounded-lg self-center">閉じる</button></div></div>
+        <div id="equipment-select-modal" class="modal hidden"><div class="glass-panel w-11/12 max-w-3xl h-4/6 p-6 rounded-lg flex flex-col"><h3 class="text-2xl font-bold mb-4 text-center font-orbitron">装備選択</h3><div id="equipment-select-list" class="flex-grow overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div><button id="close-equipment-select-btn" class="btn-secondary mt-4 py-2 px-6 rounded-lg self-center">閉じる</button></div></div>
+        <div id="equipment-detail-modal" class="modal hidden"><div class="glass-panel w-11/12 max-w-lg p-6 rounded-lg flex flex-col"><div id="equipment-detail-content" class="flex-grow overflow-y-auto"></div><div id="equipment-detail-buttons" class="flex justify-center gap-4 mt-4"></div></div></div>
+        <div id="relic-detail-modal" class="modal hidden"><div class="glass-panel w-11/12 max-w-lg p-6 rounded-lg flex flex-col"><div id="relic-detail-content" class="flex-grow overflow-y-auto"></div><div id="relic-detail-buttons" class="flex justify-center gap-4 mt-4"></div></div></div>
+        <div id="gacha-result-modal" class="modal hidden"><div class="glass-panel w-11/12 max-w-4xl h-5/6 p-6 rounded-lg flex flex-col"><h3 class="text-2xl font-bold mb-4 text-center font-orbitron">降臨結果</h3><div id="gacha-result-list" class="flex-grow overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div><button id="close-gacha-result-btn" class="btn-primary mt-4 py-2 px-6 rounded-lg self-center">確認</button></div></div>
+        <div id="message-modal" class="modal hidden"><div class="glass-panel p-8 rounded-lg text-center max-w-sm"><p id="message-text" class="mb-6 text-lg"></p><button id="message-ok-btn" class="btn-primary px-6 py-2 rounded-lg">OK</button></div></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const screens = document.querySelectorAll('.screen');
+        const messageModal = document.getElementById('message-modal');
+        const messageText = document.getElementById('message-text');
+        const characterDetailModal = document.getElementById('character-detail-modal');
+        const equipmentSelectModal = document.getElementById('equipment-select-modal');
+        const equipmentDetailModal = document.getElementById('equipment-detail-modal');
+        const gachaResultModal = document.getElementById('gacha-result-modal');
+        const relicDetailModal = document.getElementById('relic-detail-modal');
+
+
+        // --- ゲームデータマスター ---
+        const GAME_DATA = {
+            ATTRIBUTES: {
+                erosion: { name: '侵食', symbol: '☣️', colorClass: 'attr-erosion' }, void: { name: '虚無', symbol: '🌌', colorClass: 'attr-void' },
+                quantum: { name: '量子', symbol: '⚛️', colorClass: 'attr-quantum' }, causality: { name: '因果', symbol: '⚖️', colorClass: 'attr-causality' },
+            },
+            ROLES: {
+                attacker: { name: 'アタッカー', symbol: '⚔️' }, shielder: { name: 'シールダー', symbol: '🛡️' },
+                attack_buffer: { name: '攻撃力バッファー', symbol: '✨' }, healer: { name: 'ヒーラー', symbol: '❤️' },
+                ultimate_buffer: { name: '終焉バッファー', symbol: '⌛' }, speed_buffer: { name: '速度バッファー', symbol: '🚀' }, ap_buffer: { name: 'APバッファー', symbol: '🔋' },
+            },
+            ATTACKER_TYPES: {
+                conventional: { name: '従来型' },
+                normal_enhance: { name: '通常攻撃強化型' },
+                ultimate_special: { name: '終焉開放型' },
+                gauge_flexible: { name: 'ゲージ解放型' }
+            },
+            RARITY: {
+                3: { name: 'Rare', colorClass: 'rarity-3' }, 4: { name: 'Epic', colorClass: 'rarity-4' }, 5: { name: 'Legendary', colorClass: 'rarity-5' },
+                6: { name: 'Mythic', colorClass: 'rarity-6' }
+            },
+            CHARACTERS: {
+                c001: { name: 'アレス', symbol: '⚔️', rarity: 4, attribute: 'erosion', role: 'attacker', attackerType: 'normal_enhance', hp: 100, atk: 40, spd: 50, skills: { otherworld: { name: 'レイジングアサルト', cost: 1, effect: { type: 'self_buff', buffTarget: 'normal_attack', power: 2.5, duration: 3 }, desc: "次の3ターン、通常攻撃を大幅に強化する。" }, ultimate: { name: 'バーミリオンエッジ', cost: 100, effect: { type: 'damage', power: 3.0, target: 'all' }, desc: "敵全体に強力なダメージを与える。" } }, potentials: [ { name: "闘争本能", desc: "自身のHPが50%以下の時、与えるダメージが20%増加する。", unlock: { level: 40 }, effect: { type: 'conditional_damage_buff', threshold: 0.5, multiplier: 1.2 } } ] },
+                c002: { name: 'アルテミス', symbol: '🏹', rarity: 4, attribute: 'quantum', role: 'attacker', attackerType: 'gauge_flexible', hp: 90, atk: 45, spd: 60, skills: { otherworld: { name: 'クイックショット', cost: 1, effect: { type: 'damage', power: 1.5 }, desc: "敵単体に素早い一撃を放つ。" }, ultimate: { name: 'ムーンライトジャッジメント', cost: 100, effect: { type: 'damage', power: 3.5 }, desc: "ゲージを全て消費し、量に応じたダメージを与える。" } }, potentials: [ { name: "月光の加護", desc: "自身のHPが満タンの時、速度が20%増加する。", unlock: { limitBreak: 1 }, effect: { type: 'conditional_stat_buff', stat: 'spd', multiplier: 1.2 } } ] },
+                c003: { name: 'ヘルメス', symbol: '🕊️', rarity: 4, attribute: 'void', role: 'attack_buffer', hp: 120, atk: 25, spd: 40, skills: { otherworld: { name: 'スピードフォース', cost: 1, effect: { type: 'buff', buffType: 'damage', multiplier: 1.3, dupeBonus: 0.05, duration: 2, target: 'party' } }, ultimate: { name: 'クロノブースト', cost: 110, effect: { type: 'buff', buffType: 'damage', multiplier: 1.7, dupeBonus: 0.1, duration: 3, target: 'party' } } }, potentials: [ { name: "神速", desc: "戦闘開始時、味方全体の速度を1ターン15%上昇させる。", unlock: { level: 40 }, effect: { type: 'battle_start_buff', buffType: 'speed', multiplier: 1.15, duration: 1, target: 'party' } } ] },
+                c004: { name: 'ゼウス', symbol: '⚡️', rarity: 5, attribute: 'quantum', role: 'attacker', attackerType: 'conventional', hp: 200, atk: 100, spd: 85, skills: { otherworld: { name: 'サンダーボルト', cost: 1, effect: { type: 'damage', power: 1.9 }, desc: "敵単体に強力な雷撃を放つ。" }, ultimate: { name: 'クロノドライブ', cost: 120, effect: { type: 'damage', power: 3.8, target: 'all' }, desc: "敵全体に時空を歪めるほどのダメージを与える。" } }, potentials: [ { name: "神々の王", desc: "パーティにいるだけで味方全体の攻撃力が5%上昇する。", unlock: { limitBreak: 2 }, effect: { type: 'party_passive_stat_buff', stat: 'atk', multiplier: 1.05 } } ] },
+                c005: { name: 'ハデス', symbol: '💀', rarity: 5, attribute: 'void', role: 'shielder', hp: 280, atk: 55, spd: 60, skills: { otherworld: { name: 'ソウルガード', cost: 1, effect: { type: 'shield', power: 1.2, target: 'party' } }, ultimate: { name: 'タナトスウォール', cost: 120, effect: { type: 'shield', power: 1.8, target: 'party' } } }, potentials: [ { name: "冥王の権威", desc: "自身にシールドがある時、攻撃力が30%上昇する。", unlock: { level: 50 }, effect: { type: 'conditional_stat_buff', stat: 'atk', multiplier: 1.3 } } ] },
+                c006: { name: 'アポロン', symbol: '☀️', rarity: 5, attribute: 'erosion', role: 'healer', hp: 230, atk: 65, spd: 75, skills: { otherworld: { name: 'ヒーリングライト', cost: 1, effect: { type: 'heal', power: 0.5, target: 'party' } }, ultimate: { name: 'ソーラーグレイス', cost: 120, effect: { type: 'heal', power: 1.0, target: 'party' } } }, potentials: [ { name: "光明", desc: "回復スキルの効果が15%上昇する。", unlock: { limitBreak: 1 }, effect: { type: 'heal_power_buff', multiplier: 1.15 } } ] },
+                c007: { name: 'クロノス', symbol: '⏳', rarity: 6, attribute: 'quantum', role: 'attack_buffer', hp: 400, atk: 130, spd: 110, skills: { otherworld: { name: 'タイムアクセル', cost: 2, effect: { type: 'buff', buffType: 'damage', multiplier: 1.8, dupeBonus: 0.1, duration: 3, target: 'party' } }, ultimate: { name: 'ジェネシス・ゼロ', cost: 200, effect: { type: 'buff', buffType: 'damage', multiplier: 3.0, dupeBonus: 0.15, duration: 3, target: 'party' } } }, potentials: [ { name: "時の支配者", desc: "戦闘開始時、自身の終焉ゲージを50チャージする。", unlock: { limitBreak: 2 }, effect: { type: 'battle_start_self_gauge', amount: 50 } } ] },
+                c008: { name: 'カオス', symbol: '🌀', rarity: 6, attribute: 'erosion', role: 'attacker', attackerType: 'ultimate_special', hp: 450, atk: 160, spd: 95, skills: { otherworld: { name: 'ディメンションブレイク', cost: 1, effect: { type: 'damage', power: 2.5 }, desc: "敵単体に次元を切り裂く一撃を与える。" }, ultimate: { name: 'ゼロディメンション', cost: 200, effect: { type: 'self_buff', buffTarget: 'otherworld_attack', power: 1.5, duration: 3, isFree: true }, desc: "次の3ターン、AP消費なしで強化された異界攻撃を放つ。" } }, potentials: [ { name: "混沌の深淵", desc: "攻撃時、10%の確率で敵の防御力を1ターン無視する。", unlock: { limitBreak: 3 }, effect: { type: 'on_attack_ignore_def', chance: 0.1 } } ] },
+                c009: { name: 'ニクス', symbol: '🌙', rarity: 6, attribute: 'void', role: 'shielder', hp: 550, atk: 110, spd: 90, skills: { otherworld: { name: 'エターナルナイト', cost: 1, effect: { type: 'shield', power: 1.5, target: 'party' } }, ultimate: { name: 'エンプティ・ゴッド', cost: 200, effect: { type: 'shield', power: 2.5, target: 'party' } } }, potentials: [ { name: "夜の帳", desc: "戦闘開始時、味方全体に自身の最大HPの10%分のシールドを付与する。", unlock: { limitBreak: 1 }, effect: { type: 'battle_start_shield', power: 0.1 } } ] },
+                c010: { name: 'アテナ', symbol: '🦉', rarity: 5, attribute: 'causality', role: 'shielder', hp: 260, atk: 60, spd: 70, skills: { otherworld: { name: '絶対防御', cost: 1, effect: { type: 'shield', power: 1.6, target: 'party' } }, ultimate: { name: 'パルテノン・ジャッジ', cost: 130, effect: { type: 'shield', power: 2.5, target: 'party' } } }, potentials: [ { name: "戦略的思考", desc: "自身がダメージを受けた時、15%の確率で自身の終焉ゲージを20チャージする。", unlock: { level: 50 }, effect: { type: 'on_hit_gauge_charge', chance: 0.15, amount: 20 } } ] },
+                c011: { name: 'ポセイドン', symbol: '🔱', rarity: 6, attribute: 'causality', role: 'attacker', attackerType: 'ultimate_special', hp: 500, atk: 155, spd: 100, skills: { otherworld: { name: 'トライデントタイド', cost: 1, effect: { type: 'damage', power: 2.2 }, desc: "敵単体に激流の一撃を叩き込む。" }, ultimate: { name: 'マエルストロム', cost: 210, effect: { type: 'self_buff', buffTarget: 'otherworld_attack', power: 1.4, duration: 3, isFree: true }, desc: "次の3ターン、AP消費なしで強化された異界攻撃を放つ。" } }, potentials: [ { name: "大海の主", desc: "自身のHPが80%以上の時、攻撃力が25%上昇する。", unlock: { limitBreak: 1 }, effect: { type: 'conditional_stat_buff', stat: 'atk', multiplier: 1.25 } } ] },
+                c012: { name: 'ヘファイストス', symbol: '🔨', rarity: 4, attribute: 'erosion', role: 'shielder', hp: 130, atk: 32, spd: 30, skills: { otherworld: { name: 'クラフトシールド', cost: 1, effect: { type: 'shield', power: 1.0, target: 'party' } }, ultimate: { name: 'ボルカニックガード', cost: 100, effect: { type: 'shield', power: 1.8, target: 'party' } } }, potentials: [ { name: "職人の魂", desc: "付与するシールドの効果が20%上昇する。", unlock: { level: 40 }, effect: { type: 'shield_power_buff', multiplier: 1.2 } } ] },
+                c013: { name: 'アフロディーテ', symbol: '🌹', rarity: 4, attribute: 'causality', role: 'healer', hp: 110, atk: 28, spd: 55, skills: { otherworld: { name: 'チャームウィンク', cost: 1, effect: { type: 'heal', power: 0.5, target: 'party' } }, ultimate: { name: 'エターナルラブ', cost: 100, effect: { type: 'heal', power: 1.0, target: 'party' } } }, potentials: [ { name: "美の女神", desc: "ターン開始時、最もHPが低い味方1人のHPを自身の攻撃力の50%分回復する。", unlock: { limitBreak: 1 }, effect: { type: 'turn_start_heal', power: 0.5 } } ] },
+                c014: { name: 'オーディン', symbol: '👁️', rarity: 6, attribute: 'causality', role: 'attacker', attackerType: 'conventional', hp: 420, atk: 175, spd: 105, skills: { otherworld: { name: 'グングニル', cost: 1, effect: { type: 'damage', power: 2.8 }, desc: "敵単体を貫く必中の一撃。" }, ultimate: { name: 'ラグナロク', cost: 220, effect: { type: 'damage', power: 5.5, target: 'all' }, desc: "敵全体に終末をもたらす攻撃。" } }, potentials: [ { name: "ルーンの叡智", desc: "パーティにいるだけで味方全体の終焉ゲージ獲得量が5%上昇する。", unlock: { limitBreak: 3 }, effect: { type: 'party_passive_gauge_buff', multiplier: 1.05 } } ] },
+                c015: { name: 'トール', symbol: '🔨⚡️', rarity: 5, attribute: 'quantum', role: 'attacker', attackerType: 'gauge_flexible', hp: 280, atk: 105, spd: 80, skills: { otherworld: { name: 'ミョルニル', cost: 1, effect: { type: 'damage', power: 2.0 }, desc: "敵単体に鉄槌を振り下ろす。" }, ultimate: { name: 'ラグナロクブレイカー', cost: 130, effect: { type: 'damage', power: 5.0, target: 'all' }, desc: "ゲージを全て消費し、量に応じたダメージを敵全体に与える。" } }, potentials: [ { name: "雷神の憤怒", desc: "攻撃時、20%の確率で追加で攻撃力の50%分のダメージを与える。", unlock: { limitBreak: 2 }, effect: { type: 'on_attack_extra_damage', chance: 0.2, power: 0.5 } } ] },
+                c016: { name: 'ロキ', symbol: '🐍', rarity: 5, attribute: 'void', role: 'attack_buffer', hp: 220, atk: 70, spd: 90, skills: { otherworld: { name: '幻影の囁き', cost: 1, effect: { type: 'buff', buffType: 'damage', multiplier: 1.6, dupeBonus: 0.08, duration: 3, target: 'party' } }, ultimate: { name: 'トリックデスター', cost: 125, effect: { type: 'buff', buffType: 'damage', multiplier: 2.2, dupeBonus: 0.12, duration: 3, target: 'party' } } }, potentials: [ { name: "トリックスター", desc: "自身が付与するバフの効果ターンが1延長される。", unlock: { level: 50 }, effect: { type: 'buff_duration_increase', amount: 1 } } ] },
+                c017: { name: 'アマテラス', symbol: '⛩️', rarity: 6, attribute: 'causality', role: 'healer', hp: 520, atk: 125, spd: 98, skills: { otherworld: { name: '天岩戸の光', cost: 1, effect: { type: 'heal', power: 0.6, target: 'party' } }, ultimate: { name: '八咫鏡の裁き', cost: 210, effect: { type: 'heal', power: 1.2, target: 'party' } } }, potentials: [ { name: "太陽神", desc: "自身が戦闘不能になった時、一度だけHP50%で復活する。", unlock: { limitBreak: 4 }, effect: { type: 'self_revive', hp_percent: 0.5 } } ] },
+                c018: { name: 'スサノオ', symbol: '🌪️', rarity: 5, attribute: 'erosion', role: 'attacker', attackerType: 'normal_enhance', hp: 260, atk: 110, spd: 88, skills: { otherworld: { name: '剣の舞', cost: 1, effect: { type: 'self_buff', buffTarget: 'normal_attack', power: 2.8, duration: 2 }, desc: "次の2ターン、通常攻撃を極度に強化する。" }, ultimate: { name: '天羽々斬', cost: 135, effect: { type: 'damage', power: 4.2 }, desc: "敵単体に渾身の力を込めた斬撃を放つ。" } }, potentials: [ { name: "荒ぶる神", desc: "敵を倒した時、自身のAPを1回復する。", unlock: { limitBreak: 2 }, effect: { type: 'on_kill_ap_gain', amount: 1 } } ] },
+                c019: { name: 'ラー', symbol: '𓂀', rarity: 6, attribute: 'quantum', role: 'attacker', attackerType: 'conventional', hp: 410, atk: 180, spd: 115, skills: { otherworld: { name: '太陽風', cost: 2, effect: { type: 'damage', power: 2.5, target: 'all' }, desc: "敵全体に灼熱の風を浴びせる。" }, ultimate: { name: 'アトゥムの創造', cost: 200, effect: { type: 'damage', power: 5.2, target: 'all' }, desc: "敵全体を焼き尽くす原初の光を放つ。" } }, potentials: [ { name: "創造主", desc: "パーティにいるだけで味方全体のHPが5%上昇する。", unlock: { limitBreak: 1 }, effect: { type: 'party_passive_stat_buff', stat: 'hp', multiplier: 1.05 } } ] },
+                c020: { name: 'アヌビス', symbol: '⚖️🐺', rarity: 5, attribute: 'void', role: 'healer', hp: 300, atk: 65, spd: 72, skills: { otherworld: { name: '魂の天秤', cost: 1, effect: { type: 'heal', power: 0.4, target: 'party' } }, ultimate: { name: '冥府の再生', cost: 120, effect: { type: 'heal', power: 0.8, target: 'party' } } }, potentials: [ { name: "魂の導き手", desc: "HPが50%以下の味方を回復する時、回復量が30%増加する。", unlock: { level: 50 }, effect: { type: 'conditional_heal_buff', threshold: 0.5, multiplier: 1.3 } } ] },
+                c021: { name: 'クトゥルフ', symbol: '🐙', rarity: 6, attribute: 'erosion', role: 'shielder', hp: 650, atk: 105, spd: 85, skills: { otherworld: { name: '深淵の呼び声', cost: 2, effect: { type: 'shield', power: 1.5, target: 'party' } }, ultimate: { name: 'ルルイエ浮上', cost: 250, effect: { type: 'shield', power: 2.8, target: 'party' } } }, potentials: [ { name: "狂気の先触れ", desc: "敵全体にターン終了時、クトゥルフの最大HPの5%分のダメージを与える。", unlock: { limitBreak: 4 }, effect: { type: 'end_of_turn_dot', power: 0.05, target: 'all_enemies' } } ] },
+                c022: { name: 'ヘカテー', symbol: '🗝️', rarity: 4, attribute: 'void', role: 'ap_buffer', hp: 115, atk: 30, spd: 45, skills: { otherworld: { name: '魔力の源泉', cost: 1, effect: { type: 'ap_gain', amount: 2 } }, ultimate: { name: 'トリプル・チャージ', cost: 100, effect: { type: 'ap_gain', amount: 3 } } }, potentials: [ { name: "魔術の女王", desc: "戦闘開始時、APを1獲得する。", unlock: { level: 40 }, effect: { type: 'battle_start_ap_gain', amount: 1 } } ] },
+                c023: { name: 'イリス', symbol: '🌈', rarity: 4, attribute: 'quantum', role: 'ultimate_buffer', hp: 125, atk: 28, spd: 52, skills: { otherworld: { name: '虹の架け橋', cost: 1, effect: { type: 'ultimate_gauge_charge', amount: 20, target: 'party' } }, ultimate: { name: 'プリズム・フラッド', cost: 100, effect: { type: 'ultimate_gauge_charge', amount: 40, target: 'party' } } }, potentials: [ { name: "伝令神", desc: "自身が行動した後、10%の確率で再度行動する。", unlock: { limitBreak: 1 }, effect: { type: 'action_extra_turn', chance: 0.1 } } ] },
+                c024: { name: 'アイオロス', symbol: '💨', rarity: 4, attribute: 'erosion', role: 'speed_buffer', hp: 100, atk: 33, spd: 65, skills: { otherworld: { name: '追い風', cost: 1, effect: { type: 'buff', buffType: 'speed', multiplier: 1.2, dupeBonus: 0.02, duration: 2, target: 'party' } }, ultimate: { name: '暴風陣', cost: 110, effect: { type: 'buff', buffType: 'speed', multiplier: 1.4, dupeBonus: 0.05, duration: 2, target: 'party' } } }, potentials: [ { name: "風の王", desc: "パーティの速度が最も速い。", unlock: { level: 40 }, effect: { type: 'always_fastest' } } ] },
+                c025: { name: 'ウラノス', symbol: '🌌', rarity: 5, attribute: 'void', role: 'ap_buffer', hp: 220, atk: 60, spd: 70, skills: { otherworld: { name: '星々の息吹', cost: 1, effect: { type: 'ap_gain', amount: 3 } }, ultimate: { name: 'ギャラクシー・フロー', cost: 130, effect: { type: 'ap_gain', amount: 4 } } }, potentials: [ { name: "天空神", desc: "ターン開始時、25%の確率でAPを1獲得する。", unlock: { level: 50 }, effect: { type: 'turn_start_ap_gain', chance: 0.25, amount: 1 } } ] },
+                c026: { name: 'モイラ', symbol: '🕸️', rarity: 5, attribute: 'causality', role: 'ultimate_buffer', hp: 250, atk: 55, spd: 75, skills: { otherworld: { name: '運命の糸車', cost: 1, effect: { type: 'ultimate_gauge_charge', amount: 30, target: 'party' } }, ultimate: { name: '終焉への紡ぎ歌', cost: 120, effect: { type: 'ultimate_gauge_charge', amount: 60, target: 'party' } } }, potentials: [ { name: "運命の三女神", desc: "パーティにいるだけで味方全体の受けるダメージを5%軽減する。", unlock: { limitBreak: 2 }, effect: { type: 'party_passive_damage_reduction', multiplier: 0.95 } } ] },
+                c027: { name: 'ヤヌス', symbol: '🚪', rarity: 5, attribute: 'quantum', role: 'speed_buffer', hp: 210, atk: 65, spd: 92, skills: { otherworld: { name: '未来への扉', cost: 1, effect: { type: 'buff', buffType: 'speed', multiplier: 1.3, dupeBonus: 0.03, duration: 3, target: 'party' } }, ultimate: { name: '二つの顔の加速', cost: 125, effect: { type: 'buff', buffType: 'speed', multiplier: 1.6, dupeBonus: 0.06, duration: 3, target: 'party' } } }, potentials: [ { name: "始まりと終わり", desc: "戦闘の最初のターンと5ターン毎に、味方全体のAPを1回復する。", unlock: { limitBreak: 1 }, effect: { type: 'turn_based_ap_gain', turn_interval: 5, amount: 1 } } ] },
+                c028: { name: 'プロメテウス', symbol: '🔥', rarity: 6, attribute: 'erosion', role: 'ap_buffer', hp: 430, atk: 120, spd: 95, skills: { otherworld: { name: '神々の火', cost: 1, effect: { type: 'ap_gain', amount: 4 } }, ultimate: { name: '無限の叡智', cost: 200, effect: { type: 'ap_max_up', amount: 1 } } }, potentials: [ { name: "人類の恩人", desc: "パーティにいるだけで、戦闘で獲得する資源が10%増加する。", unlock: { limitBreak: 1 }, effect: { type: 'resource_gain_buff', multiplier: 1.1 } } ] },
+                c029: { name: 'メティス', symbol: '💡', rarity: 6, attribute: 'causality', role: 'ultimate_buffer', hp: 480, atk: 115, spd: 105, skills: { otherworld: { name: '閃光の啓示', cost: 1, effect: { type: 'ultimate_gauge_charge', amount: 50, target: 'party' } }, ultimate: { name: 'アテナの誕生', cost: 210, effect: { type: 'ultimate_gauge_charge', amount: 100, target: 'party' } } }, potentials: [ { name: "叡智の女神", desc: "パーティにいるだけで、戦闘で獲得するチケットが5%増加する。", unlock: { limitBreak: 2 }, effect: { type: 'ticket_gain_buff', multiplier: 1.05 } } ] },
+                c030: { name: 'ヘルメス・トリスメギストス', symbol: '📜', rarity: 6, attribute: 'void', role: 'speed_buffer', hp: 410, atk: 130, spd: 120, skills: { otherworld: { name: 'エメラルド・タブレット', cost: 1, effect: { type: 'buff', buffType: 'speed', multiplier: 1.5, dupeBonus: 0.05, duration: 3, target: 'party' } }, ultimate: { name: '超越のヘルメス主義', cost: 220, effect: { type: 'buff', buffType: 'speed', multiplier: 2.0, dupeBonus: 0.1, duration: 3, target: 'party' } } }, potentials: [ { name: "唯一神", desc: "パーティに3人以上の虚無属性がいる時、自身の全能力が15%上昇する。", unlock: { limitBreak: 3 }, effect: { type: 'attribute_synergy_buff', attribute: 'void', threshold: 3, multiplier: 1.15 } } ] },
+                c031: { name: 'ランスロット', symbol: '🛡️⚔️', rarity: 5, attribute: 'quantum', role: 'attacker', attackerType: 'normal_enhance', hp: 290, atk: 100, spd: 82, skills: { otherworld: { name: '湖光の剣閃', cost: 1, effect: { type: 'self_buff', buffTarget: 'normal_attack', power: 2.2, duration: 2}, desc: "次の2ターン、通常攻撃を強化する。" }, ultimate: { name: 'アロンダイト・オーバーロード', cost: 130, effect: { type: 'damage', power: 4.5 }, desc: "敵単体に騎士の全てを込めた一撃を放つ。" } }, potentials: [ { name: "湖の騎士", desc: "パーティに女性がいる場合、自身の攻撃力が15%上昇する。", unlock: { level: 50 }, effect: { type: 'gender_synergy_buff' } } ] },
+                c032: { name: 'マーリン', symbol: '🧙‍♂️', rarity: 6, attribute: 'causality', role: 'attack_buffer', hp: 420, atk: 140, spd: 112, skills: { otherworld: { name: '英雄創造', cost: 1, effect: { type: 'buff', buffType: 'damage', multiplier: 1.9, dupeBonus: 0.1, duration: 3, target: 'party' } }, ultimate: { name: 'アヴァロンの園', cost: 210, effect: { type: 'buff', buffType: 'damage', multiplier: 3.5, dupeBonus: 0.15, duration: 2, target: 'party' } } }, potentials: [ { name: "花の魔術師", desc: "ターン終了時、10%の確率で自身の終焉ゲージを100チャージする。", unlock: { limitBreak: 2 }, effect: { type: 'turn_end_self_gauge', chance: 0.1, amount: 100 } } ] },
+                c033: { name: 'ギルガメッシュ', symbol: '👑', rarity: 6, attribute: 'causality', role: 'attacker', attackerType: 'conventional', hp: 460, atk: 185, spd: 108, skills: { otherworld: { name: '王の財宝', cost: 2, effect: { type: 'damage', power: 2.0, target: 'all' }, desc: "宝物庫の武具を放ち、敵全体を攻撃する。" }, ultimate: { name: '天地乖離す開闢の星', cost: 230, effect: { type: 'damage', power: 6.0, target: 'all' }, desc: "乖離剣エアが空間を断裂させ、敵全体に絶対的なダメージを与える。" } }, potentials: [ { name: "人類最古の英雄王", desc: "パーティにいるだけで、味方全体の聖遺物の効果が10%上昇する。", unlock: { limitBreak: 4 }, effect: { type: 'relic_power_buff', multiplier: 1.1 } } ] },
+                c034: { name: 'クー・フーリン', symbol: '🩸', rarity: 5, attribute: 'erosion', role: 'attacker', attackerType: 'gauge_flexible', hp: 270, atk: 115, spd: 95, skills: { otherworld: { name: '刺し穿つ死棘の槍', cost: 1, effect: { type: 'damage', power: 2.2 }, desc: "敵単体に心臓を穿つ一撃を放つ。" }, ultimate: { name: '突き穿つ死翔の槍', cost: 125, effect: { type: 'damage', power: 5.2, target: 'all' }, desc: "ゲージを全て消費し、因果を逆転させる槍を敵全体に投げ放つ。" } }, potentials: [ { name: "戦闘続行", desc: "HPが0になるダメージを受けた時、一度だけHP1で耐える。", unlock: { limitBreak: 2 }, effect: { type: 'guts' } } ] },
+                c035: { name: 'シヴァ', symbol: '🕉️', rarity: 6, attribute: 'erosion', role: 'attacker', attackerType: 'conventional', hp: 500, atk: 170, spd: 100, skills: { otherworld: { name: '第三の目', cost: 1, effect: { type: 'damage', power: 2.9 }, desc: "敵単体を焼き尽くす破壊の視線。" }, ultimate: { name: 'マハープララヤ', cost: 220, effect: { type: 'damage', power: 5.8, target: 'all' }, desc: "世界を終焉させ再生させる、宇宙的な規模の破壊を敵全体にもたらす。" } }, potentials: [ { name: "破壊神", desc: "敵を倒した時、自身の終焉ゲージを50チャージする。", unlock: { limitBreak: 3 }, effect: { type: 'on_kill_self_gauge', amount: 50 } } ] },
+                c036: { name: '孫悟空', symbol: '🐒', rarity: 6, attribute: 'quantum', role: 'attacker', attackerType: 'normal_enhance', hp: 440, atk: 165, spd: 118, skills: { otherworld: { name: '如意金箍棒', cost: 1, effect: { type: 'self_buff', buffTarget: 'normal_attack', power: 2.0, duration: 3 }, desc: "次の3ターン、伸縮自在の如意棒で通常攻撃を強化する。" }, ultimate: { name: '大鬧天宮', cost: 200, effect: { type: 'damage', power: 5.0, target: 'all' }, desc: "天界を騒がせた伝説の戦いを再現し、敵全体を蹂躙する。" } }, potentials: [ { name: "斉天大聖", desc: "HPが0になるダメージを受けた時、HP1で耐え、自身の攻撃力を2ターン50%上昇させる。", unlock: { limitBreak: 4 }, effect: { type: 'guts_and_buff', buffType: 'damage', multiplier: 1.5, duration: 2 } } ] },
+                c037: { name: 'ベールゼブブ', symbol: '蝿', rarity: 6, attribute: 'void', role: 'attacker', attackerType: 'ultimate_special', hp: 470, atk: 175, spd: 102, skills: { otherworld: { name: '万魔の言霊', cost: 1, effect: { type: 'damage', power: 2.4 }, desc: "敵単体に呪いの言葉を浴びせる。" }, ultimate: { name: '虚空の王', cost: 210, effect: { type: 'self_buff', buffTarget: 'otherworld_attack', power: 1.6, duration: 2, isFree: true }, desc: "次の2ターン、AP消費なしで強化された異界攻撃を放つ。" } }, potentials: [ { name: "蝿の王", desc: "攻撃時、15%の確率で敵の攻撃力を1ターン20%低下させる。", unlock: { limitBreak: 2 }, effect: { type: 'on_attack_debuff', chance: 0.15, debuff: 'atk_down', power: 0.8, duration: 1 } } ] },
+                c038: { name: 'メタトロン', symbol: '🕎', rarity: 6, attribute: 'quantum', role: 'ultimate_buffer', hp: 500, atk: 135, spd: 105, skills: { otherworld: { name: '天の書記', cost: 1, effect: { type: 'ultimate_gauge_charge', amount: 60, target: 'party' } }, ultimate: { name: 'シナイの啓示', cost: 180, effect: { type: 'ultimate_gauge_charge', amount: 120, target: 'party' } } }, potentials: [ { name: "契約の天使", desc: "パーティにいるだけで、味方全体の弱体効果への耐性が10%上昇する。", unlock: { limitBreak: 1 }, effect: { type: 'party_passive_debuff_resist', amount: 0.1 } } ] },
+                c039: { name: 'スカサハ', symbol: '🧙‍♀️', rarity: 6, attribute: 'void', role: 'attacker', attackerType: 'conventional', hp: 430, atk: 190, spd: 115, skills: { otherworld: { name: '影の国の魔槍', cost: 1, effect: { type: 'damage', power: 3.0 }, desc: "敵単体に影の国からの一撃を放つ。" }, ultimate: { name: 'ゲート・オブ・スカイ', cost: 220, effect: { type: 'damage', power: 5.5, target: 'all' }, desc: "影の国の門を開き、敵全体を異次元に引きずり込む。" } }, potentials: [ { name: "神殺し", desc: "「神」特性を持つ敵への与ダメージが30%増加する。", unlock: { limitBreak: 3 }, effect: { type: 'trait_damage_buff', trait: 'god', multiplier: 1.3 } } ] },
+                c040: { name: 'カルナ', symbol: '☀️🛡️', rarity: 5, attribute: 'causality', role: 'attacker', attackerType: 'gauge_flexible', hp: 300, atk: 120, spd: 85, skills: { otherworld: { name: '日輪よ、具足となれ', cost: 1, effect: { type: 'damage', power: 1.8 }, desc: "黄金の鎧の輝きで敵単体を攻撃。" }, ultimate: { name: '日輪よ、死に随え', cost: 140, effect: { type: 'damage', power: 6.0 }, desc: "ゲージを全て消費し、必滅の光槍を敵単体に放つ。" } }, potentials: [ { name: "施しの英雄", desc: "自身がダメージを受けた時、受けたダメージの10%分、味方全体の終焉ゲージをチャージする。", unlock: { level: 50 }, effect: { type: 'on_hit_party_gauge_charge', ratio: 0.1 } } ] },
+                c_god_erosion: { name: '侵食神', symbol: '☣️', rarity: 6, attribute: 'erosion', role: 'attacker', attackerType: 'conventional', hp: 600, atk: 170, spd: 120, skills: { otherworld: { name: 'コズミッククロー', cost: 1, effect: { type: 'damage', power: 2.8 } }, ultimate: { name: 'エクリプス・エンド', cost: 200, effect: { type: 'damage', power: 6.0, target: 'all' } } }, potentials: [] },
+                c_god_void: { name: '虚無神', symbol: '🌌', rarity: 6, attribute: 'void', role: 'shielder', hp: 800, atk: 110, spd: 110, skills: { otherworld: { name: 'ゼロフィールド', cost: 1, effect: { type: 'shield', power: 2.0, target: 'party' } }, ultimate: { name: 'イベントホライゾン', cost: 220, effect: { type: 'shield', power: 3.5, target: 'party' } } }, potentials: [] },
+                c_god_quantum: { name: '量子神', symbol: '⚛️', rarity: 6, attribute: 'quantum', role: 'attack_buffer', hp: 550, atk: 130, spd: 150, skills: { otherworld: { name: 'パラレルソート', cost: 1, effect: { type: 'buff', buffType: 'damage', multiplier: 1.9, dupeBonus: 0.1, duration: 3, target: 'party' } }, ultimate: { name: 'シンギュラリティ', cost: 240, effect: { type: 'buff', buffType: 'damage', multiplier: 3.2, dupeBonus: 0.2, duration: 4, target: 'party' } } }, potentials: [] },
+                c_god_causality: { name: '因果神', symbol: '⚖️', rarity: 6, attribute: 'causality', role: 'healer', hp: 700, atk: 120, spd: 130, skills: { otherworld: { name: 'リバース・クロニクル', cost: 1, effect: { type: 'heal', power: 0.8, target: 'party' } }, ultimate: { name: 'アカシックレコード', cost: 230, effect: { type: 'heal', power: 1.8, target: 'party' } } }, potentials: [] },
+            },
+            EQUIPMENT: {
+                w001: { name: 'ナイトソード', symbol: '🗡️', rarity: 4, type: 'weapon', stats: { atk: 15 } }, a001: { name: 'バトルアーマー', symbol: '🛡️', rarity: 4, type: 'armor', stats: { hp: 50 } },
+                w002: { name: 'ルーンブレード', symbol: '🗡️', rarity: 5, type: 'weapon', stats: { atk: 40 } }, a002: { name: 'フォースプレート', symbol: '🛡️', rarity: 5, type: 'armor', stats: { hp: 120 } },
+                w003: { name: '神殺しの剣', symbol: '🗡️', rarity: 6, type: 'weapon', stats: { atk: 80, spd: 10 } }, a003: { name: '創生の鎧', symbol: '🛡️', rarity: 6, type: 'armor', stats: { hp: 250 } },
+                w004: { name: '時空の弓', symbol: '🏹', rarity: 5, type: 'weapon', stats: { atk: 35, spd: 5 } }, a004: { name: '因果のローブ', symbol: '👘', rarity: 5, type: 'armor', stats: { hp: 100 } },
+                w005: { name: 'エクスカリバー', symbol: '⚔️✨', rarity: 6, type: 'weapon', stats: { atk: 90 } }, a005: { name: 'アイギスの盾', symbol: '🛡️✨', rarity: 6, type: 'armor', stats: { hp: 200, spd: -10 } },
+                w006: { name: 'グングニル', symbol: '☄️', rarity: 6, type: 'weapon', stats: { atk: 85, spd: 15 } }, a006: { name: 'ドラゴンメイル', symbol: '🐉', rarity: 5, type: 'armor', stats: { hp: 150, atk: 10 } },
+                w007: { name: '天叢雲剣', symbol: '🎌', rarity: 5, type: 'weapon', stats: { atk: 50, spd: 8 } }, a007: { name: '賢者の石', symbol: '💎', rarity: 6, type: 'armor', stats: { hp: 100, atk: 20, spd: 20 } },
+                w008: { name: 'アサシンダガー', symbol: '🔪', rarity: 4, type: 'weapon', stats: { atk: 10, spd: 12 } }, a008: { name: 'ミラージュベスト', symbol: '💨', rarity: 4, type: 'armor', stats: { hp: 20, spd: 8 } },
+                w009: { name: 'アロンダイト', symbol: '🗡️✨', rarity: 6, type: 'weapon', stats: { atk: 88, spd: 5 } }, a009: { name: 'ロード・キャメロット', symbol: '🏰', rarity: 6, type: 'armor', stats: { hp: 300 } },
+                w010: { name: 'ゲイ・ボルク', symbol: '⚡️', rarity: 5, type: 'weapon', stats: { atk: 60 } }, a010: { name: 'プリドゥエン', symbol: '🛡️', rarity: 5, type: 'armor', stats: { hp: 180 } },
+                w011: { name: '如意棒', symbol: '棍', rarity: 6, type: 'weapon', stats: { atk: 80, spd: 20 } }, a011: { name: 'カヴァーチャ＆クンダーラ', symbol: '☀️', rarity: 6, type: 'armor', stats: { hp: 200, atk: 20 } },
+            },
+            ENEMIES: {
+                e001: { name: '下級侵食体', attribute: 'erosion', hp: 80, atk: 20, spd: 30, ticketDrop: { rate: 0.8, amount: [5, 7] } },
+                e002: { name: '彷徨う虚無', attribute: 'void', hp: 100, atk: 15, spd: 20, ticketDrop: { rate: 0.8, amount: [5, 7] } },
+                e003: { name: '量子ノイズ', attribute: 'quantum', hp: 60, atk: 25, spd: 40, ticketDrop: { rate: 0.8, amount: [5, 7] } },
+                e004: { name: '中級侵食体', attribute: 'erosion', hp: 250, atk: 50, spd: 35, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e005: { name: 'アビスウォッチャー', attribute: 'void', hp: 300, atk: 40, spd: 30, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e006: { name: '上級量子霊', attribute: 'quantum', hp: 400, atk: 85, spd: 50, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e007: { name: '因果の残滓', attribute: 'causality', hp: 600, atk: 60, spd: 45, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e008: { name: '異形の獣', attribute: 'erosion', hp: 120, atk: 28, spd: 32, ticketDrop: { rate: 0.8, amount: [5, 7] } },
+                e009: { name: 'アンデッド兵', attribute: 'void', hp: 150, atk: 22, spd: 18, ticketDrop: { rate: 0.8, amount: [5, 7] } },
+                e010: { name: '堕天使の使い', attribute: 'quantum', hp: 550, atk: 120, spd: 55, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e011: { name: '混沌の塊', attribute: 'causality', hp: 900, atk: 80, spd: 25, ticketDrop: { rate: 1.0, amount: [7, 10] } },
+                e012: { name: '次元の歪み', attribute: 'quantum', hp: 450, atk: 70, spd: 60, ticketDrop: { rate: 0.9, amount: [7, 12] } },
+                e013: { name: '星辰の亡霊', attribute: 'void', hp: 500, atk: 65, spd: 40, ticketDrop: { rate: 0.9, amount: [7, 12] } },
+                e014: { name: '因果の捕食者', attribute: 'causality', hp: 700, atk: 90, spd: 50, ticketDrop: { rate: 0.9, amount: [7, 12] } },
+                e015: { name: 'エーテルの精霊', attribute: 'erosion', hp: 400, atk: 80, spd: 70, ticketDrop: { rate: 0.9, amount: [7, 12] } },
+                e_elite_1: { name: '侵食の精鋭', attribute: 'erosion', hp: 800, atk: 100, spd: 40, ticketDrop: { rate: 1.0, amount: [10, 15] } },
+                e_elite_2: { name: '虚無の精鋭', attribute: 'void', hp: 1000, atk: 90, spd: 35, ticketDrop: { rate: 1.0, amount: [10, 15] } },
+                e_elite_3: { name: '因果の守護者', attribute: 'causality', hp: 900, atk: 95, spd: 45, ticketDrop: { rate: 1.0, amount: [10, 15] } },
+                e_elite_4: { name: '量子の破壊者', attribute: 'quantum', hp: 750, atk: 120, spd: 65, ticketDrop: { rate: 1.0, amount: [12, 17] } },
+                e_elite_5: { name: '侵食の巨兵', attribute: 'erosion', hp: 1200, atk: 110, spd: 30, ticketDrop: { rate: 1.0, amount: [12, 17] } },
+                e_midboss_1: { name: '因果の番人', attribute: 'causality', hp: 2500, atk: 120, spd: 50, ticketDrop: { rate: 1.0, amount: [15, 20] } },
+                e_midboss_2: { name: '歪みの具現', attribute: 'causality', hp: 4000, atk: 180, spd: 60, ticketDrop: { rate: 1.0, amount: [15, 20] } },
+                e_midboss_3: { name: '時の門番', attribute: 'quantum', hp: 3500, atk: 150, spd: 80, ticketDrop: { rate: 1.0, amount: [17, 22] } },
+                e_boss_ground: { name: '因果の観測者', attribute: 'causality', hp: 1000, atk: 80, spd: 60, ticketDrop: { rate: 1.0, amount: [20, 30] } },
+                e_boss_underground: { name: '深淵の執行官', attribute: 'causality', hp: 3000, atk: 100, spd: 70, ticketDrop: { rate: 1.0, amount: [20, 30] } },
+                e_boss_heaven: { name: '天空の審判者', attribute: 'causality', hp: 12000, atk: 250, spd: 80, ticketDrop: { rate: 1.0, amount: [20, 30] } },
+                e_boss_abyss: { name: '終焉の因果律', attribute: 'causality', hp: 25000, atk: 400, spd: 90, ticketDrop: { rate: 1.0, amount: [20, 30] } },
+                god_erosion: { name: '原初の侵食神', attribute: 'erosion', symbol: '☣️', hp: 200000, atk: 1500, spd: 150, ticketDrop: { rate: 1.0, amount: [50, 75] }, rewardId: 'c_god_erosion', traits: ['god'] },
+                god_void: { name: '終末の虚無神', attribute: 'void', symbol: '🌌', hp: 250000, atk: 1400, spd: 140, ticketDrop: { rate: 1.0, amount: [50, 75] }, rewardId: 'c_god_void', traits: ['god'] },
+                god_quantum: { name: '時空の量子神', attribute: 'quantum', symbol: '⚛️', hp: 180000, atk: 1800, spd: 180, ticketDrop: { rate: 1.0, amount: [50, 75] }, rewardId: 'c_god_quantum', traits: ['god'] },
+                god_causality: { name: '万象の因果神', attribute: 'causality', symbol: '⚖️', hp: 220000, atk: 1600, spd: 160, ticketDrop: { rate: 1.0, amount: [50, 75] }, rewardId: 'c_god_causality', traits: ['god'] },
+                e_soukai_1: { name: '蒼界の斥候', attribute: 'causality', hp: 5000, atk: 300, spd: 100, ticketDrop: { rate: 1.0, amount: [12, 17] } },
+                e_soukai_2: { name: '蒼界の衛兵', attribute: 'causality', hp: 6000, atk: 280, spd: 90, ticketDrop: { rate: 1.0, amount: [12, 17] } },
+                e_elite_soukai: { name: '蒼界の精鋭', attribute: 'causality', hp: 15000, atk: 500, spd: 120, ticketDrop: { rate: 1.0, amount: [17, 22] } },
+                e_midboss_soukai: { name: '蒼界の守護者', attribute: 'causality', hp: 40000, atk: 700, spd: 110, ticketDrop: { rate: 1.0, amount: [22, 27] } },
+                e_boss_soukai: { name: '原初の因果律', attribute: 'causality', hp: 100000, atk: 900, spd: 130, ticketDrop: { rate: 1.0, amount: [30, 40] } },
+                e_boss_soukai_final: { name: '原初の混沌', attribute: 'causality', hp: 250000, atk: 1200, spd: 140, ticketDrop: { rate: 1.0, amount: [50, 100] } },
+            },
+            MAPS: {
+                ground: { name: '地上', size: 8, enemies: ['e001', 'e002', 'e008'], eliteTiles: { 18: 'e_elite_1', 35: 'e_elite_1', 43: 'e_elite_1', 52: 'e_elite_1'}, midBossTiles: {}, bossTile: 63, bossId: 'e_boss_ground' },
+                underground: { name: '地下', size: 8, enemies: ['e002', 'e004', 'e009', 'e013'], eliteTiles: { 12: 'e_elite_2', 28: 'e_elite_1', 47: 'e_elite_2', 51: 'e_elite_2' }, midBossTiles: { 20: 'e_midboss_1', 45: 'e_midboss_1' }, bossTile: 63, bossId: 'e_boss_underground' },
+                heaven: { name: '天界', size: 8, enemies: ['e003', 'e006', 'e007', 'e010', 'e012'], eliteTiles: { 10: 'e_elite_4', 22: 'e_elite_3', 36: 'e_elite_2', 49: 'e_elite_1', 58: 'e_elite_3' }, midBossTiles: { 18: 'e_midboss_2', 42: 'e_midboss_3', 55: 'e_midboss_1' }, bossTile: 63, bossId: 'e_boss_heaven' },
+                abyss: { name: '淵界', size: 8, enemies: ['e005', 'e007', 'e011', 'e014', 'e015'], eliteTiles: { 8: 'e_elite_3', 15: 'e_elite_5', 25: 'e_elite_2', 38: 'e_elite_1', 48: 'e_elite_5', 59: 'e_elite_3'}, midBossTiles: { 4: 'e_midboss_2', 29: 'e_midboss_2', 52: 'e_midboss_3' }, bossTile: 63, bossId: 'e_boss_abyss' },
+                soukai: { name: '蒼界', size: 8, enemies: ['e_soukai_1', 'e_soukai_2', 'e014'], eliteTiles: { 10: 'e_elite_soukai', 25: 'e_elite_soukai', 40: 'e_elite_soukai'}, midBossTiles: { 20: 'e_midboss_soukai', 48: 'e_boss_soukai' }, bossTile: 63, bossId: 'e_boss_soukai_final' }
+            },
+            GACHA_RATES: { 
+                character: { 6: 0.002, 5: 0.02, 4: 0.1 },
+                weapon: { 6: 0.003, 5: 0.03, 4: 0.15 }
+            },
+            LIMIT_BREAK_COSTS: [
+                { resources: 5000,  materials: { ether_crystal: 5 } }, { resources: 10000, materials: { ether_crystal: 10 } },
+                { resources: 20000, materials: { ether_crystal: 15 } }, { resources: 40000, materials: { ether_crystal: 20 } },
+                { resources: 80000, materials: { ether_crystal: 30 } }, { resources: 150000,materials: { ether_crystal: 40 } },
+                { resources: 300000,materials: { ether_crystal: 50 } }, { resources: 500000,materials: { ether_crystal: 60 } },
+                { resources: 1000000,materials:{ ether_crystal: 75 } }
+            ],
+            RELIC_SETS: {
+                warrior: { name: '戦士', symbol: '⚔️', bonus: [ { count: 2, desc: '攻撃力+15%' }, { count: 4, desc: '通常攻撃の与ダメージ+40%' } ] },
+                guardian: { name: '守護者', symbol: '🛡️', bonus: [ { count: 2, desc: 'HP+15%' }, { count: 4, desc: '付与するシールド量+20%' } ] },
+                sage: { name: '賢者', symbol: '🧙', bonus: [ { count: 2, desc: '終焉ゲージ獲得量+20%' }, { count: 4, desc: '終焉攻撃を発動後、味方全体の終焉ゲージを20回復' } ] },
+                sovereign: { name: '君主', symbol: '👑', bonus: [ { count: 2, desc: 'HP+15%' }, { count: 4, desc: '異界攻撃を発動後、味方全体のHPを10%回復' } ] },
+                berserker: { name: '狂戦士', symbol: '🩸', bonus: [ { count: 2, desc: '攻撃力+15%' }, { count: 4, desc: 'HPが50%以下の時、与ダメージ+50%' } ] },
+                cosmic: { name: '宇宙', symbol: '🌌', bonus: [ { count: 2, desc: '攻撃力+15%' }, { count: 4, desc: '速度+20%' } ] },
+                assassin: { name: '暗殺者', symbol: '🔪', bonus: [ { count: 2, desc: '速度+10%' }, { count: 4, desc: '終焉攻撃の与ダメージ+50%' } ] },
+                prophet: { name: '預言者', symbol: '👁️', bonus: [ { count: 2, desc: '終焉ゲージ獲得量+20%' }, { count: 4, desc: '戦闘開始時、味方全体の終焉ゲージを25回復' } ] },
+                chrono: { name: '時空', symbol: '⏳', bonus: [ { count: 2, desc: '速度+10%' }, { count: 4, desc: '行動後、20%の確率で再度行動する' } ] },
+                abyss: { name: '深淵', symbol: '🐙', bonus: [ { count: 2, desc: 'HP+15%' }, { count: 4, desc: 'ターン終了時、敵全体に自身の最大HP5%分のダメージ' } ] },
+            },
+            RELIC_MAIN_STATS: {
+                flower: { hp: [100, 150, 200] }, // Rarity 3, 4, 5
+                clock: { atk: [10, 15, 20] },
+                goblet: { ultimateGaugeBonus: [0.1, 0.15, 0.2] }, // 10%, 15%, 20%
+                crown: { ap: [1, 2, 3] }
+            },
+            RELIC_PARTS: ['flower', 'clock', 'goblet', 'crown'],
+            RELIC_HUNT_LEVELS: [
+                { id: 'hunt1', name: "Lv.1 忘れられた聖域", enemies: ['e001','e001'], statMultiplier: 1, rewards: { relics: { setIds: ['warrior', 'guardian'], rarity: 3, rate: 0.4 }, materials: { ether_crystal: { rate: 0.1, amount: [1,1] } } } },
+                { id: 'hunt2', name: "Lv.2 崩れた神殿", enemies: ['e004','e004'], statMultiplier: 2, rewards: { relics: { setIds: ['warrior', 'guardian'], rarity: 3, rate: 0.4 }, materials: { ether_crystal: { rate: 0.2, amount: [1,2] } } } },
+                { id: 'hunt3', name: "Lv.3 沈んだ都市", enemies: ['e_elite_1','e005'], statMultiplier: 3, rewards: { relics: { setIds: ['sage', 'sovereign'], rarity: 4, rate: 0.3 }, materials: { ether_crystal: { rate: 0.3, amount: [1,3] } } } },
+                { id: 'hunt4', name: "Lv.4 天空の祭壇", enemies: ['e_elite_2','e_elite_3'], statMultiplier: 5, rewards: { relics: { setIds: ['sage', 'sovereign', 'assassin'], rarity: 4, rate: 0.3 }, materials: { ether_crystal: { rate: 0.5, amount: [2,4] } } } },
+                { id: 'hunt5', name: "Lv.5 淵界の揺り籠", enemies: ['e_midboss_2','e_midboss_2'], statMultiplier: 8, rewards: { relics: { setIds: ['berserker', 'cosmic', 'prophet'], rarity: 5, rate: 0.2 }, materials: { ether_crystal: { rate: 0.8, amount: [3,5] } } } },
+                { id: 'hunt6', name: "Lv.6 時空の果て", enemies: ['e_boss_abyss', 'e_elite_3'], statMultiplier: 15, rewards: { relics: { setIds: ['chrono', 'abyss'], rarity: 5, rate: 0.2 }, materials: { ether_crystal: { rate: 1.0, amount: [5,10] } } } }
+            ],
+            INFINITE_CORRIDOR_ENEMIES: ['e001', 'e002', 'e003', 'e004', 'e005', 'e006', 'e007', 'e008', 'e009', 'e010', 'e011', 'e012', 'e013', 'e014', 'e015'],
+            INFINITE_CORRIDOR_REWARDS: {
+                10: { resources: 10000, gachaTickets: 10, materials: { ether_crystal: 5 } },
+                20: { resources: 20000, gachaTickets: 20, materials: { ether_crystal: 10 } },
+                30: { resources: 35000, gachaTickets: 30, materials: { ether_crystal: 15 } },
+                40: { resources: 50000, gachaTickets: 40, materials: { ether_crystal: 20 } },
+                50: { resources: 75000, gachaTickets: 50, materials: { ether_crystal: 30 } },
+                60: { resources: 100000, gachaTickets: 60, materials: { ether_crystal: 40 } },
+                70: { resources: 150000, gachaTickets: 70, materials: { ether_crystal: 50 } },
+                80: { resources: 200000, gachaTickets: 80, materials: { ether_crystal: 60 } },
+                90: { resources: 250000, gachaTickets: 90, materials: { ether_crystal: 70 } },
+                100: { resources: 500000, gachaTickets: 100, materials: { ether_crystal: 100 } },
+            }
+        };
+
+        let playerState = {};
+        let gameState = {};
+        
+        function resetGameData() {
+            playerState = { resources: 1000, gachaTickets: 100, characters: [], equipment: [], party: [], mentalPollution: 0, mapProgress: { ground: {}, heaven: {}, underground: {}, abyss: {}, soukai: {} }, endingsUnlocked: { salvation: false, corruption: false, ruin: false }, godsDefeated: {}, relicInventory: [], equippedRelics: { flower: null, clock: null, goblet: null, crown: null }, limitBreakMaterials: { ether_crystal: 0 }, clearedRelicHuntLevels: {}, infiniteCorridor: { highestFloor: 0, claimedRewards: {} }, nextUniqueId: 1 };
+            gameState = { currentScreen: 'title-screen', currentMap: 'ground', battle: null, activeCharacterDetail: null, equipmentSlotToFill: { charUniqueId: null, type: null }, preBattleScreen: 'hub-screen', relicFilter: 'all', activeRelicDetail: null, activeRelicHunt: null };
+        }
+
+        function getNextUniqueId() { return playerState.nextUniqueId++; }
+        function switchScreen(screenId) {
+            screens.forEach(screen => screen.classList.remove('active-screen'));
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active-screen');
+                gameState.currentScreen = screenId;
+                if (screenId === 'hub-screen') updateHubUI(); 
+                if (screenId === 'map-screen') renderMap();
+                if (screenId === 'gacha-screen') updateGachaUI(); 
+                if (screenId === 'character-screen') renderCharacterScreen();
+                if (screenId === 'god-slay-screen') renderGodSlayScreen();
+                if (screenId === 'relic-screen') renderRelicScreen();
+                if (screenId === 'relic-hunt-screen') renderRelicHuntScreen();
+                if (screenId === 'infinite-corridor-screen') renderInfiniteCorridorScreen();
+            } else { console.error(`Screen with id "${screenId}" not found. Defaulting to hub-screen.`); switchScreen('hub-screen'); }
+        }
+        function showMessage(text, onOk) {
+            messageText.innerHTML = text.replace(/\n/g, '<br>');
+            messageModal.classList.remove('hidden');
+            document.getElementById('message-ok-btn').onclick = () => { messageModal.classList.add('hidden'); if (onOk) onOk(); };
+        }
+        function updateHubUI() {
+            let totalTiles = Object.keys(GAME_DATA.MAPS).length * 64;
+            let conqueredTiles = Object.values(playerState.mapProgress).reduce((sum, map) => sum + Object.keys(map).length, 0);
+            document.getElementById('purification-rate').textContent = ((conqueredTiles / totalTiles) * 100).toFixed(1);
+            document.getElementById('mental-pollution').textContent = playerState.mentalPollution;
+            document.getElementById('player-resources').textContent = playerState.resources;
+            document.getElementById('gacha-tickets').textContent = playerState.gachaTickets;
+            document.getElementById('limit-break-materials-display').textContent = playerState.limitBreakMaterials.ether_crystal;
+        }
+        
+        function getCharacterLevelCap(character) {
+            const baseCap = 20;
+            const capPerLB = 10;
+            return baseCap + (character.limitBreakLevel || 0) * capPerLB;
+        }
+
+        function renderCharacterScreen() { renderPartyList(); renderCharacterList(); }
+        function renderPartyList() {
+            const partyContainer = document.getElementById('current-party'); partyContainer.innerHTML = '';
+            for(let i=0; i < 4; i++) {
+                const charUniqueId = playerState.party[i];
+                const slot = document.createElement('div');
+                slot.className = 'glass-panel p-2 rounded-lg flex flex-col gap-2 min-h-[100px]';
+                if (charUniqueId) {
+                    const character = getCharacterInstance(charUniqueId); const master = GAME_DATA.CHARACTERS[character.charId]; const rarityClass = GAME_DATA.RARITY[master.rarity].colorClass; const role = GAME_DATA.ROLES[master.role];
+                    const lbLevelText = character.limitBreakLevel > 0 ? `<span class="text-yellow-400"> LB ${character.limitBreakLevel}</span>` : '';
+                    slot.innerHTML = `<div class="flex items-center gap-2 cursor-pointer" data-char-id="${charUniqueId}"><div class="text-4xl w-12 text-center">${master.symbol}</div><div class="flex-grow"><p class="font-bold ${rarityClass}">${master.name} <span class="text-sm text-white">(Lv.${character.level})</span>${lbLevelText}</p><p class="text-xs ${GAME_DATA.ATTRIBUTES[master.attribute].colorClass}">${role.symbol} ${role.name}</p></div><button class="remove-from-party-btn btn-secondary text-red-500 text-xs px-2 rounded" data-unique-id="${charUniqueId}">外す</button></div><div class="flex justify-around gap-2">${createPartyEquipSlot(character, 'weapon')}${createPartyEquipSlot(character, 'armor')}</div>`;
+                } else { slot.innerHTML = `<div class="h-full flex items-center justify-center text-gray-500">スロット ${i+1}</div>`; }
+                partyContainer.appendChild(slot);
+            }
+            partyContainer.querySelectorAll('[data-char-id]').forEach(el => el.onclick = (e) => showCharacterDetail(parseInt(e.currentTarget.dataset.charId)));
+            partyContainer.querySelectorAll('.remove-from-party-btn').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); removeFromParty(parseInt(e.target.dataset.uniqueId)); });
+            partyContainer.querySelectorAll('.party-equip-slot').forEach(slot => {
+                slot.onclick = (e) => { e.stopPropagation(); const charId = parseInt(slot.dataset.charId); const type = slot.dataset.type; const equipUniqueId = getCharacterInstance(charId)?.equipped[type]; if (equipUniqueId) { showEquipmentDetail(equipUniqueId, charId, type); } else { openEquipmentSelectModal(charId, type); } };
+            });
+        }
+        function createPartyEquipSlot(character, type) {
+            const equipUniqueId = character.equipped[type]; let content;
+            if (equipUniqueId) {
+                const equipment = getEquipmentInstance(equipUniqueId); const master = GAME_DATA.EQUIPMENT[equipment.equipId];
+                content = `<span class="text-2xl">${master.symbol}</span> <span class="text-xs ${GAME_DATA.RARITY[master.rarity].colorClass}">${master.name}</span>`;
+            } else { content = `<span class="text-gray-500 text-xs">${type === 'weapon' ? '武器' : '防具'}</span>`; }
+            return `<div data-char-id="${character.uniqueId}" data-type="${type}" class="party-equip-slot w-1/2 h-10 bg-black bg-opacity-20 rounded flex items-center justify-center gap-1 cursor-pointer hover:bg-opacity-40">${content}</div>`;
+        }
+        function renderCharacterList() {
+            const listContainer = document.getElementById('character-list'); listContainer.innerHTML = '';
+            playerState.characters.sort((a,b) => GAME_DATA.CHARACTERS[b.charId].rarity - GAME_DATA.CHARACTERS[a.charId].rarity || a.uniqueId - b.uniqueId).forEach(character => {
+                const master = GAME_DATA.CHARACTERS[character.charId]; const rarityClass = GAME_DATA.RARITY[master.rarity].colorClass; const role = GAME_DATA.ROLES[master.role];
+                 const lbLevelText = character.limitBreakLevel > 0 ? `<span class="text-yellow-400"> LB ${character.limitBreakLevel}</span>` : '';
+                const card = document.createElement('div'); card.className = 'glass-panel p-2 rounded-lg text-center h-28 flex flex-col justify-center items-center cursor-pointer hover:border-cyan-400 border border-transparent';
+                card.innerHTML = `<div class="text-3xl">${master.symbol}</div><p class="font-bold text-sm ${rarityClass}">${master.name}</p><p class="text-xs">${role.symbol} Lv.${character.level}${lbLevelText} ${character.duplicationBonus > 0 ? `<span class='text-yellow-400'>(+${character.duplicationBonus})</span>` : ''}</p>`;
+                card.onclick = () => showCharacterDetail(character.uniqueId); listContainer.appendChild(card);
+            });
+        }
+        function showCharacterDetail(uniqueId) {
+            gameState.activeCharacterDetail = uniqueId;
+            const content = document.getElementById('character-detail-content'); const character = getCharacterInstance(uniqueId); const master = GAME_DATA.CHARACTERS[character.charId]; const stats = getCharacterFullStats(uniqueId); const isInParty = playerState.party.includes(uniqueId);
+            const duplicationBonusText = character.duplicationBonus > 0 ? `<p class="text-yellow-400">重複ボーナス: +${character.duplicationBonus}</p>` : ''; const role = GAME_DATA.ROLES[master.role];
+            let roleText = `${role.symbol} ${role.name}`;
+            if(master.role === 'attacker' && master.attackerType) { roleText += ` <span class="text-cyan-300">(${GAME_DATA.ATTACKER_TYPES[master.attackerType].name})</span>`; }
+            const enhanceCost = 100 + (character.level * 50);
+            const levelCap = getCharacterLevelCap(character);
+            const lbLevel = character.limitBreakLevel || 0;
+            const maxLB = GAME_DATA.LIMIT_BREAK_COSTS.length;
+            
+            let enhanceButtonHTML = '';
+            if (character.level < levelCap) {
+                enhanceButtonHTML = `<button id="enhance-btn" class="btn-primary mt-2 py-2 px-6 rounded-lg w-full">強化 (${enhanceCost}資源)</button>`;
+            } else if (lbLevel < maxLB) {
+                const lbCost = GAME_DATA.LIMIT_BREAK_COSTS[lbLevel];
+                enhanceButtonHTML = `<button id="limit-break-btn" class="btn-limit-break mt-2 py-2 px-6 rounded-lg w-full">限界突破</button><p class="text-xs text-center mt-1">コスト: ${lbCost.resources}資源, ${lbCost.materials.ether_crystal}エーテル結晶</p>`;
+            } else {
+                 enhanceButtonHTML = `<p class="text-center text-yellow-400 mt-2">レベル上限です</p>`;
+            }
+            
+            let potentialsHTML = '<div class="glass-panel p-4 flex-grow"><h4 class="font-bold text-lg mb-2">潜在能力</h4><div class="space-y-2">';
+            if (master.potentials && master.potentials.length > 0) {
+                master.potentials.forEach((potential, index) => {
+                    const isUnlocked = character.unlockedPotentials[index];
+                    const unlockCond = potential.unlock.level ? `Lv.${potential.unlock.level}` : `限界突破${potential.unlock.limitBreak}`;
+                    potentialsHTML += `<div class="${isUnlocked ? '' : 'opacity-50'}"><p class="font-bold text-cyan-300">${potential.name} ${isUnlocked ? '<span class="text-yellow-400">[解放済]</span>' : `<span class="text-gray-400">[${unlockCond}]</span>`}</p><p class="text-xs text-gray-300">${potential.desc}</p></div>`;
+                });
+            } else {
+                potentialsHTML += '<p class="text-sm text-gray-500">このキャラクターに潜在能力はありません。</p>';
+            }
+            potentialsHTML += '</div></div>';
+
+            content.innerHTML = `
+                <div class="flex flex-col md:flex-row gap-4 h-full">
+                    <div class="md:w-1/3 flex flex-col items-center glass-panel p-4">
+                        <div class="text-7xl mb-2">${master.symbol}</div>
+                        <h2 class="text-2xl font-bold ${GAME_DATA.RARITY[master.rarity].colorClass}">${master.name}</h2>
+                        <p class="text-lg">${roleText}</p>
+                        <p class="text-md ${GAME_DATA.ATTRIBUTES[master.attribute].colorClass}">${GAME_DATA.ATTRIBUTES[master.attribute].symbol} ${GAME_DATA.ATTRIBUTES[master.attribute].name}</p>
+                        <p class="mt-4">Level: ${character.level} / ${levelCap}</p>
+                        <p>限界突破: ${lbLevel} / ${maxLB}</p>
+                        ${duplicationBonusText}
+                        ${enhanceButtonHTML}
+                        <button id="toggle-party-btn" class="${isInParty ? 'btn-secondary text-red-400' : 'btn-primary'} mt-4 py-2 px-6 rounded-lg w-full">${isInParty ? 'パーティから外す' : 'パーティに入れる'}</button>
+                    </div>
+                    <div class="md:w-2/3 flex flex-col gap-4">
+                        <div class="glass-panel p-4"><h4 class="font-bold text-lg mb-2">ステータス</h4><div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm"><span>HP: ${stats.hp}</span><span>攻撃力: ${stats.atk}</span><span>速度: ${stats.spd}</span></div></div>
+                        <div class="glass-panel p-4"><h4 class="font-bold text-lg mb-2">装備</h4><div class="flex gap-4">${createEquipmentSlot(character, 'weapon')}${createEquipmentSlot(character, 'armor')}</div></div>
+                        <div class="glass-panel p-4"><h4 class="font-bold text-lg mb-2">スキル</h4><p><b>異界攻撃:</b> ${master.skills.otherworld.name} (AP:${master.skills.otherworld.cost})<br><small class="text-gray-400">${master.skills.otherworld.desc || ''}</small></p><p class="mt-2"><b>終焉攻撃:</b> ${master.skills.ultimate.name} (ゲージ:${master.skills.ultimate.cost})<br><small class="text-gray-400">${master.skills.ultimate.desc || ''}</small></p></div>
+                        ${potentialsHTML}
+                    </div>
+                </div>`;
+            characterDetailModal.classList.remove('hidden');
+            if (document.getElementById('enhance-btn')) document.getElementById('enhance-btn').onclick = () => enhanceCharacter(uniqueId);
+            if (document.getElementById('limit-break-btn')) document.getElementById('limit-break-btn').onclick = () => limitBreakCharacter(uniqueId);
+            document.getElementById('toggle-party-btn').onclick = () => togglePartyStatus(uniqueId);
+            document.querySelectorAll('.equip-slot').forEach(slot => { slot.onclick = () => { const equipUniqueId = character.equipped[slot.dataset.type]; if (equipUniqueId) { showEquipmentDetail(equipUniqueId, character.uniqueId, slot.dataset.type); } else { openEquipmentSelectModal(character.uniqueId, slot.dataset.type); } }; });
+        }
+        function checkAndUnlockPotentials(charUniqueId) {
+            const character = getCharacterInstance(charUniqueId);
+            const master = GAME_DATA.CHARACTERS[character.charId];
+            if (!master.potentials) return;
+            let updated = false;
+            master.potentials.forEach((potential, index) => {
+                if (!character.unlockedPotentials[index]) {
+                    const unlock = potential.unlock;
+                    const canUnlock = (unlock.level && character.level >= unlock.level) || (unlock.limitBreak && (character.limitBreakLevel || 0) >= unlock.limitBreak);
+                    if (canUnlock) {
+                        character.unlockedPotentials[index] = true;
+                        updated = true;
+                        showMessage(`潜在能力解放！\n${character.name}は「${potential.name}」を習得しました。`);
+                    }
+                }
+            });
+            if(updated) showCharacterDetail(charUniqueId);
+        }
+        function enhanceCharacter(uniqueId) {
+            const character = getCharacterInstance(uniqueId);
+            const cost = 100 + (character.level * 50);
+            if(character.level >= getCharacterLevelCap(character)) { showMessage("レベルが上限に達しています。限界突破が必要です。"); return; }
+            if (playerState.resources < cost) { showMessage("資源が不足しています。"); return; }
+            playerState.resources -= cost; character.level++;
+            const master = GAME_DATA.CHARACTERS[character.charId];
+            character.baseStats.hp += Math.floor(master.hp * 0.1); character.baseStats.atk += Math.floor(master.atk * 0.1); character.baseStats.spd += Math.floor(master.spd * 0.1);
+            checkAndUnlockPotentials(uniqueId);
+            updateHubUI(); showCharacterDetail(uniqueId); renderCharacterScreen();
+        }
+        function limitBreakCharacter(uniqueId) {
+            const character = getCharacterInstance(uniqueId);
+            const lbLevel = character.limitBreakLevel || 0;
+            if (lbLevel >= GAME_DATA.LIMIT_BREAK_COSTS.length) { showMessage("これ以上限界突破できません。"); return; }
+            const cost = GAME_DATA.LIMIT_BREAK_COSTS[lbLevel];
+            if (playerState.resources < cost.resources || playerState.limitBreakMaterials.ether_crystal < cost.materials.ether_crystal) {
+                showMessage(`素材が不足しています。\n必要: ${cost.resources}資源, ${cost.materials.ether_crystal}エーテル結晶`); return;
+            }
+            playerState.resources -= cost.resources;
+            playerState.limitBreakMaterials.ether_crystal -= cost.materials.ether_crystal;
+            character.limitBreakLevel = lbLevel + 1;
+            showMessage(`${character.name}の限界を突破しました！\nレベルキャップが${getCharacterLevelCap(character)}に上昇！`);
+            checkAndUnlockPotentials(uniqueId);
+            updateHubUI();
+            showCharacterDetail(uniqueId);
+        }
+        function togglePartyStatus(uniqueId) { if (playerState.party.includes(uniqueId)) removeFromParty(uniqueId); else assignToParty(uniqueId); showCharacterDetail(uniqueId); renderPartyList(); }
+        function createEquipmentSlot(character, type) {
+            const equipUniqueId = character.equipped[type]; const typeName = type === 'weapon' ? '武器' : '防具'; let content;
+            if (equipUniqueId) {
+                const equipment = getEquipmentInstance(equipUniqueId); const master = GAME_DATA.EQUIPMENT[equipment.equipId];
+                content = `<div class="text-3xl">${master.symbol}</div><div><p class="font-bold text-sm ${GAME_DATA.RARITY[master.rarity].colorClass}">${master.name}</p><p class="text-xs text-gray-400">クリックして詳細</p></div>`;
+            } else { content = `<div class="text-gray-500 w-full text-center">空き (${typeName})</div>`; }
+            return `<div data-char-id="${character.uniqueId}" data-type="${type}" class="equip-slot w-1/2 h-20 glass-panel rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:border-cyan-400 border border-transparent">${content}</div>`;
+        }
+        function openEquipmentSelectModal(charUniqueId, type) {
+            gameState.equipmentSlotToFill = { charUniqueId, type };
+            const listContainer = document.getElementById('equipment-select-list');
+            listContainer.innerHTML = '';
+            const availableEquipment = playerState.equipment.filter(e => {
+                const master = GAME_DATA.EQUIPMENT[e.equipId];
+                const isCorrectType = master.type === type;
+                const isNotEquipped = !playerState.characters.some(c => c.equipped.weapon === e.uniqueId || c.equipped.armor === e.uniqueId);
+                return isCorrectType && isNotEquipped;
+            });
+            if (availableEquipment.length === 0) {
+                listContainer.innerHTML = `<p class="text-gray-400 col-span-full text-center">装備できる${type === 'weapon' ? '武器' : '防具'}がありません。</p>`;
+            } else {
+                availableEquipment.forEach(equipment => {
+                    const master = GAME_DATA.EQUIPMENT[equipment.equipId];
+                    const card = document.createElement('div');
+                    card.className = 'glass-panel p-2 rounded-lg text-center h-28 flex flex-col justify-center items-center cursor-pointer hover:border-cyan-400 border border-transparent';
+                    card.innerHTML = `<div class="text-3xl">${master.symbol}</div><p class="font-bold text-sm ${GAME_DATA.RARITY[master.rarity].colorClass}">${master.name}</p><p class="text-xs">★${master.rarity}</p>`;
+                    card.onclick = () => equipItem(equipment.uniqueId);
+                    listContainer.appendChild(card);
+                });
+            }
+            equipmentSelectModal.classList.remove('hidden');
+        }
+        function showEquipmentDetail(equipUniqueId, charUniqueId, type) {
+            const equipment = getEquipmentInstance(equipUniqueId); const master = GAME_DATA.EQUIPMENT[equipment.equipId]; const content = document.getElementById('equipment-detail-content'); const buttonsContainer = document.getElementById('equipment-detail-buttons'); let statsHtml = '';
+            for (const [stat, value] of Object.entries(master.stats)) { statsHtml += `<p>${stat.toUpperCase()}: ${value > 0 ? '+' : ''}${value}</p>`; }
+            content.innerHTML = `<div class="flex flex-col items-center text-center"><div class="text-7xl mb-4">${master.symbol}</div><h2 class="text-2xl font-bold ${GAME_DATA.RARITY[master.rarity].colorClass}">${master.name}</h2><p class="text-lg">★${master.rarity}</p><div class="glass-panel p-4 mt-4 w-full"><h4 class="font-bold text-lg mb-2">ステータス</h4><div class="text-left">${statsHtml}</div></div></div>`;
+            buttonsContainer.innerHTML = `<button id="close-equipment-detail-btn" class="btn-secondary py-2 px-4 rounded-lg">閉じる</button>`;
+            if(charUniqueId && type) { buttonsContainer.innerHTML += `<button id="unequip-btn" class="btn-secondary text-red-400 py-2 px-4 rounded-lg">この装備を外す</button>`; document.getElementById('unequip-btn').onclick = () => { unequipItem(charUniqueId, type); equipmentDetailModal.classList.add('hidden'); if (!characterDetailModal.classList.contains('hidden')) { showCharacterDetail(charUniqueId); } else { renderCharacterScreen(); } }; }
+            document.getElementById('close-equipment-detail-btn').onclick = () => equipmentDetailModal.classList.add('hidden'); equipmentDetailModal.classList.remove('hidden');
+        }
+        function equipItem(equipUniqueId) {
+            const { charUniqueId, type } = gameState.equipmentSlotToFill; const character = getCharacterInstance(charUniqueId);
+            if(character) character.equipped[type] = equipUniqueId;
+            equipmentSelectModal.classList.add('hidden');
+            if (characterDetailModal.classList.contains('hidden')) renderCharacterScreen(); else showCharacterDetail(charUniqueId);
+        }
+        function unequipItem(charUniqueId, type) {
+             const character = getCharacterInstance(charUniqueId); if(character) character.equipped[type] = null;
+             if (characterDetailModal.classList.contains('hidden')) renderCharacterScreen(); else showCharacterDetail(charUniqueId);
+        }
+        function assignToParty(uniqueId) { if (playerState.party.length >= 4) { showMessage('パーティは4人までです。'); return; } if (!playerState.party.includes(uniqueId)) playerState.party.push(uniqueId); }
+        function removeFromParty(uniqueId) { playerState.party = playerState.party.filter(id => id !== uniqueId); renderPartyList(); }
+        function renderMap() {
+            const mapData = GAME_DATA.MAPS[gameState.currentMap]; const mapGrid = document.getElementById('map-grid'); document.getElementById('map-name').textContent = mapData.name; mapGrid.innerHTML = '';
+            for (let i = 0; i < mapData.size * mapData.size; i++) {
+                const tile = document.createElement('div'); tile.dataset.tileId = i; tile.className = 'map-tile flex items-center justify-center rounded text-2xl';
+                if (playerState.mapProgress[gameState.currentMap]?.[i]) { tile.classList.add('conquered'); tile.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+                } else { tile.classList.add('unexplored'); let specialType = ''; let symbol = ''; if (i === mapData.bossTile) { specialType = 'boss'; symbol = '💀'; } else if (mapData.midBossTiles[i]) { specialType = 'mid-boss'; symbol = '😈'; } else if (mapData.eliteTiles[i]) { specialType = 'elite'; symbol = '⚔️'; } if (specialType) { tile.classList.add(specialType); tile.innerHTML = symbol; } tile.addEventListener('click', () => startBattle({type: 'map', id: i})); }
+                mapGrid.appendChild(tile);
+            }
+        }
+        function renderGodSlayScreen() {
+            const godListContainer = document.getElementById('god-list'); godListContainer.innerHTML = '';
+            const godIds = ['god_erosion', 'god_void', 'god_quantum', 'god_causality'];
+            godIds.forEach(godId => {
+                const god = GAME_DATA.ENEMIES[godId]; const attr = GAME_DATA.ATTRIBUTES[god.attribute]; const isDefeated = playerState.godsDefeated[godId.replace('god_', '')];
+                const card = document.createElement('div'); card.className = `glass-panel p-6 flex flex-col items-center justify-center transition-all ${isDefeated ? 'opacity-50' : 'cursor-pointer hover:border-red-500 border-2 border-transparent'}`;
+                card.innerHTML = `<div class="text-8xl">${god.symbol}</div><h3 class="text-3xl font-orbitron mt-4 ${attr.colorClass}">${god.name}</h3><p class="text-gray-400">HP: ${god.hp} / ATK: ${god.atk}</p><button class="god-slay-btn btn-primary mt-6 py-2 px-8 rounded-lg" data-god-id="${godId}" ${isDefeated ? 'disabled' : ''}>${isDefeated ? '討伐済み' : '討伐開始'}</button>`;
+                godListContainer.appendChild(card);
+            });
+            document.querySelectorAll('.god-slay-btn').forEach(btn => { if(!btn.disabled) btn.onclick = () => startBattle({type: 'god', id: btn.dataset.godId}); });
+        }
+        
+        function renderRelicHuntScreen() {
+            const listContainer = document.getElementById('relic-dungeon-list');
+            const detailContainer = document.getElementById('relic-dungeon-detail');
+            listContainer.innerHTML = '';
+            detailContainer.innerHTML = '<p class="text-center text-gray-400">挑戦する遺跡を選択してください。</p>';
+            GAME_DATA.RELIC_HUNT_LEVELS.forEach((level, index) => {
+                const isCleared = playerState.clearedRelicHuntLevels[level.id];
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-lg cursor-pointer hover:bg-white/10 glass-panel';
+                item.innerHTML = `${level.name} ${isCleared ? '<span class="text-xs text-yellow-400">[初回クリア済]</span>' : ''}`;
+                item.onclick = () => {
+                    gameState.activeRelicHunt = index;
+                    detailContainer.innerHTML = `
+                        <h3 class="text-2xl font-bold mb-4">${level.name}</h3>
+                        <div class="flex-grow space-y-4">
+                           <div>
+                                <h4 class="font-bold text-lg mb-2">出現する敵</h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                ${level.enemies.map(eId => { const eMaster = GAME_DATA.ENEMIES[eId]; return `<div class="bg-black/20 p-2 rounded text-sm">${eMaster.name}</div>`}).join('')}
+                                </div>
+                           </div>
+                           <div>
+                                <h4 class="font-bold text-lg mb-2">主な報酬</h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                ${level.rewards.relics.setIds.map(setId => { const rMaster = GAME_DATA.RELIC_SETS[setId]; return `<div class="bg-black/20 p-2 rounded text-sm flex items-center gap-2"><span class="text-2xl">${rMaster.symbol}</span> <span>${rMaster.name}セット</span></div>`}).join('')}
+                                ${level.rewards.materials.ether_crystal ? `<div class="bg-black/20 p-2 rounded text-sm">エーテル結晶</div>` : ''}
+                                </div>
+                           </div>
+                        </div>
+                        <button id="start-relic-hunt-btn" class="btn-primary w-full py-3 mt-4 rounded-lg font-bold">挑戦</button>
+                    `;
+                    document.getElementById('start-relic-hunt-btn').onclick = () => startBattle({ type: 'relic_hunt', levelIndex: index });
+                };
+                listContainer.appendChild(item);
+            });
+        }
+        function renderRelicScreen() {
+            const equippedContainer = document.getElementById('equipped-relics-container');
+            const inventoryContainer = document.getElementById('relic-inventory-list');
+            const setBonusContainer = document.getElementById('active-set-bonus-container');
+            
+            equippedContainer.innerHTML = '';
+            GAME_DATA.RELIC_PARTS.forEach(part => {
+                const relicUniqueId = playerState.equippedRelics[part];
+                const slot = document.createElement('div');
+                slot.className = 'glass-panel p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400 border border-transparent min-h-[100px]';
+                if (relicUniqueId) {
+                    const relic = getRelicInstance(relicUniqueId);
+                    const setInfo = GAME_DATA.RELIC_SETS[relic.setId];
+                    slot.innerHTML = `<div class="text-4xl">${setInfo.symbol}</div><p class="text-xs ${GAME_DATA.RARITY[relic.rarity].colorClass}">${setInfo.name}</p>`;
+                    slot.onclick = () => showRelicDetail(relicUniqueId);
+                } else {
+                    slot.innerHTML = `<span class="text-gray-500 text-sm">${part}</span>`;
+                    slot.onclick = () => { gameState.relicFilter = part; renderRelicInventoryList(part); }; // Filter inventory on click
+                }
+                equippedContainer.appendChild(slot);
+            });
+
+            renderRelicInventoryList(gameState.relicFilter);
+            renderRelicFilterButtons();
+            
+            const bonuses = getActiveSetBonus();
+            setBonusContainer.innerHTML = '<h4 class="font-bold mb-2">セット効果</h4>';
+            if (bonuses.length > 0) {
+                bonuses.forEach(b => {
+                    setBonusContainer.innerHTML += `<p class="text-sm text-green-400">${b.setInfo.name} ${b.count}セット: ${b.bonus.desc}</p>`;
+                });
+            } else {
+                setBonusContainer.innerHTML += '<p class="text-sm text-gray-500">発動中のセット効果はありません</p>';
+            }
+        }
+        function renderRelicFilterButtons() {
+            const container = document.getElementById('relic-filter-buttons');
+            container.innerHTML = `<button data-filter="all" class="relic-filter-btn btn-sm ${gameState.relicFilter === 'all' ? 'btn-primary' : 'btn-secondary'} px-2 py-1 rounded-md text-xs">全て</button>`;
+            GAME_DATA.RELIC_PARTS.forEach(part => {
+                 container.innerHTML += `<button data-filter="${part}" class="relic-filter-btn btn-sm ${gameState.relicFilter === part ? 'btn-primary' : 'btn-secondary'} px-2 py-1 rounded-md text-xs">${part}</button>`;
+            });
+            document.querySelectorAll('.relic-filter-btn').forEach(btn => btn.onclick = (e) => {
+                gameState.relicFilter = e.target.dataset.filter;
+                renderRelicFilterButtons();
+                renderRelicInventoryList(gameState.relicFilter);
+            });
+        }
+        function renderRelicInventoryList(filter) {
+            const inventoryContainer = document.getElementById('relic-inventory-list');
+            inventoryContainer.innerHTML = '';
+            const filteredRelics = playerState.relicInventory.filter(r => {
+                const isEquipped = Object.values(playerState.equippedRelics).includes(r.uniqueId);
+                const typeMatch = filter === 'all' || r.part === filter;
+                return !isEquipped && typeMatch;
+            });
+
+            if (filteredRelics.length === 0) {
+                inventoryContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">該当する聖遺物がありません。</p>`;
+                return;
+            }
+
+            filteredRelics.forEach(relic => {
+                const setInfo = GAME_DATA.RELIC_SETS[relic.setId];
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400 border border-transparent h-24';
+                card.innerHTML = `<div class="text-3xl">${setInfo.symbol}</div><p class="text-xs ${GAME_DATA.RARITY[relic.rarity].colorClass}">${setInfo.name} (${relic.part})</p>`;
+                card.onclick = () => showRelicDetail(relic.uniqueId);
+                inventoryContainer.appendChild(card);
+            });
+        }
+        function showRelicDetail(relicUniqueId) {
+            gameState.activeRelicDetail = relicUniqueId;
+            const relic = getRelicInstance(relicUniqueId);
+            const setInfo = GAME_DATA.RELIC_SETS[relic.setId];
+            const isEquipped = Object.values(playerState.equippedRelics).includes(relic.uniqueId);
+            const content = document.getElementById('relic-detail-content');
+            const buttons = document.getElementById('relic-detail-buttons');
+
+            let mainStatText = '';
+            if (relic.mainStat.hp) mainStatText = `HP+${relic.mainStat.hp}`;
+            if (relic.mainStat.atk) mainStatText = `攻撃力+${relic.mainStat.atk}`;
+            if (relic.mainStat.ultimateGaugeBonus) mainStatText = `終焉ゲージ獲得量+${relic.mainStat.ultimateGaugeBonus*100}%`;
+            if (relic.mainStat.ap) mainStatText = `初期AP+${relic.mainStat.ap}`;
+
+            content.innerHTML = `
+                <div class="text-center">
+                    <div class="text-6xl mb-2">${setInfo.symbol}</div>
+                    <h3 class="text-xl font-bold ${GAME_DATA.RARITY[relic.rarity].colorClass}">${setInfo.name}</h3>
+                    <p class="text-gray-400">${relic.part}</p>
+                    <p class="text-lg mt-4">${mainStatText}</p>
+                    <div class="glass-panel p-3 mt-4 text-left">
+                        <h4 class="font-bold mb-1">セット効果</h4>
+                        ${setInfo.bonus.map(b => `<p class="text-xs ${GAME_DATA.RARITY[relic.rarity].colorClass}">${b.count}セット: ${b.desc}</p>`).join('')}
+                    </div>
+                </div>`;
+            
+            buttons.innerHTML = `<button id="close-relic-detail-btn" class="btn-secondary py-2 px-4 rounded-lg">閉じる</button>`;
+            if (isEquipped) {
+                buttons.innerHTML += `<button id="unequip-relic-btn" class="btn-secondary text-red-400 py-2 px-4 rounded-lg">外す</button>`;
+            } else {
+                buttons.innerHTML += `<button id="equip-relic-btn" class="btn-primary py-2 px-4 rounded-lg">装備</button>`;
+                buttons.innerHTML += `<button id="salvage-relic-btn" class="btn-danger py-2 px-4 rounded-lg">分解</button>`;
+            }
+            
+            document.getElementById('close-relic-detail-btn').onclick = () => relicDetailModal.classList.add('hidden');
+            if (document.getElementById('equip-relic-btn')) document.getElementById('equip-relic-btn').onclick = () => equipRelic(relic.uniqueId);
+            if (document.getElementById('unequip-relic-btn')) document.getElementById('unequip-relic-btn').onclick = () => unequipRelic(relic.part);
+            if (document.getElementById('salvage-relic-btn')) document.getElementById('salvage-relic-btn').onclick = () => salvageRelic(relic.uniqueId);
+
+
+            relicDetailModal.classList.remove('hidden');
+        }
+        function equipRelic(relicUniqueId) {
+            const relic = getRelicInstance(relicUniqueId);
+            if (playerState.equippedRelics[relic.part]) {
+                const oldRelicId = playerState.equippedRelics[relic.part];
+            }
+            playerState.equippedRelics[relic.part] = relic.uniqueId;
+            relicDetailModal.classList.add('hidden');
+            renderRelicScreen();
+        }
+        function unequipRelic(part) {
+            playerState.equippedRelics[part] = null;
+            relicDetailModal.classList.add('hidden');
+            renderRelicScreen();
+        }
+        function salvageRelic(relicUniqueId) {
+            const relicIndex = playerState.relicInventory.findIndex(r => r.uniqueId === relicUniqueId);
+            if (relicIndex === -1) return;
+
+            const relic = playerState.relicInventory[relicIndex];
+            const resourceYields = { 3: 100, 4: 500, 5: 2500, 6: 10000 };
+            const gainedResources = resourceYields[relic.rarity] || 100;
+
+            playerState.resources += gainedResources;
+            playerState.relicInventory.splice(relicIndex, 1);
+            
+            relicDetailModal.classList.add('hidden');
+            showMessage(`${GAME_DATA.RELIC_SETS[relic.setId].name}を分解し、${gainedResources}資源を獲得しました。`);
+            renderRelicScreen();
+            updateHubUI();
+        }
+        function getActiveSetBonus() {
+            const equippedSets = {};
+            Object.values(playerState.equippedRelics).forEach(relicId => {
+                if (relicId) {
+                    const relic = getRelicInstance(relicId);
+                    equippedSets[relic.setId] = (equippedSets[relic.setId] || 0) + 1;
+                }
+            });
+            const activeBonuses = [];
+            for (const setId in equippedSets) {
+                const count = equippedSets[setId];
+                const setInfo = GAME_DATA.RELIC_SETS[setId];
+                let highestBonus = null;
+                setInfo.bonus.forEach(bonus => {
+                    if (count >= bonus.count) {
+                        highestBonus = {setInfo, count: bonus.count, bonus};
+                    }
+                });
+                if(highestBonus) activeBonuses.push(highestBonus);
+            }
+            return activeBonuses;
+        }
+        function createRelic(setIds, rarity) {
+            const setId = setIds[Math.floor(Math.random() * setIds.length)];
+            const part = GAME_DATA.RELIC_PARTS[Math.floor(Math.random() * GAME_DATA.RELIC_PARTS.length)];
+            const mainStatKey = Object.keys(GAME_DATA.RELIC_MAIN_STATS[part])[0];
+            const rarityIndex = Math.min(rarity - 3, GAME_DATA.RELIC_MAIN_STATS[part][mainStatKey].length - 1);
+            const mainStatValue = GAME_DATA.RELIC_MAIN_STATS[part][mainStatKey][rarityIndex];
+
+            const newRelic = {
+                uniqueId: getNextUniqueId(),
+                setId: setId,
+                rarity: rarity,
+                part: part,
+                level: 0,
+                mainStat: { [mainStatKey]: mainStatValue },
+            };
+            return newRelic;
+        }
+
+        function startBattle(battleInfo) {
+            if (playerState.party.length === 0) { showMessage('出撃するキャラクターを編成してください。'); return; }
+            gameState.preBattleScreen = gameState.currentScreen; let enemies = []; let statMultiplier = 1; let enemyIds = []; gameState.battleType = battleInfo.type;
+            if (battleInfo.type === 'map') {
+                const mapData = GAME_DATA.MAPS[gameState.currentMap];
+                if (gameState.currentMap === 'underground') statMultiplier = 3; if (gameState.currentMap === 'heaven') statMultiplier = 8; if (gameState.currentMap === 'abyss') statMultiplier = 15; if (gameState.currentMap === 'soukai') statMultiplier = 25;
+                let enemyId;
+                if (battleInfo.id === mapData.bossTile) enemyId = mapData.bossId;
+                else if (mapData.midBossTiles[battleInfo.id]) enemyId = mapData.midBossTiles[battleInfo.id];
+                else if (mapData.eliteTiles[battleInfo.id]) enemyId = mapData.eliteTiles[battleInfo.id];
+                if (enemyId) { enemyIds.push(enemyId); } else { const numEnemies = Math.floor(Math.random() * 2) + 1; for (let i = 0; i < numEnemies; i++) enemyIds.push(mapData.enemies[Math.floor(Math.random() * mapData.enemies.length)]); }
+            } else if (battleInfo.type === 'god') { enemyIds.push(battleInfo.id); statMultiplier = 10;
+            } else if (battleInfo.type === 'relic_hunt') {
+                const level = GAME_DATA.RELIC_HUNT_LEVELS[battleInfo.levelIndex];
+                enemyIds.push(...level.enemies);
+                statMultiplier = level.statMultiplier;
+            } else if (battleInfo.type === 'infinite_corridor') {
+                statMultiplier = 1 + (battleInfo.floor - 1) * 0.25;
+                const numEnemies = Math.min(3, 1 + Math.floor(battleInfo.floor / 10));
+                for(let i = 0; i < numEnemies; i++) {
+                    enemyIds.push(GAME_DATA.INFINITE_CORRIDOR_ENEMIES[Math.floor(Math.random() * GAME_DATA.INFINITE_CORRIDOR_ENEMIES.length)]);
+                }
+            }
+            function createEnemyInstance(baseId, instanceIndex, multiplier) { const master = { ...GAME_DATA.ENEMIES[baseId] }; const instance = { ...master, baseId: baseId }; instance.id = `enemy-${instanceIndex}`; instance.hp = Math.floor(master.hp * multiplier); instance.atk = Math.floor(master.atk * multiplier); instance.spd = Math.floor(master.spd * multiplier); instance.maxHp = instance.hp; instance.currentHp = instance.hp; return instance; }
+            enemies = enemyIds.map((id, i) => createEnemyInstance(id, i, statMultiplier));
+            
+            const activeBonuses = getActiveSetBonus();
+
+            const party = playerState.party.map((charUniqueId, index) => {
+                const charMaster = GAME_DATA.CHARACTERS[getCharacterInstance(charUniqueId).charId];
+                let stats = getCharacterFullStats(charUniqueId); // This already includes relic stats
+                
+                return { ...getCharacterInstance(charUniqueId), ...charMaster, ...stats, id: `player-${index}`, maxHp: stats.hp, currentHp: stats.hp, ultimateGauge: 0, normalAttackEnhance: { turns: 0, power: 1.0 }, otherworldAttackEnhance: { turns: 0, power: 1.0, isFree: false }, battleTriggers: { gutsUsed: false, chrono_extra_turn: false, abyss_dot: false }, activeBonuses };
+            });
+
+            const crownRelicId = playerState.equippedRelics.crown;
+            const crownRelic = crownRelicId ? getRelicInstance(crownRelicId) : null;
+            let initialAp = 2 + (crownRelic ? crownRelic.mainStat.ap : 0);
+            
+            const prophetBonus = activeBonuses.find(b => b.setInfo.name === '預言者' && b.count >= 4);
+            if(prophetBonus) {
+                party.forEach(p => p.ultimateGauge = Math.min(p.skills.ultimate.cost, (p.ultimateGauge || 0) + 25));
+            }
+
+            gameState.battle = { battleInfo, party, enemies, turn: 0, currentAction: null, partyBuffs: [], partyShield: 0, partyShieldMax: 0, log: [], actionPoints: 0, actionPointsMax: 10, floor: battleInfo.floor || 0};
+            gameState.battle.actionPoints = Math.min(initialAp, gameState.battle.actionPointsMax);
+            
+            gameState.battle.turnOrder = [...party, ...enemies].sort((a, b) => b.spd - a.spd);
+            renderBattleScreen(); switchScreen('battle-screen'); addBattleLog('戦闘開始！');
+            if(prophetBonus) addBattleLog('預言者セット効果で終焉ゲージが上昇！');
+            setTimeout(battleTurn, 50);
+        }
+        function renderBattleScreen() {
+            const playerArea = document.getElementById('player-area'); const enemyArea = document.getElementById('enemy-area'); const battleHeader = document.getElementById('battle-header');
+            playerArea.innerHTML = ''; enemyArea.innerHTML = ''; if(!gameState.battle) return;
+            if (gameState.battleType === 'infinite_corridor') { battleHeader.textContent = `無限回廊 ${gameState.battle.floor}階`; } else { battleHeader.textContent = ''; }
+            gameState.battle.party.forEach(char => playerArea.appendChild(createBattleCharacterCard(char, 'player')));
+            gameState.battle.enemies.forEach(enemy => enemyArea.appendChild(createBattleCharacterCard(enemy, 'enemy')));
+            updateBattleUI();
+        }
+        function createBattleCharacterCard(unit, type) {
+            const card = document.createElement('div'); card.id = `battle-card-${unit.id}`;
+            card.className = 'w-32 h-44 glass-panel p-2 flex flex-col justify-between items-center rounded-lg relative overflow-hidden transition-all';
+            if (type === 'enemy') card.classList.add('cursor-pointer', 'hover:border-red-500', 'border', 'border-transparent');
+            const attrData = GAME_DATA.ATTRIBUTES[unit.attribute];
+            const rarityClass = (unit.rarity && GAME_DATA.RARITY[unit.rarity]) ? GAME_DATA.RARITY[unit.rarity].colorClass : 'text-white';
+            const roleSymbol = (unit.role) ? GAME_DATA.ROLES[unit.role].symbol : '';
+            card.innerHTML = `<p class="text-sm font-bold truncate ${rarityClass}">${roleSymbol} ${unit.name}</p><div class="w-24 h-24 bg-black bg-opacity-40 rounded flex items-center justify-center text-5xl">${unit.symbol || attrData.symbol}</div><div class="w-full relative h-2.5"><div id="hp-${unit.id}" class="bg-green-500 h-2.5 rounded-full" style="width: ${(unit.currentHp / unit.maxHp) * 100}%"></div></div><p class="text-xs">${Math.ceil(unit.currentHp)} / ${unit.maxHp}</p>`;
+            if(type === 'enemy') card.onclick = () => handlePlayerTargetSelection(card.id.replace('battle-card-', ''));
+            return card;
+        }
+        function battleTurn() {
+            if(!gameState.battle) return;
+            if(gameState.battle.party.every(p => p.currentHp <= 0)) { endBattle(false); return; }
+            if(gameState.battle.enemies.every(e => e.currentHp <= 0)) { endBattle(true); return; }
+            
+            const currentTurnIndex = gameState.battle.turn % gameState.battle.turnOrder.length;
+            const currentUnit = gameState.battle.turnOrder[currentTurnIndex];
+
+            // --- Start of turn ---
+            if (currentUnit.id.startsWith('player')) {
+                // Abyss set DoT
+                const abyssDotSource = gameState.battle.party.find(p => p.activeBonuses.some(b => b.setInfo.name === '深淵' && b.count >= 4) && p.currentHp > 0);
+                if(abyssDotSource && !currentUnit.battleTriggers.abyss_dot) {
+                    gameState.battle.enemies.forEach(enemy => {
+                        if(enemy.currentHp > 0) {
+                            const dotDamage = Math.floor(abyssDotSource.maxHp * 0.05);
+                            enemy.currentHp = Math.max(0, enemy.currentHp - dotDamage);
+                            addBattleLog(`深淵セット効果が敵全体に${dotDamage}ダメージを与えた。`);
+                            const targetCard = document.getElementById(`battle-card-${enemy.id}`); const damagePopup = document.createElement('div'); damagePopup.className = 'damage-popup text-purple-400'; damagePopup.textContent = dotDamage; targetCard?.appendChild(damagePopup); setTimeout(() => damagePopup.remove(), 700);
+                        }
+                    });
+                    currentUnit.battleTriggers.abyss_dot = true; // Prevents multi-trigger in one "turn cycle"
+                }
+            }
+             // Reset dot trigger for next cycle
+            if(currentTurnIndex === 0) {
+                gameState.battle.party.forEach(p => p.battleTriggers.abyss_dot = false);
+            }
+            
+            // Buff/debuff duration update
+            if (currentTurnIndex === 0 && gameState.battle.turn > 0) {
+                gameState.battle.partyBuffs.forEach(buff => buff.duration--);
+                const expiredBuffs = gameState.battle.partyBuffs.filter(buff => buff.duration <= 0);
+                expiredBuffs.forEach(buff => addBattleLog(`パーティの${buff.buffType === 'damage' ? '攻撃力' : '速度'}バフが切れた。`));
+                gameState.battle.partyBuffs = gameState.battle.partyBuffs.filter(buff => buff.duration > 0);
+            }
+
+            if (currentUnit.id.startsWith('player')) {
+                if (currentUnit.normalAttackEnhance?.turns > 0) {
+                    currentUnit.normalAttackEnhance.turns--;
+                    if(currentUnit.normalAttackEnhance.turns === 0) addBattleLog(`${currentUnit.name}の通常攻撃強化が終了した。`);
+                }
+                if (currentUnit.otherworldAttackEnhance?.turns > 0) {
+                    currentUnit.otherworldAttackEnhance.turns--;
+                    if(currentUnit.otherworldAttackEnhance.turns === 0) addBattleLog(`${currentUnit.name}の異界攻撃強化が終了した。`);
+                }
+            }
+            
+            if(gameState.battle.enemies.every(e => e.currentHp <= 0)) { endBattle(true); return; }
+            updateBattleUI();
+            if (currentUnit.currentHp <= 0) { gameState.battle.turn++; setTimeout(battleTurn, 50); return; }
+            
+            document.querySelectorAll('[id^=battle-card-]').forEach(c => c.classList.remove('border-yellow-400', 'border-2', 'scale-105'));
+            document.getElementById(`battle-card-${currentUnit.id}`)?.classList.add('border-yellow-400', 'border-2', 'scale-105');
+            
+            if (currentUnit.id.startsWith('player')) { renderActionButtons(currentUnit); } 
+            else { renderActionButtons(null); addBattleLog(`${currentUnit.name}のターン。`); setTimeout(() => enemyTurn(currentUnit), 1000); }
+        }
+        function renderActionButtons(unit) {
+            const actionArea = document.getElementById('action-buttons-area'); const statusArea = document.getElementById('character-status-area');
+            actionArea.innerHTML = ''; statusArea.innerHTML = '';
+            if (unit) {
+                const rarityClass = GAME_DATA.RARITY[unit.rarity].colorClass;
+                statusArea.innerHTML = `<div class="text-center p-2"><p class="text-lg font-bold ${rarityClass}">${unit.name}</p><p class="text-sm">HP: ${Math.ceil(unit.currentHp)}/${unit.maxHp}</p><div class="w-full bg-gray-700 rounded-full h-4 mt-1"><div class="bg-purple-500 h-4 rounded-full" style="width: ${Math.min(100, (unit.ultimateGauge || 0) / unit.skills.ultimate.cost * 100)}%"></div></div><p class="text-xs">終焉ゲージ: ${unit.ultimateGauge || 0}/${unit.skills.ultimate.cost}</p></div>`;
+                const otherworldSkill = unit.skills.otherworld;
+                const ultimateSkill = unit.skills.ultimate;
+
+                let normalBtnClass = 'btn-secondary'; let normalBtnText = '通常攻撃';
+                if(unit.normalAttackEnhance?.turns > 0) { normalBtnClass = 'btn-enhanced'; normalBtnText = '強化通常攻撃'; }
+
+                let otherworldBtnClass = 'btn-secondary'; let otherworldBtnText = `${otherworldSkill.name} (AP:${otherworldSkill.cost})`; let otherworldDisabled = gameState.battle.actionPoints < otherworldSkill.cost;
+                if(unit.otherworldAttackEnhance?.turns > 0) {
+                    otherworldBtnClass = 'btn-enhanced';
+                    otherworldBtnText = `強化${otherworldSkill.name}`;
+                    if(unit.otherworldAttackEnhance.isFree) { otherworldBtnText += ' (AP:0)'; otherworldDisabled = false; } else { otherworldBtnText += ` (AP:${otherworldSkill.cost})`; }
+                }
+
+                let ultimateDisabled = (unit.ultimateGauge || 0) < ultimateSkill.cost;
+                if(unit.attackerType === 'gauge_flexible') { ultimateDisabled = (unit.ultimateGauge || 0) <= 0; }
+
+                actionArea.innerHTML = `
+                    <button data-action="normal" class="action-btn ${normalBtnClass} w-full py-1 rounded-lg text-sm">${normalBtnText}</button>
+                    <button data-action="otherworld" class="action-btn ${otherworldBtnClass} w-full py-1 rounded-lg text-sm" ${otherworldDisabled ? 'disabled' : ''}>${otherworldBtnText}</button>
+                    <button data-action="ultimate" class="action-btn btn-secondary w-full py-1 rounded-lg text-sm" ${ultimateDisabled ? 'disabled' : ''}>${ultimateSkill.name}</button>
+                `;
+                document.querySelectorAll('.action-btn').forEach(btn => { if (!btn.disabled && !btn.classList.contains('btn-enhanced')) { btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary'); } btn.onclick = () => preparePlayerAction(btn.dataset.action); });
+            }
+        }
+        function preparePlayerAction(actionType) {
+            const battle = gameState.battle; const currentUnit = battle.turnOrder[battle.turn % battle.turnOrder.length];
+            let skill = null; if (actionType !== 'normal') skill = currentUnit.skills[actionType];
+            const effectType = skill ? skill.effect.type : 'damage';
+            if(effectType === 'damage' || (skill && skill.effect.target === 'all')) { battle.currentAction = { type: actionType, attacker: currentUnit }; addBattleLog(`${currentUnit.name}は${actionType === 'normal' ? '通常攻撃' : skill.name}の対象を選択...`); if(skill?.effect?.target === 'all'){ handlePlayerTargetSelection(null); } } // Auto-select for AoE
+            else { executeAction(currentUnit, null, actionType); }
+        }
+        function handlePlayerTargetSelection(targetId) {
+            const battle = gameState.battle; if (!battle.currentAction) return;
+            executeAction(battle.currentAction.attacker, targetId, battle.currentAction.type);
+            battle.currentAction = null; 
+        }
+        function enemyTurn(attacker) {
+            const livingPlayers = gameState.battle.party.filter(p => p.currentHp > 0); if (livingPlayers.length === 0) return;
+            const target = livingPlayers[Math.floor(Math.random() * livingPlayers.length)];
+            executeAction(attacker, target.id, 'normal'); 
+        }
+        function executeAction(attacker, targetId, actionType) {
+            const battle = gameState.battle; const attackerCard = document.getElementById(`battle-card-${attacker.id}`);
+            attackerCard?.classList.add('attacking'); setTimeout(() => attackerCard?.classList.remove('attacking'), 300);
+            let effect, logMsg, skillName = "通常攻撃";
+            
+            let gaugeGainMultiplier = 1;
+            const sageBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '賢者' && b.count >= 2);
+            if(sageBonus) gaugeGainMultiplier += 0.2;
+            const baseGaugeGain = attacker.id.startsWith('player') ? 10 * gaugeGainMultiplier : 0;
+            
+            if (actionType === 'normal') {
+                let power = attacker.id.startsWith('player') ? 0.5 : 1.0;
+                if(attacker.normalAttackEnhance?.turns > 0) { power *= attacker.normalAttackEnhance.power; skillName = "強化通常攻撃"; }
+                 const warriorBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '戦士' && b.count >= 4);
+                 if(warriorBonus) { power *= 1.4; }
+                effect = { type: 'damage', power: power };
+                logMsg = `${attacker.name}の${skillName}！`;
+                if (attacker.id.startsWith('player')) { attacker.ultimateGauge = Math.min(attacker.skills.ultimate.cost, (attacker.ultimateGauge || 0) + baseGaugeGain); battle.actionPoints = Math.min(battle.actionPointsMax, battle.actionPoints + 1); }
+            } else {
+                const skill = attacker.skills[actionType]; skillName = skill.name; effect = skill.effect;
+                logMsg = `${attacker.name}の「${skillName}」！`;
+                if (actionType === 'otherworld') { 
+                    if (!attacker.otherworldAttackEnhance?.isFree) battle.actionPoints -= skill.cost;
+                    if (attacker.id.startsWith('player')) attacker.ultimateGauge = Math.min(attacker.skills.ultimate.cost, (attacker.ultimateGauge || 0) + baseGaugeGain * 2); 
+                    const sovereignBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '君主' && b.count >= 4);
+                    if(sovereignBonus) { battle.party.forEach(p => p.currentHp = Math.min(p.maxHp, p.currentHp + p.maxHp * 0.1)); addBattleLog('君主セット効果でパーティのHPが10%回復。'); }
+                }
+                if (actionType === 'ultimate') {
+                    if (attacker.attackerType !== 'gauge_flexible') { attacker.ultimateGauge = 0; }
+                    if (attacker.id.startsWith('player')) battle.actionPoints = Math.min(battle.actionPointsMax, battle.actionPoints + 1);
+                    const sageBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '賢者' && b.count >= 4);
+                    if(sageBonus) { battle.party.forEach(p => p.ultimateGauge = Math.min(p.skills.ultimate.cost, (p.ultimateGauge || 0) + 20)); addBattleLog('賢者セット効果でパーティの終焉ゲージが20回復。'); }
+                }
+            }
+            addBattleLog(logMsg);
+
+            switch(effect.type) {
+                case 'damage': {
+                    const targets = [];
+                    if (effect.target === 'all') { if(attacker.id.startsWith('player')) targets.push(...battle.enemies.filter(e => e.currentHp > 0)); else targets.push(...battle.party.filter(p => p.currentHp > 0)); } 
+                    else { if(attacker.id.startsWith('player')) targets.push(battle.enemies.find(e => e.id === targetId)); else targets.push(battle.party.find(p => p.id === targetId)); }
+                    if (targets.length === 0 || !targets[0]) break;
+                    
+                    targets.forEach(target => {
+                        let damageMultiplier = effect.power;
+                        if (attacker.id.startsWith('player')) {
+                            battle.partyBuffs.forEach(buff => { if(buff.buffType === 'damage') damageMultiplier *= buff.multiplier; });
+                            if (actionType === 'otherworld' && attacker.otherworldAttackEnhance?.turns > 0) { damageMultiplier *= attacker.otherworldAttackEnhance.power; }
+                            const berserkerBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '狂戦士' && b.count >= 4);
+                            if(berserkerBonus && attacker.currentHp / attacker.maxHp <= 0.5) damageMultiplier *= 1.5;
+                            if (actionType === 'ultimate') {
+                               const assassinBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '暗殺者' && b.count >= 4);
+                               if(assassinBonus) damageMultiplier *= 1.5;
+                            }
+                        }
+                        let damage = Math.max(1, attacker.atk * damageMultiplier);
+
+                        if(actionType === 'ultimate' && attacker.attackerType === 'gauge_flexible') {
+                            const gaugeRatio = (attacker.ultimateGauge || 0) / attacker.skills.ultimate.cost;
+                            damage = Math.floor(damage * gaugeRatio);
+                            addBattleLog(`ゲージ${attacker.ultimateGauge}を解放！`);
+                            attacker.ultimateGauge = 0;
+                        }
+
+                        if (target.id.startsWith('player') && battle.partyShield > 0) { const shieldDamage = Math.min(damage, battle.partyShield); battle.partyShield -= shieldDamage; damage -= shieldDamage; addBattleLog(`シールドが${Math.ceil(shieldDamage)}ダメージを吸収！`); }
+                        let finalDamage = damage;
+                        if (target.id.startsWith('player') && target.currentHp - finalDamage <= 0) {
+                            const gutsPotential = target.potentials.find((p,i) => target.unlockedPotentials[i] && p.effect.type === 'guts');
+                            if (gutsPotential && !target.battleTriggers.gutsUsed) {
+                                finalDamage = target.currentHp - 1;
+                                target.battleTriggers.gutsUsed = true;
+                                addBattleLog(`${target.name}は持ちこたえた！`);
+                            }
+                        }
+                        
+                        target.currentHp = Math.max(0, target.currentHp - finalDamage);
+                        const targetCard = document.getElementById(`battle-card-${target.id}`); const damagePopup = document.createElement('div'); damagePopup.className = 'damage-popup'; damagePopup.textContent = Math.floor(finalDamage); targetCard?.appendChild(damagePopup); setTimeout(() => damagePopup.remove(), 700);
+                        if (target.currentHp <= 0) { addBattleLog(`${target.name}を撃破！`); }
+                    });
+                    break;
+                }
+                case 'self_buff': {
+                    if(effect.buffTarget === 'normal_attack') {
+                        attacker.normalAttackEnhance = { turns: effect.duration + 1, power: effect.power };
+                        addBattleLog(`${attacker.name}は次の${effect.duration}ターン、通常攻撃が強化される！`);
+                    } else if (effect.buffTarget === 'otherworld_attack') {
+                        attacker.otherworldAttackEnhance = { turns: effect.duration + 1, power: effect.power, isFree: effect.isFree };
+                        addBattleLog(`${attacker.name}は次の${effect.duration}ターン、異界攻撃が強化される！`);
+                    }
+                    break;
+                }
+                case 'shield': {
+                    let shieldMultiplier = 1.0;
+                    const guardianBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '守護者' && b.count >= 4);
+                    if(guardianBonus) shieldMultiplier *= 1.2;
+                    const shieldAmount = Math.floor(attacker.maxHp * effect.power * shieldMultiplier);
+                    battle.partyShield = shieldAmount; battle.partyShieldMax = shieldAmount; addBattleLog(`パーティーに${shieldAmount}のシールドが付与された！`); break;
+                }
+                case 'heal': { const healAmount = Math.floor(attacker.maxHp * effect.power); battle.party.forEach(target => { if (target.currentHp > 0) target.currentHp = Math.min(target.maxHp, target.currentHp + healAmount); }); addBattleLog(`パーティーが${healAmount}回復した！`); break; }
+                case 'buff': {
+                    const dupeBonus = effect.dupeBonus * (getCharacterInstance(attacker.uniqueId).duplicationBonus || 0); const finalMultiplier = effect.multiplier + dupeBonus; battle.partyBuffs.push({ ...effect, multiplier: finalMultiplier });
+                    const buffName = effect.buffType === 'damage' ? '攻撃力' : '速度'; addBattleLog(`パーティーの${buffName}が${finalMultiplier.toFixed(2)}倍になった！ (${effect.duration}ターン)`); break;
+                }
+                case 'ap_gain': { battle.actionPoints = Math.min(battle.actionPointsMax, battle.actionPoints + effect.amount); addBattleLog(`攻撃ポイント(AP)を${effect.amount}獲得した！`); break; }
+                case 'ap_max_up': { battle.actionPointsMax += effect.amount; battle.actionPoints += effect.amount; addBattleLog(`最大APが${effect.amount}増加した！`); break; }
+                case 'ultimate_gauge_charge': { battle.party.forEach(p => p.ultimateGauge = Math.min(p.skills.ultimate.cost, p.ultimateGauge + effect.amount)); addBattleLog(`パーティー全体の終焉ゲージが${effect.amount}増加した！`); break; }
+            }
+            updateBattleUI();
+            
+            // Post-action turn logic
+            const chronoBonus = attacker.activeBonuses?.find(b => b.setInfo.name === '時空' && b.count >= 4);
+            if (attacker.id.startsWith('player') && chronoBonus && Math.random() < 0.2) {
+                addBattleLog(`${attacker.name}は時空セットの効果で再度行動する！`);
+                // No turn increment, effectively giving another action
+                setTimeout(() => battleTurn(), 1000); // Re-run turn logic for the same character
+            } else {
+                battle.turn++;
+                setTimeout(battleTurn, 1000);
+            }
+        }
+        function updateBattleUI() {
+            if (!gameState.battle) return;
+            // Party shield
+            const shieldContainer = document.getElementById('party-shield-bar-container');
+            if (shieldContainer) {
+                if (gameState.battle.partyShield > 0) { const shieldPercent = (gameState.battle.partyShield / gameState.battle.partyShieldMax) * 100; shieldContainer.innerHTML = `<div class="text-center text-xs text-blue-300 mb-1">パーティーシールド: ${Math.ceil(gameState.battle.partyShield)}</div><div class="w-full bg-gray-700 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full transition-all duration-300" style="width: ${shieldPercent}%"></div></div>`;
+                } else { shieldContainer.innerHTML = ''; }
+            }
+            // Buff display
+            const buffDisplay = document.getElementById('party-buff-display');
+            if(buffDisplay) {
+                let buffText = [];
+                const damageBuff = gameState.battle.partyBuffs.find(b => b.buffType === 'damage');
+                const speedBuff = gameState.battle.partyBuffs.find(b => b.buffType === 'speed');
+                if(damageBuff) buffText.push(`<span class="text-red-400">攻撃 x${damageBuff.multiplier.toFixed(2)}</span> (あと${damageBuff.duration})`);
+                if(speedBuff) buffText.push(`<span class="text-green-400">速度 x${speedBuff.multiplier.toFixed(2)}</span> (あと${speedBuff.duration})`);
+                buffDisplay.innerHTML = buffText.join(' / ');
+            }
+            // Action Points
+            const apDisplay = document.getElementById('action-point-display');
+            if (apDisplay) {
+                apDisplay.innerHTML = `<span class="self-center text-sm mr-2">AP: </span>`;
+                for(let i = 0; i < gameState.battle.actionPointsMax; i++) {
+                    const filled = i < gameState.battle.actionPoints;
+                    const diamondSVG = `<svg width="20" height="20" viewBox="0 0 16 16" class="inline-block"><path d="M8 0L16 8L8 16L0 8L8 0Z" fill="${filled ? '#22d3ee' : 'none'}" stroke="${filled ? '#a5f3fc' : '#4b5563'}" stroke-width="1.5"/></svg>`;
+                    apDisplay.innerHTML += diamondSVG;
+                }
+            }
+            // Turn Order
+            const turnOrderDisplay = document.getElementById('turn-order-display');
+            if(turnOrderDisplay) {
+                turnOrderDisplay.innerHTML = '<span class="text-sm self-center mr-2">行動順:</span>';
+                let displayedCount = 0;
+                for(let i=0; displayedCount<8 && i < gameState.battle.turnOrder.length * 2; i++) {
+                    const unit = gameState.battle.turnOrder[(gameState.battle.turn + i) % gameState.battle.turnOrder.length];
+                    if(unit.currentHp <= 0) continue; 
+                    const icon = document.createElement('div');
+                    const isPlayer = unit.id.startsWith('player');
+                    icon.className = `w-10 h-10 rounded-full flex items-center justify-center text-2xl bg-black bg-opacity-40 border-2 ${ isPlayer ? 'border-cyan-400' : 'border-red-500'} ${i === 0 ? 'scale-110 shadow-lg shadow-yellow-500/50' : 'opacity-70'}`;
+                    icon.innerHTML = unit.symbol || GAME_DATA.ATTRIBUTES[unit.attribute].symbol;
+                    turnOrderDisplay.appendChild(icon);
+                    displayedCount++;
+                }
+            }
+            // Units HP
+            [...gameState.battle.party, ...gameState.battle.enemies].forEach(unit => {
+                const card = document.getElementById(`battle-card-${unit.id}`); if (!card) return;
+                const hpBar = card.querySelector(`#hp-${unit.id}`); const hpText = card.querySelector('p:last-child');
+                if (unit.currentHp <= 0) { card.style.opacity = '0.4'; if(hpBar) hpBar.style.width = '0%'; } 
+                else { card.style.opacity = '1'; if (hpBar) hpBar.style.width = `${(unit.currentHp / unit.maxHp) * 100}%`; if (hpText) hpText.textContent = `${Math.ceil(unit.currentHp)}/${unit.maxHp}`; }
+            });
+        }
+        function endBattle(isWin) {
+            const battleState = gameState.battle; const preBattleScreen = gameState.preBattleScreen || 'hub-screen';
+            if (isWin) {
+                if (gameState.battleType === 'infinite_corridor') {
+                    addBattleLog(`${battleState.floor}階をクリア！`);
+                    const nextFloor = battleState.floor + 1;
+                    setTimeout(() => {
+                        startBattle({ type: 'infinite_corridor', floor: nextFloor });
+                    }, 1500);
+                    return; 
+                }
+                let message = "勝利！";
+                let etherWon = 0;
+
+                if (gameState.battleType === 'map') {
+                     const battleTileId = battleState.battleInfo.id;
+                     const mapData = GAME_DATA.MAPS[gameState.currentMap];
+                     if(battleTileId === mapData.bossTile) etherWon += 5;
+                     else if (mapData.eliteTiles[battleTileId]) etherWon += 2;
+                }
+                else if (gameState.battleType === 'god') {
+                    const firstEnemy = battleState.enemies[0]; const enemyMaster = GAME_DATA.ENEMIES[firstEnemy.baseId]; const godId = enemyMaster.rewardId.replace('c_god_', '');
+                    if (!playerState.godsDefeated[godId]) { playerState.godsDefeated[godId] = true; const godChar = GAME_DATA.CHARACTERS[enemyMaster.rewardId]; addCharacter(enemyMaster.rewardId); message += `\n\n<span class="${GAME_DATA.RARITY[godChar.rarity].colorClass} font-bold">「${godChar.name}」</span>が仲間に加わった！`; }
+                    etherWon += 15;
+                } else if (gameState.battleType === 'relic_hunt') {
+                    const { levelIndex } = battleState.battleInfo;
+                    const level = GAME_DATA.RELIC_HUNT_LEVELS[levelIndex];
+                    const rewards = level.rewards;
+                    const isFirstClear = !playerState.clearedRelicHuntLevels[level.id];
+                    if (isFirstClear || Math.random() < rewards.relics.rate) {
+                         const newRelic = createRelic(rewards.relics.setIds, rewards.relics.rarity);
+                         playerState.relicInventory.push(newRelic);
+                         const setInfo = GAME_DATA.RELIC_SETS[newRelic.setId];
+                         message += `\n\n<span class="${GAME_DATA.RARITY[newRelic.rarity].colorClass} font-bold">聖遺物「${setInfo.name}」</span>を発見！`;
+                         if (isFirstClear) { playerState.clearedRelicHuntLevels[level.id] = true; }
+                    }
+                    if (rewards.materials.ether_crystal && Math.random() < rewards.materials.ether_crystal.rate) {
+                        const amount = rewards.materials.ether_crystal.amount;
+                        etherWon += amount[0] + Math.floor(Math.random() * (amount[1] - amount[0] + 1));
+                    }
+                }
+                if (battleState.battleInfo.type === 'map') { if (!playerState.mapProgress[gameState.currentMap]) playerState.mapProgress[gameState.currentMap] = {}; playerState.mapProgress[gameState.currentMap][battleState.battleInfo.id] = true; message += "\n領域を浄化しました。"; }
+                const resourcesWon = Math.floor(Math.random() * 50) + 50 + (battleState.enemies.length * 20); playerState.resources += resourcesWon; message += `\n${resourcesWon}の資源を獲得した。`;
+                let ticketsWon = 0;
+                battleState.enemies.forEach(enemy => {
+                    const masterEnemy = GAME_DATA.ENEMIES[enemy.baseId];
+                    if (masterEnemy && masterEnemy.ticketDrop && Math.random() < masterEnemy.ticketDrop.rate) { const amount = masterEnemy.ticketDrop.amount; ticketsWon += Array.isArray(amount) ? amount[0] + Math.floor(Math.random() * (amount[1] - amount[0] + 1)) : amount; }
+                });
+                if (ticketsWon > 0) { playerState.gachaTickets += ticketsWon; message += `\n降臨チケットを${ticketsWon}枚発見した！`; }
+                if (etherWon > 0) { playerState.limitBreakMaterials.ether_crystal += etherWon; message += `\nエーテル結晶を${etherWon}個発見した！`; }
+                
+                showMessage(message, () => switchScreen(preBattleScreen)); checkEndings();
+            } else { 
+                if (gameState.battleType === 'infinite_corridor') {
+                    const floorReached = gameState.battle.floor - 1;
+                    playerState.infiniteCorridor.highestFloor = Math.max(playerState.infiniteCorridor.highestFloor, floorReached);
+                    showMessage(`部隊は撤退した...\n到達階層: ${floorReached}階\n自己最高記録: ${playerState.infiniteCorridor.highestFloor}階`, () => switchScreen('infinite-corridor-screen'));
+                } else {
+                    addBattleLog('戦闘敗北...'); playerState.mentalPollution += 5; showMessage('部隊は撤退した... (精神汚染 +5)', () => switchScreen(preBattleScreen)); checkEndings();
+                }
+            }
+            gameState.battle = null;
+        }
+
+        function updateGachaUI() { document.getElementById('gacha-tickets-display').textContent = playerState.gachaTickets; }
+        function drawGacha(type, count) {
+            if (playerState.gachaTickets < count) { showMessage('降臨チケットが不足しています。'); return; }
+            playerState.gachaTickets -= count; const results = []; const rates = GAME_DATA.GACHA_RATES[type];
+            const pool = type === 'character' ? Object.keys(GAME_DATA.CHARACTERS).filter(id => !id.startsWith('c_god')) : Object.keys(GAME_DATA.EQUIPMENT);
+            for (let i = 0; i < count; i++) {
+                const rand = Math.random(); let acquiredRarity = null;
+                if (rand < rates[6]) acquiredRarity = 6; else if (rand < rates[5]) acquiredRarity = 5; else if (rand < rates[4]) acquiredRarity = 4;
+                if (acquiredRarity) {
+                    if (type === 'character') { const charPool = pool.filter(id => GAME_DATA.CHARACTERS[id].rarity === acquiredRarity); const charId = charPool[Math.floor(Math.random() * charPool.length)]; const result = addCharacter(charId); results.push({type: 'character', id: charId, isNew: result.isNew});
+                    } else { const equipPool = pool.filter(id => GAME_DATA.EQUIPMENT[id].rarity === acquiredRarity); const equipId = equipPool[Math.floor(Math.random() * equipPool.length)]; addEquipment(equipId); results.push({type: 'equipment', id: equipId}); }
+                } else { const reward = 100 * (Math.floor(Math.random() * 5) + 1); playerState.resources += reward; results.push({type: 'resource', amount: reward}); }
+            }
+            showGachaResultModal(results); updateGachaUI(); updateHubUI();
+        }
+        function showGachaResultModal(results) {
+            const resultContainer = document.getElementById('gacha-result-list'); resultContainer.innerHTML = '';
+            results.forEach(result => {
+                const itemDiv = document.createElement('div'); itemDiv.className = 'glass-panel p-2 rounded-lg text-center h-28 flex flex-col justify-center items-center'; let master;
+                if (result.type === 'character') { master = GAME_DATA.CHARACTERS[result.id]; const rarityClass = GAME_DATA.RARITY[master.rarity].colorClass; const bonusText = !result.isNew ? `<span class='text-xs text-yellow-400'>重複ボーナス!</span>` : ''; itemDiv.innerHTML = `<div class="text-4xl">${master.symbol}</div><p class="font-bold text-sm ${rarityClass}">★${master.rarity} ${master.name}</p>${bonusText}`;
+                } else if (result.type === 'equipment') { master = GAME_DATA.EQUIPMENT[result.id]; const rarityClass = GAME_DATA.RARITY[master.rarity].colorClass; itemDiv.innerHTML = `<div class="text-4xl">${master.symbol}</div><p class="font-bold text-sm ${rarityClass}">★${master.rarity} ${master.name}</p>`;
+                } else { itemDiv.innerHTML = `<p class="font-bold text-gray-400">素材</p><p class="text-sm">${result.amount} 資源</p>`; }
+                resultContainer.appendChild(itemDiv);
+            });
+            gachaResultModal.classList.remove('hidden');
+        }
+        function renderInfiniteCorridorScreen() {
+            document.getElementById('highest-floor-display').textContent = playerState.infiniteCorridor.highestFloor;
+            const rewardsContainer = document.getElementById('corridor-rewards-list');
+            rewardsContainer.innerHTML = '';
+
+            for (const floor in GAME_DATA.INFINITE_CORRIDOR_REWARDS) {
+                const reward = GAME_DATA.INFINITE_CORRIDOR_REWARDS[floor];
+                const canClaim = playerState.infiniteCorridor.highestFloor >= floor && !playerState.infiniteCorridor.claimedRewards[floor];
+                const isClaimed = playerState.infiniteCorridor.claimedRewards[floor];
+                
+                let rewardText = `${reward.resources || 0}資源, ${reward.gachaTickets || 0}チケット, ${reward.materials.ether_crystal || 0}エーテル結晶`;
+
+                const rewardDiv = document.createElement('div');
+                rewardDiv.className = `glass-panel p-3 rounded-lg flex justify-between items-center ${isClaimed ? 'opacity-50' : ''}`;
+                rewardDiv.innerHTML = `
+                    <div>
+                        <p class="font-bold text-cyan-300">${floor}階 到達報酬</p>
+                        <p class="text-sm">${rewardText}</p>
+                    </div>
+                    <button class="claim-corridor-reward-btn btn-primary px-4 py-1 rounded-md" data-floor="${floor}" ${!canClaim ? 'disabled' : ''}>
+                        ${isClaimed ? '受取済' : '受け取る'}
+                    </button>
+                `;
+                rewardsContainer.appendChild(rewardDiv);
+            }
+            document.querySelectorAll('.claim-corridor-reward-btn').forEach(btn => {
+                if (!btn.disabled) btn.onclick = () => claimInfiniteCorridorReward(btn.dataset.floor);
+            });
+        }
+        function claimInfiniteCorridorReward(floor) {
+            const reward = GAME_DATA.INFINITE_CORRIDOR_REWARDS[floor];
+            if (!reward) return;
+            if (playerState.infiniteCorridor.highestFloor < floor) { showMessage("まだ到達していません。"); return; }
+            if (playerState.infiniteCorridor.claimedRewards[floor]) { showMessage("この報酬は既に受け取り済みです。"); return; }
+
+            let message = `${floor}階の報酬を受け取りました！\n`;
+            if (reward.resources) { playerState.resources += reward.resources; message += `資源 +${reward.resources}\n`; }
+            if (reward.gachaTickets) { playerState.gachaTickets += reward.gachaTickets; message += `降臨チケット +${reward.gachaTickets}\n`; }
+            if (reward.materials.ether_crystal) { playerState.limitBreakMaterials.ether_crystal += reward.materials.ether_crystal; message += `エーテル結晶 +${reward.materials.ether_crystal}`; }
+
+            playerState.infiniteCorridor.claimedRewards[floor] = true;
+            
+            showMessage(message);
+            renderInfiniteCorridorScreen();
+            updateHubUI();
+        }
+        function startInfiniteCorridorRun() {
+            const startFloor = playerState.infiniteCorridor.highestFloor + 1;
+            startBattle({ type: 'infinite_corridor', floor: startFloor });
+        }
+        
+        function getCharacterInstance(uniqueId) { return playerState.characters.find(c => c.uniqueId === uniqueId); }
+        function getEquipmentInstance(uniqueId) { return playerState.equipment.find(e => e.uniqueId === uniqueId); }
+        function getRelicInstance(uniqueId) { return playerState.relicInventory.find(r => r.uniqueId === uniqueId); }
+        function getCharacterFullStats(uniqueId) {
+            const character = getCharacterInstance(uniqueId); if (!character) return null;
+            const master = GAME_DATA.CHARACTERS[character.charId]; const stats = { ...character.baseStats }; let bonusRate = 0.2;
+            if (master.rarity === 5) { bonusRate = 0.5; } else if (master.rarity === 6) { bonusRate = 1.0; }
+            const bonusMultiplier = 1 + (character.duplicationBonus || 0) * bonusRate;
+            stats.hp = Math.floor(stats.hp * bonusMultiplier); stats.atk = Math.floor(stats.atk * bonusMultiplier); stats.spd = Math.floor(stats.spd * bonusMultiplier);
+            // Equipment stats
+            ['weapon', 'armor'].forEach(type => { const equipUniqueId = character.equipped[type]; if (equipUniqueId) { const equipment = getEquipmentInstance(equipUniqueId); const masterEquip = GAME_DATA.EQUIPMENT[equipment.equipId]; for (const key in masterEquip.stats) { stats[key] = (stats[key] || 0) + masterEquip.stats[key]; } } });
+            // Relic flat stats
+            Object.values(playerState.equippedRelics).forEach(relicId => { if(relicId){ const relic = getRelicInstance(relicId); for(const key in relic.mainStat) stats[key] = (stats[key] || 0) + relic.mainStat[key]; } });
+            // Relic set bonus & potential passive stats
+            const activeBonuses = getActiveSetBonus();
+            activeBonuses.forEach(b => {
+                 if(b.bonus.desc.includes('HP+15%')) stats.hp = Math.floor(stats.hp * 1.15);
+                 if(b.bonus.desc.includes('攻撃力+15%')) stats.atk = Math.floor(stats.atk * 1.15);
+                 if(b.bonus.desc.includes('速度+10%')) stats.spd = Math.floor(stats.spd * 1.10); // Changed from 20% to 10% for some sets
+                 if(b.bonus.desc.includes('速度+20%')) stats.spd = Math.floor(stats.spd * 1.20);
+            });
+            if(master.potentials) { master.potentials.forEach((potential, index) => { if (character.unlockedPotentials[index] && potential.effect.type === 'party_passive_stat_buff') { stats[potential.effect.stat] = Math.floor(stats[potential.effect.stat] * potential.effect.multiplier); } }); }
+            return stats;
+        }
+        function addCharacter(charId) {
+            const existingChar = playerState.characters.find(c => c.charId === charId);
+            if (existingChar) {
+                existingChar.duplicationBonus = (existingChar.duplicationBonus || 0) + 1; const master = GAME_DATA.CHARACTERS[charId];
+                setTimeout(() => showMessage(`${master.name}は既に仲間になっています。\n魂が共鳴し、能力が上昇しました！<br>(重複ボーナス: +${existingChar.duplicationBonus})`), 100);
+                return { isNew: false };
+            } else {
+                const master = GAME_DATA.CHARACTERS[charId];
+                const newChar = {
+                    uniqueId: getNextUniqueId(), charId: charId, level: 1, exp: 0,
+                    baseStats: { hp: master.hp, atk: master.atk, spd: master.spd },
+                    equipped: { weapon: null, armor: null }, duplicationBonus: 0, limitBreakLevel: 0,
+                    unlockedPotentials: master.potentials ? master.potentials.map(() => false) : []
+                };
+                playerState.characters.push(newChar);
+                return { isNew: true };
+            }
+        }
+        function addEquipment(equipId) { playerState.equipment.push({ uniqueId: getNextUniqueId(), equipId: equipId }); }
+        function addBattleLog(message) { const log = document.getElementById('battle-log'); if(log) { log.innerHTML += `<p>${message}</p>`; log.scrollTop = log.scrollHeight; } }
+        function checkEndings() {
+            const allConquered = Object.values(playerState.mapProgress).every(map => Object.keys(map).length >= 64);
+            if (allConquered && playerState.mentalPollution < 50 && !playerState.endingsUnlocked.salvation) { playerState.endingsUnlocked.salvation = true; showEnding('salvation'); }
+            if (allConquered && playerState.mentalPollution >= 50 && !playerState.endingsUnlocked.corruption) { playerState.endingsUnlocked.corruption = true; showEnding('corruption'); }
+            if (playerState.mentalPollution >= 100 && !playerState.endingsUnlocked.ruin) { playerState.endingsUnlocked.ruin = true; showEnding('ruin'); }
+        }
+        function showEnding(type) {
+            const endings = { salvation: { title: '救済の勝利', text: '全ての異次元存在を排除し、地球は浄化された。長い戦いの末、あなたは世界に光を取り戻したのだ。人類の新たな歴史が、今ここから始まる。' }, corruption: { title: '堕落の勝利', text: '異次元の力を完全に支配したあなたは、旧人類の支配者として君臨する。地球は新たな秩序の下で「安定」したが、そこに以前の温かい光はもうない。' }, ruin: { title: '破滅の終わり', text: '増大する精神汚染は、ついにあなたの心を蝕み尽くした。あなたは最後の異界戦士として、狂気の渦の中で世界と共に終焉を迎えた。静寂だけが残った。' } };
+            document.getElementById('ending-title').textContent = endings[type].title; document.getElementById('ending-text').textContent = endings[type].text; switchScreen('ending-screen');
+        }
+        function saveGame() {
+            try {
+                const saveDataString = JSON.stringify(playerState); const base64SaveData = btoa(unescape(encodeURIComponent(saveDataString)));
+                const a = document.createElement('a'); a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(base64SaveData); a.download = `IsekaiChronicle_save_${new Date().toISOString().slice(0,10)}.txt`; a.style.display = 'none';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); showMessage('セーブデータをファイルに保存しました。');
+            } catch (e) { console.error('Save failed:', e); showMessage('セーブに失敗しました。'); }
+        }
+        function loadGame(event) {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const base64SaveData = e.target.result; const saveDataString = decodeURIComponent(escape(atob(base64SaveData))); const loadedState = JSON.parse(saveDataString);
+                    if (loadedState && loadedState.characters && loadedState.resources !== undefined) {
+                        playerState = loadedState;
+                        // --- Data migration & validation for older save files ---
+                        playerState.mapProgress = playerState.mapProgress || { ground: {}, heaven: {}, underground: {}, abyss: {}, soukai: {} }; Object.keys(GAME_DATA.MAPS).forEach(mapKey => { playerState.mapProgress[mapKey] = playerState.mapProgress[mapKey] || {}; });
+                        playerState.endingsUnlocked = playerState.endingsUnlocked || { salvation: false, corruption: false, ruin: false }; playerState.godsDefeated = playerState.godsDefeated || {};
+                        playerState.relicInventory = playerState.relicInventory || [];
+                        playerState.equippedRelics = playerState.equippedRelics || { flower: null, clock: null, goblet: null, crown: null };
+                        playerState.limitBreakMaterials = playerState.limitBreakMaterials || { ether_crystal: 0 };
+                        playerState.clearedRelicHuntLevels = playerState.clearedRelicHuntLevels || {};
+                        playerState.infiniteCorridor = playerState.infiniteCorridor || { highestFloor: 0, claimedRewards: {} };
+                        playerState.characters.forEach(c => { c.duplicationBonus = c.duplicationBonus || 0; if (!c.baseStats || c.baseStats.def !== undefined) { const master = GAME_DATA.CHARACTERS[c.charId]; if(master) c.baseStats = { hp: master.hp, atk: master.atk, spd: master.spd }; } c.limitBreakLevel = c.limitBreakLevel || 0; const masterPotentials = GAME_DATA.CHARACTERS[c.charId]?.potentials || []; c.unlockedPotentials = c.unlockedPotentials || masterPotentials.map(() => false); });
+                        playerState.nextUniqueId = playerState.nextUniqueId || Math.max(1, ...playerState.characters.map(c => c.uniqueId), ...playerState.equipment.map(e => e.uniqueId), ...playerState.relicInventory.map(r => r.uniqueId)) + 1;
+                        
+                        showMessage('データをロードしました。', () => switchScreen('hub-screen'));
+                    } else { throw new Error('無効なセーブデータ形式です。'); }
+                } catch (error) { console.error('Load failed:', error); showMessage('データのロードに失敗しました。<br>ファイルが破損しているか、形式が正しくありません。'); } finally { event.target.value = ''; }
+            };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('start-game-btn').addEventListener('click', () => { initGame(); switchScreen('hub-screen'); });
+        document.querySelectorAll('.back-to-hub').forEach(btn => btn.addEventListener('click', () => switchScreen('hub-screen')));
+        document.querySelectorAll('.hub-btn[data-screen]').forEach(btn => btn.addEventListener('click', () => switchScreen(btn.dataset.screen)));
+        document.querySelectorAll('.map-change-btn').forEach(btn => btn.addEventListener('click', (e) => { gameState.currentMap = e.target.dataset.map; document.querySelectorAll('.map-change-btn').forEach(b => b.classList.replace('btn-primary', 'btn-secondary')); e.target.classList.replace('btn-secondary', 'btn-primary'); renderMap(); }));
+        document.querySelectorAll('.gacha-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.dataset.gachaType; const count = parseInt(e.currentTarget.dataset.gachaCount); drawGacha(type, count); }));
+        document.getElementById('message-ok-btn').addEventListener('click', () => messageModal.classList.add('hidden'));
+        document.getElementById('close-character-detail-btn').addEventListener('click', () => characterDetailModal.classList.add('hidden'));
+        document.getElementById('close-equipment-select-btn').addEventListener('click', () => equipmentSelectModal.classList.add('hidden'));
+        document.getElementById('close-gacha-result-btn').addEventListener('click', () => gachaResultModal.classList.add('hidden'));
+        document.getElementById('save-game-btn').addEventListener('click', saveGame);
+        document.getElementById('load-game-btn').addEventListener('click', () => document.getElementById('load-file-input').click());
+        document.getElementById('load-file-input').addEventListener('change', loadGame);
+        document.getElementById('start-corridor-btn').addEventListener('click', startInfiniteCorridorRun);
+        
+        function initGame() {
+            resetGameData();
+            addCharacter('c001'); addCharacter('c006');
+            assignToParty(1); assignToParty(2); addEquipment('w001');
+            document.querySelector('.map-change-btn[data-map="ground"]').classList.replace('btn-secondary', 'btn-primary');
+        }
+
+        resetGameData();
+        switchScreen('title-screen');
+    });
+    </script>
+</body>
+</html>
