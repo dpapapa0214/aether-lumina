@@ -18,12 +18,17 @@
 
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
                         sans: ['"Noto Sans JP"', 'sans-serif'],
                     },
                     colors: {
+                        slate: {
+                            850: '#1e293b', // Darker slate for dark mode bg
+                            900: '#0f172a',
+                        },
                         primary: {
                             50: '#eff6ff',
                             100: '#dbeafe',
@@ -35,6 +40,8 @@
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out forwards',
                         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'bounce-sm': 'bounceSm 0.3s cubic-bezier(0.25, 0.8, 0.5, 1)',
+                        'spin-slow': 'spin 3s linear infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -44,6 +51,10 @@
                         slideUp: {
                             '0%': { transform: 'translateY(20px)', opacity: '0' },
                             '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        bounceSm: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.2)' },
                         }
                     }
                 }
@@ -52,10 +63,13 @@
     </script>
     <style>
         body {
-            background-color: #f8fafc; /* Slate-50 */
+            /* Light mode bg */
+            background-color: #f8fafc; 
+        }
+        .dark body {
+            background-color: #0f172a;
         }
         
-        /* カスタムスクロールバー (非表示にしてすっきりさせる) */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -64,30 +78,30 @@
             scrollbar-width: none;
         }
 
-        /* Glassmorphism Utilities */
+        /* Glassmorphism */
         .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* アプリカードのホバーエフェクト */
         .app-card-hover {
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .app-card-hover:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px -10px rgba(59, 130, 246, 0.25); /* Colored Shadow */
+            box-shadow: 0 12px 24px -10px rgba(59, 130, 246, 0.25);
+        }
+        .dark .app-card-hover:hover {
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
         }
 
-        /* テキストの行数制限 */
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -95,28 +109,43 @@
             overflow: hidden;
         }
 
-        /* スケルトンローディングのアニメーション */
         .skeleton {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
         }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+        }
         @keyframes shimmer {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        /* Install Button Animation */
+        .installing-ring {
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
-<body class="text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-700">
+<body class="text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-700 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+
+    <!-- トースト通知コンテナ -->
+    <div id="toastContainer" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none"></div>
 
     <!-- 通知バー（エラー時のみ表示） -->
-    <div id="notificationBar" class="hidden bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-3 sticky top-0 z-[60] shadow-sm animate-fade-in">
+    <div id="notificationBar" class="hidden bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-4 py-3 sticky top-0 z-[60] shadow-sm animate-fade-in transition-colors">
         <div class="max-w-7xl mx-auto flex justify-between items-center text-sm font-medium">
             <div class="flex items-center gap-2">
                 <i class="fas fa-wifi text-amber-500"></i>
                 <span>オフラインモード: サンプルデータを表示しています</span>
             </div>
-            <button onclick="document.getElementById('notificationBar').classList.add('hidden')" class="text-amber-600 hover:text-amber-900 transition-colors">
+            <button onclick="document.getElementById('notificationBar').classList.add('hidden')" class="text-amber-600 dark:text-amber-400 hover:text-amber-900 transition-colors">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -132,85 +161,145 @@
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
                         <i class="fa-solid fa-play text-lg ml-0.5"></i>
                     </div>
-                    <span class="ml-3 font-bold text-xl tracking-tight text-slate-800 group-hover:text-blue-600 transition-colors">Prism Store</span>
+                    <span class="ml-3 font-bold text-xl tracking-tight text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Prism Store</span>
                 </div>
 
                 <!-- 検索バー（デスクトップ） -->
                 <div class="hidden md:flex flex-1 max-w-xl mx-auto">
                     <div class="relative w-full group">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <i class="fas fa-search text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
                         </div>
                         <input type="text" id="searchInputDesktop" 
-                            class="block w-full pl-11 pr-4 py-2.5 rounded-full border-none bg-slate-100 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:bg-white transition-all shadow-inner" 
+                            class="block w-full pl-11 pr-4 py-2.5 rounded-full border-none bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:bg-white dark:focus:bg-slate-900 transition-all shadow-inner" 
                             placeholder="アプリ、ゲーム、ストーリーを検索">
                     </div>
                 </div>
 
-                <!-- アクションエリア（モバイル検索ボタンのみ残す） -->
-                <div class="flex items-center gap-2">
-                    <button class="md:hidden p-2.5 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" onclick="toggleMobileSearch()">
+                <!-- アクションエリア -->
+                <div class="flex items-center gap-3">
+                    <!-- ダークモード切り替え -->
+                    <button id="themeToggle" class="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors focus:outline-none" aria-label="テーマ切り替え">
+                        <i class="fas fa-moon dark:hidden text-lg"></i>
+                        <i class="fas fa-sun hidden dark:block text-lg text-amber-400"></i>
+                    </button>
+
+                    <button class="md:hidden w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors" onclick="toggleMobileSearch()">
                         <i class="fas fa-search text-lg"></i>
                     </button>
                 </div>
             </div>
             
             <!-- 検索バー（モバイル展開時） -->
-            <div id="mobileSearch" class="hidden pb-4 md:hidden animate-fade-in">
+            <div id="mobileSearch" class="hidden pb-4 md:hidden animate-fade-in px-2">
                 <input type="text" id="searchInputMobile" 
-                    class="block w-full px-4 py-3 rounded-xl border-none bg-slate-100 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm" 
+                    class="block w-full px-4 py-3 rounded-xl border-none bg-slate-100 dark:bg-slate-800 text-slate-100 focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all shadow-sm" 
                     placeholder="検索...">
             </div>
 
-            <!-- カテゴリナビゲーション -->
-            <nav class="flex space-x-2 overflow-x-auto pb-4 pt-1 no-scrollbar mask-gradient-r" id="categoryNav">
-                <button class="category-btn active whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm transition-all duration-300 shadow-sm shadow-blue-500/30 bg-blue-600 text-white" data-category="all">
-                    すべて
-                </button>
-                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="エンタメ">
-                    エンタメ
-                </button>
-                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="ソーシャル">
-                    ソーシャル
-                </button>
-                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="ツール">
-                    ツール
-                </button>
-                <button class="category-btn whitespace-nowrap py-2 px-5 rounded-full font-medium text-sm bg-white text-slate-600 hover:bg-slate-50 transition-all duration-300 border border-slate-200 hover:border-slate-300" data-category="学習">
-                    学習
-                </button>
-            </nav>
+            <!-- カテゴリ＆並び替えエリア -->
+            <div id="filterBar" class="flex items-center justify-between pb-4 pt-1 px-1 transition-all duration-300">
+                <!-- カテゴリナビゲーション -->
+                <nav class="flex space-x-2 overflow-x-auto no-scrollbar mask-gradient-r flex-1 mr-4" id="categoryNav">
+                    <button class="category-btn active whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm transition-all duration-300 shadow-sm shadow-blue-500/30 bg-blue-600 text-white" data-category="all">
+                        すべて
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="favorites">
+                        <i class="fas fa-heart text-pink-500 mr-1"></i>お気に入り
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="ゲーム">
+                        ゲーム
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="ソーシャル">
+                        ソーシャル
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="コマース">
+                        コマース
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="ツール">
+                        ツール
+                    </button>
+                    <button class="category-btn whitespace-nowrap py-1.5 px-4 rounded-full font-medium text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 border border-slate-200 dark:border-slate-700" data-category="学習">
+                        学習
+                    </button>
+                </nav>
+
+                <!-- 並び替えドロップダウン -->
+                <div class="relative flex-shrink-0">
+                    <select id="sortSelect" class="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-1.5 pl-3 pr-8 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="newest">新着順</option>
+                        <option value="rating">評価順</option>
+                        <option value="downloads">人気順</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
     <!-- メインコンテンツ -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full mt-32 md:mt-36 transition-all duration-500">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full mt-36 md:mt-40 transition-all duration-500">
         
+        <!-- デベロッパープロフィールヘッダー（初期非表示） -->
+        <div id="developerHeader" class="hidden mb-8 animate-fade-in relative z-10">
+            <div class="flex items-center gap-2 mb-4">
+                <button type="button" onclick="resetFilter()" class="relative z-50 flex items-center text-sm font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    <span>ホームに戻る</span>
+                </button>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-code"></i>
+                </div>
+                <div class="flex-1 text-center sm:text-left">
+                    <h2 id="devProfileName" class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Developer Name</h2>
+                    <div class="flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-center">
+                            <i class="fas fa-cube mr-2 text-slate-400"></i>
+                            <span id="devAppCount">0</span> アプリ
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-star mr-2 text-yellow-400"></i>
+                            <span id="devAvgRating">0.0</span> 平均評価
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ヒーローセクション（Featured） -->
-        <div id="heroSection" class="mb-12 hidden animate-fade-in">
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/20 group">
+        <div id="heroSection" class="mb-12 hidden animate-fade-in transition-all duration-500">
+            <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/20 group h-full">
                 <!-- 背景画像・グラデーション -->
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-900 dark:to-indigo-900 transition-colors"></div>
                 <!-- 装飾パターン -->
                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
                 <div class="absolute -right-20 -top-20 w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-30 group-hover:opacity-40 transition-opacity duration-700"></div>
                 <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-cyan-400 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
 
-                <div class="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center md:items-start gap-8">
-                    <div class="flex-shrink-0 transition-transform duration-500 hover:scale-105">
+                <!-- 進行状況バー（ローテーション用：10秒） -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-white/10 z-20">
+                    <div id="heroProgressBar" class="h-full bg-white/50 w-0 transition-all duration-[10000ms] ease-linear"></div>
+                </div>
+
+                <div class="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center md:items-start gap-8" id="heroContent">
+                    <div class="flex-shrink-0 transition-transform duration-500 hover:scale-105 cursor-pointer" onclick="openHeroApp()">
                         <img id="heroIcon" src="" alt="Hero App" class="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] shadow-xl bg-white object-cover">
                     </div>
                     <div class="flex-1 text-center md:text-left text-white">
                         <div class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold mb-4 border border-white/10 uppercase tracking-wider">
                             Featured App
                         </div>
-                        <h2 id="heroTitle" class="text-3xl md:text-5xl font-bold mb-2 tracking-tight">App Name</h2>
-                        <p id="heroDeveloper" class="text-blue-100 font-medium text-lg mb-4 opacity-90">Developer Name</p>
-                        <p id="heroDescription" class="text-blue-50/90 mb-8 max-w-2xl text-base md:text-lg leading-relaxed line-clamp-3">アプリの説明文がここに入ります。</p>
+                        <h2 id="heroTitle" class="text-3xl md:text-5xl font-bold mb-2 tracking-tight transition-opacity duration-300">App Name</h2>
+                        <button onclick="openDeveloperProfile(this.textContent)" id="heroDeveloper" class="text-blue-100 font-medium text-lg mb-4 opacity-90 hover:underline hover:text-white transition-colors">Developer Name</button>
+                        <p id="heroDescription" class="text-blue-50/90 mb-8 max-w-2xl text-base md:text-lg leading-relaxed line-clamp-3 transition-opacity duration-300">アプリの説明文がここに入ります。</p>
                         
                         <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <button onclick="openHeroApp()" class="w-full sm:w-auto px-8 py-3.5 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-                                <span>インストール</span>
+                            <button id="heroInstallBtn" class="w-full sm:w-auto px-8 py-3.5 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+                                <span>入手</span>
                                 <i class="fas fa-download text-sm"></i>
                             </button>
                             <div class="flex items-center gap-6 px-4 py-2 rounded-xl bg-black/10 backdrop-blur-sm border border-white/10">
@@ -233,17 +322,16 @@
 
         <!-- セクションタイトル -->
         <div class="flex items-end justify-between mb-6 px-1">
-            <h2 id="listTitle" class="text-2xl font-bold text-slate-800 tracking-tight">おすすめアプリ</h2>
-            <!-- 必要ならここにフィルタオプションなどを追加 -->
+            <h2 id="listTitle" class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">おすすめアプリ</h2>
+            <div id="resultCount" class="text-sm text-slate-500 dark:text-slate-400 font-medium"></div>
         </div>
 
-        <!-- ローディングスケルトン -->
+        <!-- ローディングスケルトン（JSで非表示になるまで表示） -->
         <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- 8個のスケルトンを表示 -->
             <script>
                 for(let i=0; i<8; i++) {
                     document.write(`
-                        <div class="bg-white rounded-3xl p-5 border border-slate-100 flex flex-col h-full">
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-100 dark:border-slate-700 flex flex-col h-full">
                             <div class="flex gap-4 mb-4">
                                 <div class="w-16 h-16 rounded-2xl skeleton shrink-0"></div>
                                 <div class="flex-1 space-y-2 py-1">
@@ -263,12 +351,12 @@
 
         <!-- エラー表示 -->
         <div id="error" class="hidden flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
+            <div class="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
                 <i class="fas fa-exclamation text-red-500 text-3xl"></i>
             </div>
-            <p class="text-slate-800 font-bold text-lg mb-2">読み込みエラー</p>
-            <p class="text-slate-500 text-sm max-w-md mx-auto mb-6">データの取得中に問題が発生しました。</p>
-            <button onclick="initializeApp()" class="px-6 py-2.5 bg-slate-800 text-white font-medium rounded-full hover:bg-slate-700 transition-colors shadow-lg shadow-slate-200">
+            <p class="text-slate-800 dark:text-slate-200 font-bold text-lg mb-2">読み込みエラー</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto mb-6">データの取得中に問題が発生しました。</p>
+            <button onclick="initializeApp()" class="px-6 py-2.5 bg-slate-800 dark:bg-slate-700 text-white font-medium rounded-full hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg">
                 再読み込み
             </button>
         </div>
@@ -280,25 +368,27 @@
 
         <!-- 検索結果なし -->
         <div id="noResults" class="hidden py-24 text-center animate-fade-in">
-            <div class="inline-block p-6 rounded-full bg-slate-100 mb-4">
-                <i class="fas fa-search text-slate-400 text-4xl"></i>
+            <div class="inline-block p-6 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                <i class="fas fa-search text-slate-400 dark:text-slate-500 text-4xl"></i>
             </div>
-            <p class="text-slate-500 font-medium">一致するアプリが見つかりませんでした</p>
-            <button onclick="resetFilter()" class="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm">
+            <p class="text-slate-500 dark:text-slate-400 font-medium text-lg">一致するアプリが見つかりませんでした</p>
+            <p class="text-slate-400 dark:text-slate-500 text-sm mt-2">キーワードを変更するか、フィルタを解除してみてください。</p>
+            <button onclick="resetFilter()" class="mt-6 px-6 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-full font-medium text-sm transition-colors">
                 フィルタをリセット
             </button>
         </div>
     </main>
 
     <!-- フッター -->
-    <footer class="mt-auto border-t border-slate-200 bg-white">
+    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
         <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-2 text-slate-700">
+            <div class="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                 <i class="fa-brands fa-google-play text-xl"></i>
                 <span class="font-bold tracking-tight">Prism Store</span>
             </div>
-            <div class="text-sm text-slate-400">
-                &copy; 2025 Prism Store
+            <div class="text-sm text-slate-400 dark:text-slate-500 flex gap-4">
+                <span>&copy; 2024 Prism Store</span>
+                <span id="footerStats" class="hidden sm:inline"></span>
             </div>
         </div>
     </footer>
@@ -306,42 +396,47 @@
     <!-- アプリ詳細モーダル -->
     <div id="appModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <!-- 背景ブラー -->
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop" onclick="closeModal()"></div>
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop" onclick="closeModal()"></div>
 
         <!-- モーダル本体 -->
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div id="modalContent" class="relative transform overflow-hidden rounded-[2rem] bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl scale-95 opacity-0">
+                <div id="modalContent" class="relative transform overflow-hidden rounded-[2rem] bg-white dark:bg-slate-800 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl scale-95 opacity-0 border border-slate-100 dark:border-slate-700">
                     
-                    <!-- ヘッダー背景画像（オプション） -->
-                    <div class="h-32 bg-gradient-to-br from-slate-100 to-slate-200 w-full absolute top-0 left-0 z-0"></div>
+                    <!-- ヘッダー背景画像 -->
+                    <div class="h-32 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 w-full absolute top-0 left-0 z-0"></div>
                     
-                    <!-- 閉じるボタン -->
-                    <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-slate-600 hover:text-slate-800 transition-colors backdrop-blur-md">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <!-- コントロールボタン -->
+                    <div class="absolute top-4 right-4 z-20 flex gap-2">
+                         <button id="modalShareBtn" class="w-9 h-9 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white transition-colors backdrop-blur-md" title="シェア">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button onclick="closeModal()" class="w-9 h-9 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white transition-colors backdrop-blur-md">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
 
                     <div class="relative z-10 px-6 pt-12 pb-6 sm:px-10">
                         <div class="flex flex-col sm:flex-row sm:items-start gap-6">
                             <!-- アイコン -->
-                            <div class="flex-shrink-0 mx-auto sm:mx-0">
-                                <img id="modalIcon" src="" alt="" class="h-28 w-28 rounded-[1.5rem] bg-white object-cover shadow-lg ring-4 ring-white">
+                            <div class="flex-shrink-0 mx-auto sm:mx-0 relative group">
+                                <img id="modalIcon" src="" alt="" class="h-28 w-28 rounded-[1.5rem] bg-white dark:bg-slate-700 object-cover shadow-lg ring-4 ring-white dark:ring-slate-800">
                             </div>
                             
                             <!-- タイトルエリア -->
                             <div class="flex-1 text-center sm:text-left mt-2">
-                                <h3 class="text-2xl font-bold text-slate-900 leading-tight mb-1" id="modalTitle">App Title</h3>
-                                <p class="text-blue-600 font-medium mb-3" id="modalDeveloper">Developer Name</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-1" id="modalTitle">App Title</h3>
+                                <button onclick="closeModal(); openDeveloperProfile(this.textContent)" id="modalDeveloper" class="text-blue-600 dark:text-blue-400 font-medium mb-3 hover:underline">Developer Name</button>
                                 
                                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-6">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700" id="modalCategory">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800" id="modalCategory">
                                         Category
                                     </span>
-                                    <div class="flex items-center text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
+                                    <div class="flex items-center text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">
                                         <span id="modalRating" class="mr-1">4.5</span>
                                         <i class="fas fa-star text-yellow-400"></i>
                                     </div>
-                                    <div class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                    <div class="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">
                                         <span id="modalDownloads">1M+</span> DL
                                     </div>
                                 </div>
@@ -350,33 +445,38 @@
 
                         <!-- アクションボタン -->
                         <div class="mt-6 flex gap-3">
-                            <a id="modalLink" href="#" target="_blank" class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:scale-[1.02]">
-                                インストール
-                            </a>
+                            <button id="modalInstallBtn" class="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+                                <span>入手</span>
+                            </button>
+                            
+                            <button id="modalFavoriteBtn" class="w-12 flex-shrink-0 inline-flex justify-center items-center border border-slate-200 dark:border-slate-600 text-slate-400 hover:text-pink-500 hover:border-pink-200 rounded-xl bg-white dark:bg-slate-700 hover:bg-pink-50 dark:hover:bg-slate-600 transition-all active:scale-95" title="お気に入り">
+                                <i class="far fa-heart text-xl"></i>
+                            </button>
                         </div>
 
                         <!-- 区切り線 -->
-                        <div class="relative py-6">
+                        <div class="relative py-8">
                             <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                                <div class="w-full border-t border-slate-100"></div>
+                                <div class="w-full border-t border-slate-100 dark:border-slate-700"></div>
                             </div>
                             <div class="relative flex justify-center">
-                                <span class="bg-white px-2 text-xs text-slate-400 uppercase tracking-widest">About this app</span>
+                                <span class="bg-white dark:bg-slate-800 px-3 text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest font-semibold">About this app</span>
                             </div>
                         </div>
 
                         <!-- 説明文 -->
-                        <div class="text-slate-600 text-sm leading-relaxed space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                             <p id="modalDescription" class="whitespace-pre-line">
                                 詳細説明
                             </p>
                         </div>
-                        
-                        <!-- スクリーンショット（プレースホルダー） -->
-                        <div class="mt-6 overflow-x-auto pb-2 no-scrollbar flex gap-3">
-                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse"></div>
-                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse delay-75"></div>
-                            <div class="w-32 h-56 bg-slate-100 rounded-xl flex-shrink-0 animate-pulse delay-150"></div>
+
+                        <!-- 関連アプリ（レコメンド） -->
+                        <div id="relatedAppsSection" class="mt-8 hidden">
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">こちらもおすすめ</h4>
+                            <div id="relatedAppsGrid" class="grid grid-cols-3 gap-3">
+                                <!-- JSで挿入 -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -395,96 +495,153 @@
 
         const MOCK_DATA = [
             {
-                title: "Space Defender X",
-                category: "エンタメ",
-                developer: "Galactic Studios",
-                rating: "4.5",
-                downloads: "50万+",
-                description: "圧倒的なグラフィックとサウンドで描く、次世代シューティングゲーム。オンライン協力プレイ対応。",
-                icon: "https://placehold.co/200x200/8b5cf6/ffffff?text=Game",
-                url: "#"
+                title: "VocabEngine",
+                category: "学習",
+                developer: "Aether Lumina",
+                rating: "5.0",
+                downloads: "1万+",
+                description: "共同作成単語帳。",
+                icon: "https://www.aether-lumina.com/icons/vocab-icon.png",
+                url: "https://firebasestorage.googleapis.com/v0/b/zonary-2.appspot.com/o/VocabEngine.html?alt=media&token=7f400570-8a18-4396-ae76-d5d41149a34c"
             },
             {
-                title: "Social Connect",
-                category: "ソーシャル",
-                developer: "Connect Inc.",
+                title: "WanderLog",
+                category: "エンタメ",
+                developer: "Aether Lumina",
                 rating: "4.8",
-                downloads: "200万+",
-                description: "世界中の人々と繋がろう。趣味や興味で繋がる新しいソーシャルネットワーク。",
-                icon: "https://placehold.co/200x200/f43f5e/ffffff?text=Social",
-                url: "#"
+                downloads: "5,000+",
+                description: "散歩を記録。参加者関連機能を強化。",
+                icon: "https://www.aether-lumina.com/icons/WanderLog.png",
+                url: "https://www.aether-lumina.com/wanderlog"
             },
             {
-                title: "FinTrack",
-                category: "ツール",
-                developer: "Smart Finance",
-                rating: "4.2",
-                downloads: "10万+",
-                description: "資産管理をこれひとつで。銀行口座、クレジットカード、投資信託を自動連携して見える化。",
-                icon: "https://placehold.co/200x200/10b981/ffffff?text=Fin",
-                url: "#"
-            },
-            {
-                title: "LingoAI",
-                category: "学習",
-                developer: "Global Lang Lab",
-                rating: "4.7",
-                downloads: "200万+",
-                description: "ネイティブAIとの会話で学ぶ英会話アプリ。リアルタイムの発音矯正機能付き。",
-                icon: "https://placehold.co/200x200/f59e0b/ffffff?text=AI",
-                url: "#"
-            },
-            {
-                title: "Chat Sphere",
+                title: "SpatialVerse",
                 category: "ソーシャル",
-                developer: "Chat Devs",
-                rating: "4.6",
-                downloads: "500万+",
-                description: "シンプルで高速なメッセージアプリ。グループチャットやビデオ通話も無料で楽しめます。",
-                icon: "https://placehold.co/200x200/0ea5e9/ffffff?text=Chat",
-                url: "#"
+                developer: "Aether Lumina",
+                rating: "5.0",
+                downloads: "10万+",
+                description: "フィールド型の新SNS。",
+                icon: "https://www.aether-lumina.com/icons/logo-command.png",
+                url: "https://firebasestorage.googleapis.com/v0/b/zonary-2.appspot.com/o/SpetialVerse.html?alt=media&token=0dc7bddb-8a2b-4184-a467-88419aa2fdaa"
             },
             {
-                title: "Pixel Magic",
-                category: "ツール",
-                developer: "Creative Art",
-                rating: "4.6",
-                downloads: "80万+",
-                description: "スマホでプロ並みの写真編集を。不要なオブジェクトの削除も指先ひとつで。",
-                icon: "https://placehold.co/200x200/ef4444/ffffff?text=Art",
-                url: "#"
-            },
-            {
-                title: "Shogi Quest",
-                category: "エンタメ",
-                developer: "Board Games Ltd.",
-                rating: "4.3",
-                downloads: "20万+",
-                description: "初心者からプロ級まで楽しめる将棋アプリ。棋譜分析機能で上達をサポート。",
-                icon: "https://placehold.co/200x200/d97706/ffffff?text=Shogi",
-                url: "#"
-            },
-             {
-                title: "Code Learner",
+                title: "4-Week Focus Planner",
                 category: "学習",
-                developer: "Edu Tech",
+                developer: "Regulus",
+                rating: "5.0",
+                downloads: "1万+",
+                description: "計画作成",
+                icon: "https://www.aether-lumina.com/icons/logo-eye.png",
+                url: "https://firebasestorage.googleapis.com/v0/b/zonary-2.appspot.com/o/4-Week%20Focus%20Planner.html?alt=media&token=b0f5b90c-2761-4d17-aa89-da0cccdfc0dc"
+            },
+            {
+                title: "Regulus",
+                category: "学習",
+                developer: "Regulus",
                 rating: "4.9",
-                downloads: "30万+",
-                description: "ゲーム感覚でプログラミングを学ぼう。Python, JS, HTMLなど主要言語に対応。",
-                icon: "https://placehold.co/200x200/6366f1/ffffff?text=Code",
-                url: "#"
+                downloads: "2万+",
+                description: "時間管理ツール。時間割を設定してチャイムを利用可能。",
+                icon: "https://www.aether-lumina.com/icons/logo-crown.png",
+                url: "https://www.aether-lumina.com/regulus"
+            },
+            {
+                title: "Aether Lumina : スマホ対応版",
+                category: "ソーシャル",
+                developer: "Aether Lumina",
+                rating: "4.7",
+                downloads: "100万+",
+                description: "Twitter,Instagram,LINEの機能を1つに集約。スマートフォン表示に対応。",
+                icon: "https://www.aether-lumina.com/icons/Aether%20Lumina.png",
+                url: "https://www.aether-lumina.com"
+            },
+            {
+                title: "Lexicon",
+                category: "学習",
+                developer: "Regulus",
+                rating: "4.8",
+                downloads: "5,000+",
+                description: "単語を検索。(別途単語データが必要です。)",
+                icon: "https://www.aether-lumina.com/icons/Finder.png",
+                url: "https://firebasestorage.googleapis.com/v0/b/zonary-2.appspot.com/o/lexicon.html?alt=media&token=88ea9c69-1cc8-40cb-8cd6-24cfe9e3acba"
+            },
+            {
+                title: "Prism Store",
+                category: "ツール",
+                developer: "Aether Lumina",
+                rating: "5.0",
+                downloads: "100+",
+                description: "アプリストア。",
+                icon: "https://www.aether-lumina.com/icons/prism-store-icon.png",
+                url: "https://www.aether-lumina.com/prism"
             }
         ];
 
         let allApps = [];
         let currentCategory = 'all';
         let searchQuery = '';
+        let currentSort = 'newest';
+        let favorites = [];
+        let heroInterval;
+        let viewState = { type: 'home', target: null }; // 'home' | 'developer'
 
+        // 初期化
         document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            loadFavorites();
             initializeApp();
             setupEventListeners();
         });
 
+        // テーマ管理
+        function loadTheme() {
+            // ローカルストレージまたはシステム設定を確認
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+
+        // お気に入り管理
+        function loadFavorites() {
+            try {
+                favorites = JSON.parse(localStorage.getItem('prism_favorites')) || [];
+            } catch (e) {
+                favorites = [];
+            }
+        }
+
+        function toggleFavorite(appTitle, showToastMsg = true) {
+            const index = favorites.indexOf(appTitle);
+            if (index === -1) {
+                favorites.push(appTitle);
+                if(showToastMsg) showToast(`「${appTitle}」をお気に入りに追加しました`, 'success');
+            } else {
+                favorites.splice(index, 1);
+                if(showToastMsg) showToast(`「${appTitle}」をお気に入りから削除しました`, 'info');
+            }
+            localStorage.setItem('prism_favorites', JSON.stringify(favorites));
+            
+            // UI更新
+            renderApps();
+            updateModalFavoriteState(appTitle);
+        }
+
+        function isFavorite(appTitle) {
+            return favorites.includes(appTitle);
+        }
+
+        // メイン初期化処理
         async function initializeApp() {
             const loadingEl = document.getElementById('loading');
             const errorEl = document.getElementById('error');
@@ -492,7 +649,6 @@
             const heroSection = document.getElementById('heroSection');
             const notificationBar = document.getElementById('notificationBar');
 
-            // リセット
             loadingEl.classList.remove('hidden');
             errorEl.classList.add('hidden');
             gridEl.innerHTML = ''; 
@@ -508,22 +664,17 @@
                         allApps = [...MOCK_DATA];
                     }
                 } else {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // スケルトンを見せる演出
                     allApps = [...MOCK_DATA];
                 }
 
                 if (!allApps || allApps.length === 0) throw new Error('No data');
 
-                setupHeroApp();
+                updateStats();
+                startHeroRotation();
                 renderApps();
                 
-                // フェードアウト演出
-                loadingEl.style.opacity = '0';
-                setTimeout(() => {
-                    loadingEl.classList.add('hidden');
-                    loadingEl.style.opacity = '1';
-                    heroSection.classList.remove('hidden');
-                }, 300);
+                loadingEl.classList.add('hidden');
+                heroSection.classList.remove('hidden');
 
             } catch (err) {
                 console.error("Init failed:", err);
@@ -542,20 +693,28 @@
             return [];
         }
 
+        function updateStats() {
+            const count = allApps.length;
+            document.getElementById('footerStats').textContent = `${count} apps loaded`;
+        }
+
+        // イベントリスナー
         function setupEventListeners() {
-            // カテゴリボタンのスタイル制御
+            // カテゴリ
             const buttons = document.querySelectorAll('.category-btn');
             buttons.forEach(btn => {
                 btn.addEventListener('click', (e) => {
+                    if (viewState.type === 'developer') return; // デベロッパーページ中は無効化
+
+                    // Reset Styles
                     buttons.forEach(b => {
-                        // Reset styles
                         b.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
-                        b.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                        b.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
                     });
                     
-                    // Set active style
-                    const target = e.target;
-                    target.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                    // Active Style
+                    const target = e.target.closest('button');
+                    target.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
                     target.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
 
                     currentCategory = target.dataset.category;
@@ -563,20 +722,85 @@
                 });
             });
 
+            // 検索
             const handleSearch = (e) => {
                 searchQuery = e.target.value.toLowerCase();
                 renderApps();
             };
             document.getElementById('searchInputDesktop').addEventListener('input', handleSearch);
             document.getElementById('searchInputMobile').addEventListener('input', handleSearch);
+
+            // 並び替え
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderApps();
+            });
+
+            // テーマ切り替え
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // ヒーローのインストールボタン
+            const heroInstallBtn = document.getElementById('heroInstallBtn');
+            heroInstallBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
         }
 
-        function setupHeroApp() {
-            if (allApps.length === 0) return;
-            const hero = allApps[0];
-            
+        // --- Featured App Rotation ---
+        let currentHeroIndex = 0;
+        let featuredApps = [];
+
+        function startHeroRotation() {
+            // 評価4.5以上のアプリをFeatured対象とする
+            featuredApps = allApps.filter(a => parseFloat(a.rating || 0) >= 4.5);
+            if (featuredApps.length === 0) featuredApps = allApps.slice(0, 5); // フォールバック
+
+            updateHeroUI(featuredApps[0]);
+
+            if (featuredApps.length > 1) {
+                // プログレスバーのリセット
+                const bar = document.getElementById('heroProgressBar');
+                bar.style.transition = 'none';
+                bar.style.width = '0%';
+                
+                // 次のフレームでアニメーション開始
+                requestAnimationFrame(() => {
+                    bar.style.transition = 'width 10000ms linear';
+                    bar.style.width = '100%';
+                });
+
+                heroInterval = setInterval(() => {
+                    currentHeroIndex = (currentHeroIndex + 1) % featuredApps.length;
+                    
+                    // フェードアウト
+                    const content = document.getElementById('heroContent');
+                    content.classList.add('opacity-0');
+                    
+                    setTimeout(() => {
+                        updateHeroUI(featuredApps[currentHeroIndex]);
+                        content.classList.remove('opacity-0');
+                        
+                        // プログレスバーリセット
+                        bar.style.transition = 'none';
+                        bar.style.width = '0%';
+                        requestAnimationFrame(() => {
+                            bar.style.transition = 'width 10000ms linear';
+                            bar.style.width = '100%';
+                        });
+                    }, 300); // フェードアウト時間と合わせる
+
+                }, 10000);
+            }
+        }
+
+        function updateHeroUI(hero) {
+            if (!hero) return;
             document.getElementById('heroTitle').textContent = hero.title || 'No Title';
             document.getElementById('heroDeveloper').textContent = hero.developer || '';
+            document.getElementById('heroDeveloper').onclick = (e) => {
+                e.stopPropagation();
+                openDeveloperProfile(hero.developer);
+            }
             document.getElementById('heroDescription').textContent = hero.description || '';
             document.getElementById('heroRating').textContent = hero.rating || '-';
             document.getElementById('heroDownloads').textContent = hero.downloads || '-';
@@ -585,32 +809,166 @@
             heroIcon.src = hero.icon;
             heroIcon.onerror = function() { this.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=App'; };
             
-            window.openHeroApp = () => window.open(hero.url || '#', '_blank');
+            window.openHeroApp = () => openModal(hero);
+
+            // インストールボタンの動作更新
+            const btn = document.getElementById('heroInstallBtn');
+            // ボタンをリセット（クローンしてイベントリスナー削除）
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', (e) => {
+                 e.stopPropagation();
+                 simulateInstall(newBtn, hero.url, hero.title);
+            });
+            // リセットされたボタンの状態も初期化
+            newBtn.dataset.state = 'initial';
+            newBtn.disabled = false;
+            newBtn.style.width = '';
+            newBtn.className = 'w-full sm:w-auto px-8 py-3.5 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2';
+            newBtn.innerHTML = '<span>入手</span><i class="fas fa-download text-sm"></i>';
         }
 
+        // --- Developer Profile ---
+        function openDeveloperProfile(developerName) {
+            if (!developerName) return;
+            
+            viewState = { type: 'developer', target: developerName };
+            searchQuery = ''; // 検索クリア
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            
+            // UI切り替え
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('filterBar').classList.add('opacity-50', 'pointer-events-none'); // フィルタ無効化の視覚表現
+            
+            // ヘッダー情報設定
+            const devHeader = document.getElementById('developerHeader');
+            document.getElementById('devProfileName').textContent = developerName;
+            
+            // 統計計算
+            const devApps = allApps.filter(app => app.developer === developerName);
+            document.getElementById('devAppCount').textContent = devApps.length;
+            
+            // 平均評価
+            let totalRating = 0;
+            let count = 0;
+            devApps.forEach(app => {
+                const r = parseFloat(app.rating);
+                if (!isNaN(r)) {
+                    totalRating += r;
+                    count++;
+                }
+            });
+            const avg = count > 0 ? (totalRating / count).toFixed(1) : '-';
+            document.getElementById('devAvgRating').textContent = avg;
+
+            devHeader.classList.remove('hidden');
+            
+            renderApps();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetFilter() {
+            viewState = { type: 'home', target: null };
+            searchQuery = '';
+            currentCategory = 'all';
+            currentSort = 'newest';
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            document.getElementById('sortSelect').value = 'newest';
+            
+            // UI Reset
+            document.getElementById('developerHeader').classList.add('hidden');
+            document.getElementById('heroSection').classList.remove('hidden');
+            document.getElementById('filterBar').classList.remove('opacity-50', 'pointer-events-none');
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                 btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+                 btn.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
+            });
+            const allBtn = document.querySelector('[data-category="all"]');
+            allBtn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
+            allBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
+
+            renderApps();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+
+        // アプリ一覧描画（フィルタ・ソート含む）
         function renderApps() {
             const grid = document.getElementById('appGrid');
             const noResults = document.getElementById('noResults');
             const listTitle = document.getElementById('listTitle');
+            const resultCount = document.getElementById('resultCount');
             grid.innerHTML = '';
 
-            let filteredApps = allApps.filter(app => {
-                if (!app || !app.title) return false;
-                const matchesCategory = currentCategory === 'all' || app.category === currentCategory;
-                const matchesSearch = (app.title || '').toLowerCase().includes(searchQuery) || 
-                                      (app.description || '').toLowerCase().includes(searchQuery);
-                return matchesCategory && matchesSearch;
+            let filteredApps = [];
+
+            if (viewState.type === 'developer') {
+                // デベロッパーモード
+                filteredApps = allApps.filter(app => app.developer === viewState.target);
+            } else {
+                // 通常モード
+                filteredApps = allApps.filter(app => {
+                    if (!app || !app.title) return false;
+                    
+                    // カテゴリ
+                    let matchesCategory = true;
+                    if (currentCategory === 'favorites') {
+                        matchesCategory = isFavorite(app.title);
+                    } else if (currentCategory !== 'all') {
+                        matchesCategory = app.category === currentCategory;
+                    }
+
+                    // 検索
+                    const matchesSearch = (app.title || '').toLowerCase().includes(searchQuery) || 
+                                          (app.description || '').toLowerCase().includes(searchQuery);
+                    
+                    return matchesCategory && matchesSearch;
+                });
+            }
+
+            // ソート
+            filteredApps.sort((a, b) => {
+                if (currentSort === 'rating') {
+                    return parseFloat(b.rating || 0) - parseFloat(a.rating || 0);
+                } else if (currentSort === 'downloads') {
+                    const getVal = (str) => {
+                        if(!str) return 0;
+                        let n = parseFloat(str.replace(/[^0-9.]/g, ''));
+                        if(str.includes('万')) n *= 10000;
+                        return n;
+                    };
+                    return getVal(b.downloads) - getVal(a.downloads);
+                } else {
+                    return 0; 
+                }
             });
 
+            // UI更新
             if (filteredApps.length === 0) {
                 noResults.classList.remove('hidden');
                 listTitle.classList.add('hidden');
+                resultCount.textContent = '';
             } else {
                 noResults.classList.add('hidden');
                 listTitle.classList.remove('hidden');
-                listTitle.textContent = currentCategory === 'all' 
-                    ? (searchQuery ? `"${searchQuery}" の検索結果` : 'あなたへのおすすめ') 
-                    : `${currentCategory} の人気アプリ`;
+                
+                let titleText = 'おすすめアプリ';
+                if (viewState.type === 'developer') {
+                    titleText = '配信中のアプリ';
+                } else if(currentCategory === 'favorites') {
+                    titleText = 'お気に入り';
+                } else if(currentCategory !== 'all') {
+                    titleText = `${currentCategory}`;
+                } else if(searchQuery) {
+                    titleText = `"${searchQuery}" の検索結果`;
+                }
+                
+                listTitle.textContent = titleText;
+                resultCount.textContent = `${filteredApps.length}件`;
 
                 filteredApps.forEach((app, index) => {
                     const card = createAppCard(app, index);
@@ -621,68 +979,95 @@
 
         function createAppCard(app, index) {
             const div = document.createElement('div');
-            // Stagger animation delay
-            const delay = index * 50; 
+            const delay = Math.min(index * 50, 500); // 遅延に上限を設ける
             div.style.animationDelay = `${delay}ms`;
             
-            div.className = 'app-card-hover bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col h-full cursor-pointer animate-slide-up opacity-0 fill-mode-forwards relative overflow-hidden group';
+            div.className = 'app-card-hover bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full cursor-pointer animate-slide-up opacity-0 fill-mode-forwards relative overflow-hidden group transition-colors';
             
             div.onclick = (e) => {
-                if (!e.target.closest('button')) openModal(app);
+                // ボタンクリックでなければモーダルを開く
+                if (!e.target.closest('.action-btn') && !e.target.closest('.dev-link')) openModal(app);
             };
 
             const safeIcon = app.icon || 'https://placehold.co/200x200/e2e8f0/64748b?text=App';
+            const isFav = isFavorite(app.title);
 
             div.innerHTML = `
-                <div class="flex items-start gap-4 mb-4">
-                    <img src="${safeIcon}" alt="${app.title}" class="w-16 h-16 rounded-2xl object-cover bg-slate-50 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/200x200/e2e8f0/64748b?text=App'">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-slate-800 text-lg leading-tight truncate mb-1 group-hover:text-blue-600 transition-colors">${app.title}</h3>
-                        <p class="text-xs text-slate-500 truncate font-medium">${app.developer || app.category}</p>
+                <!-- お気に入りボタン (Absolute) -->
+                <button class="action-btn absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-slate-600 transition-all ${isFav ? 'text-pink-500 animate-bounce-sm' : ''}" 
+                    onclick="toggleFavorite('${app.title}')">
+                    <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+                </button>
+
+                <div class="flex items-start gap-4 mb-4 pr-8">
+                    <img src="${safeIcon}" alt="${app.title}" class="w-16 h-16 rounded-2xl object-cover bg-slate-50 dark:bg-slate-700 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/200x200/e2e8f0/64748b?text=App'">
+                    <div class="flex-1 min-w-0 pt-1">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight truncate mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${app.title}</h3>
+                        <button class="dev-link text-xs text-slate-500 dark:text-slate-400 truncate font-medium hover:text-blue-600 dark:hover:text-blue-400 hover:underline text-left" onclick="openDeveloperProfile('${app.developer}')">${app.developer || app.category}</button>
                     </div>
                 </div>
                 
-                <p class="text-sm text-slate-600 mb-4 line-clamp-2 leading-relaxed flex-grow">
+                <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 leading-relaxed flex-grow">
                     ${app.description || 'No description available.'}
                 </p>
 
-                <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
+                <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-700">
                     <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-slate-800 text-sm">${app.rating || '4.0'}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">${app.rating || '4.0'}</span>
                         <i class="fas fa-star text-xs text-yellow-400"></i>
                     </div>
-                     <button onclick="event.stopPropagation(); window.open('${app.url || '#'}', '_blank')" class="px-4 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-bold rounded-full transition-colors">
-                        入手
+                     <button class="action-btn px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-bold rounded-full transition-colors flex items-center gap-1.5"
+                        onclick="simulateInstall(this, '${app.url || '#'}', '${app.title}')">
+                        <span>入手</span>
                     </button>
                 </div>
             `;
             return div;
         }
 
-        // Modal Logic
+        // --- モーダル & インストール機能 ---
+
         const modal = document.getElementById('appModal');
         const modalContent = document.getElementById('modalContent');
         const modalBackdrop = document.getElementById('modalBackdrop');
+        let currentModalApp = null;
 
         function openModal(app) {
-            // Set Data
+            currentModalApp = app;
+            
+            // データセット
             document.getElementById('modalTitle').textContent = app.title || '';
             document.getElementById('modalDeveloper').textContent = app.developer || 'Unknown';
             document.getElementById('modalCategory').textContent = app.category || '';
             document.getElementById('modalRating').textContent = app.rating || '-';
             document.getElementById('modalDownloads').textContent = app.downloads || '-';
             document.getElementById('modalDescription').textContent = app.description || '';
-            document.getElementById('modalLink').href = app.url || '#';
             
             const iconImg = document.getElementById('modalIcon');
             iconImg.src = app.icon || '';
             iconImg.onerror = function() { this.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=App'; };
 
-            // Show
+            // インストールボタンのリセット
+            const installBtn = document.getElementById('modalInstallBtn');
+            resetInstallButton(installBtn);
+            installBtn.onclick = () => simulateInstall(installBtn, app.url, app.title);
+
+            // シェアボタン設定
+            const shareBtn = document.getElementById('modalShareBtn');
+            shareBtn.onclick = () => shareApp(app);
+
+            // お気に入り状態の反映
+            updateModalFavoriteState(app.title);
+            const favBtn = document.getElementById('modalFavoriteBtn');
+            favBtn.onclick = () => toggleFavorite(app.title);
+
+            // 関連アプリの表示
+            showRelatedApps(app);
+
+            // モーダル表示
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
-            // Animation In
             requestAnimationFrame(() => {
                 modalBackdrop.classList.remove('opacity-0');
                 modalContent.classList.remove('scale-95', 'opacity-0');
@@ -691,7 +1076,6 @@
         }
 
         function closeModal() {
-            // Animation Out
             modalBackdrop.classList.add('opacity-0');
             modalContent.classList.remove('scale-100', 'opacity-100');
             modalContent.classList.add('scale-95', 'opacity-0');
@@ -699,7 +1083,150 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 document.body.style.overflow = '';
+                currentModalApp = null;
             }, 200);
+        }
+
+        function updateModalFavoriteState(title) {
+            if(!currentModalApp || currentModalApp.title !== title) return;
+
+            const favBtn = document.getElementById('modalFavoriteBtn');
+            const isFav = isFavorite(title);
+            const icon = favBtn.querySelector('i');
+            
+            if (isFav) {
+                icon.className = 'fas fa-heart text-xl text-pink-500';
+                favBtn.classList.add('border-pink-200', 'bg-pink-50', 'dark:bg-slate-700');
+            } else {
+                icon.className = 'far fa-heart text-xl';
+                favBtn.classList.remove('border-pink-200', 'bg-pink-50');
+                favBtn.classList.remove('text-pink-500'); // Ensure color removal
+            }
+        }
+
+        // 関連アプリロジック
+        function showRelatedApps(currentApp) {
+            const container = document.getElementById('relatedAppsSection');
+            const grid = document.getElementById('relatedAppsGrid');
+            
+            // 自分以外で同じカテゴリのアプリを3つまで探す
+            const related = allApps
+                .filter(a => a.category === currentApp.category && a.title !== currentApp.title)
+                .slice(0, 3);
+
+            if (related.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            grid.innerHTML = '';
+
+            related.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'flex flex-col items-center text-center cursor-pointer group';
+                div.onclick = () => openModal(app);
+                
+                const safeIcon = app.icon || 'https://placehold.co/100x100/e2e8f0/64748b?text=App';
+                
+                div.innerHTML = `
+                    <img src="${safeIcon}" class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-700 object-cover shadow-sm mb-2 group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/100x100/e2e8f0/64748b?text=App'">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 line-clamp-1 w-full px-1">${app.title}</span>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        // インストールシミュレーション
+        function simulateInstall(btn, url, title) {
+            // 既に「開く」状態なら遷移
+            if (btn.dataset.state === 'installed') {
+                window.open(url, '_blank');
+                return;
+            }
+            if (btn.dataset.state === 'installing') return;
+
+            // 状態：インストール中
+            btn.dataset.state = 'installing';
+            btn.disabled = true;
+            const originalWidth = btn.offsetWidth;
+            btn.style.width = `${originalWidth}px`; // 幅固定
+            
+            // ボタンの中身をスピナーに変更
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="installing-ring"></div>';
+            
+            // 擬似的な待機時間 (1.5秒)
+            setTimeout(() => {
+                // 状態：完了
+                btn.dataset.state = 'installed';
+                btn.disabled = false;
+                btn.style.width = ''; // 幅リセット
+                btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'bg-blue-50', 'text-blue-600', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+                
+                // 「開く」スタイル
+                btn.classList.add('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200', 'hover:bg-slate-200', 'dark:hover:bg-slate-600');
+                btn.innerHTML = '<span>開く</span>';
+                
+                showToast(`「${title}」をインストールしました`, 'success');
+            }, 1500);
+        }
+
+        function resetInstallButton(btn) {
+            btn.dataset.state = 'initial';
+            btn.disabled = false;
+            // 初期スタイル（モーダル用）
+            btn.className = 'flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-all hover:scale-[1.02] active:scale-95';
+            btn.innerHTML = '<span>入手</span>';
+        }
+
+        // シェア機能
+        async function shareApp(app) {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: app.title,
+                        text: `Check out ${app.title} on Prism Store!`,
+                        url: app.url || window.location.href,
+                    });
+                } catch (err) {
+                    console.log('Share canceled');
+                }
+            } else {
+                // フォールバック：クリップボードコピー
+                navigator.clipboard.writeText(`${app.title}: ${app.url}`).then(() => {
+                    showToast('リンクをコピーしました', 'success');
+                });
+            }
+        }
+
+        // トースト通知
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            // アイコン選択
+            let icon = 'fa-info-circle';
+            let colorClass = 'bg-slate-800 text-white dark:bg-slate-700';
+            
+            if (type === 'success') {
+                icon = 'fa-check-circle';
+            }
+
+            toast.className = `${colorClass} px-4 py-3 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium animate-slide-up backdrop-blur-md bg-opacity-90 min-w-[200px] justify-center`;
+            toast.innerHTML = `
+                <i class="fas ${icon} ${type === 'success' ? 'text-green-400' : 'text-blue-400'}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // 3秒後に消える
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         function toggleMobileSearch() {
@@ -711,21 +1238,29 @@
         }
 
         function resetFilter() {
+            viewState = { type: 'home', target: null };
             searchQuery = '';
             currentCategory = 'all';
+            currentSort = 'newest';
             document.getElementById('searchInputDesktop').value = '';
             document.getElementById('searchInputMobile').value = '';
+            document.getElementById('sortSelect').value = 'newest';
             
             // UI Reset
+            document.getElementById('developerHeader').classList.add('hidden');
+            document.getElementById('heroSection').classList.remove('hidden');
+            document.getElementById('filterBar').classList.remove('opacity-50', 'pointer-events-none');
+
             document.querySelectorAll('.category-btn').forEach(btn => {
                  btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
-                 btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                 btn.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
             });
             const allBtn = document.querySelector('[data-category="all"]');
-            allBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-50', 'border', 'border-slate-200');
+            allBtn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700', 'border', 'border-slate-200', 'dark:border-slate-700');
             allBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'shadow-blue-500/30', 'active');
 
             renderApps();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
