@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Favorite Archives</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- JSZip (for ZIP handling) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Outfit"', '"Noto Sans JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        theme: {
+                            50: 'rgb(var(--theme-50) / <alpha-value>)',
+                            100: 'rgb(var(--theme-100) / <alpha-value>)',
+                            200: 'rgb(var(--theme-200) / <alpha-value>)',
+                            300: 'rgb(var(--theme-300) / <alpha-value>)',
+                            400: 'rgb(var(--theme-400) / <alpha-value>)',
+                            500: 'rgb(var(--theme-500) / <alpha-value>)',
+                            600: 'rgb(var(--theme-600) / <alpha-value>)',
+                            700: 'rgb(var(--theme-700) / <alpha-value>)',
+                            800: 'rgb(var(--theme-800) / <alpha-value>)',
+                            900: 'rgb(var(--theme-900) / <alpha-value>)',
+                            950: 'rgb(var(--theme-950) / <alpha-value>)',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            "0%": { transform: "translate(0px, 0px) scale(1)" },
+                            "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                            "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                            "100%": { transform: "translate(0px, 0px) scale(1)" }
+                        },
+                        fadeIn: {
+                            "0%": { opacity: "0" },
+                            "100%": { opacity: "1" }
+                        },
+                        slideUp: {
+                            "0%": { opacity: "0", transform: "translateY(20px)" },
+                            "100%": { opacity: "1", transform: "translateY(0)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --theme-50: 238 242 255;
+            --theme-100: 224 231 255;
+            --theme-200: 199 210 254;
+            --theme-300: 165 180 252;
+            --theme-400: 129 140 248;
+            --theme-500: 99 102 241;
+            --theme-600: 79 70 229;
+            --theme-700: 67 56 202;
+            --theme-800: 55 48 163;
+            --theme-900: 49 46 129;
+            --theme-950: 30 27 75;
+        }
+
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+        .glass-panel {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.6); border-color: rgba(255, 255, 255, 0.08); }
+        html:not(.dark) .glass-panel { background: rgba(255, 255, 255, 0.7); border-color: rgba(0, 0, 0, 0.05); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); }
+
+        .glass-card {
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark .glass-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(30, 41, 59, 0.4) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        html:not(.dark) .glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .glass-card:hover { transform: translateY(-4px); }
+
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            transition: opacity 0.5s ease;
+        }
+        .dark .bg-blob { opacity: 0.3; }
+        html:not(.dark) .bg-blob { opacity: 0.15; filter: blur(100px); }
+
+        .tilt-element { transform-style: preserve-3d; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .translate-z-10 { transform: translateZ(20px); }
+
+        .modern-input { transition: all 0.3s ease; }
+        .dark .modern-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        html:not(.dark) .modern-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        .modern-input:focus {
+            outline: none;
+            border-color: rgb(var(--theme-400));
+            box-shadow: 0 0 0 3px rgba(var(--theme-500), 0.2);
+        }
+
+        #sync-indicator { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s; }
+        
+        .hero-pattern {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen relative selection:bg-theme-500 selection:text-white bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-50">
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxHwwbJceTxRh6A8qRfGSguJUG_Qp_-MjbZ3HhQtSD8l9qASHdx2i5RP_0UeVB1XnQxFA/exec";
+    </script>
+
+    <!-- Background Orbs -->
+    <div class="bg-blob bg-theme-600 w-[500px] h-[500px] top-[-100px] left-[-100px] animate-blob"></div>
+    <div class="bg-blob bg-blue-600 w-[400px] h-[400px] bottom-[-50px] right-[-50px] animate-blob" style="animation-delay: 2s"></div>
+    
+    <!-- Sync Indicator -->
+    <div id="sync-indicator" class="fixed top-4 right-4 z-[60] px-4 py-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-theme-100 dark:border-theme-900/30 flex items-center gap-2 transform translate-y-[-100px] opacity-0 transition-all duration-300">
+        <div id="sync-icon" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+        <span id="sync-text" class="text-xs font-medium text-slate-600 dark:text-slate-300">クラウドに保存済み</span>
+    </div>
+
+    <!-- Header (Full Width Outside Container) -->
+    <header class="sticky top-0 z-50 w-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-theme-500 to-theme-600 flex items-center justify-center shadow-lg shadow-theme-500/20">
+                    <i data-lucide="archive" class="text-white w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Archives</h1>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono" id="user-id-display">ID: Loading...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-full bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-gray-200 dark:border-white/5 transition-all shadow-sm" title="テーマ切り替え">
+                    <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+                </button>
+
+                 <button onclick="openModal('data')" class="p-2.5 rounded-full bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-gray-200 dark:border-white/5 transition-all shadow-sm" title="データ・設定">
+                    <i data-lucide="settings" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+                </button>
+
+                <button id="add-genre-btn" onclick="openModal('genre')" class="hidden md:flex group px-5 py-2.5 bg-theme-600 hover:bg-theme-500 text-white rounded-full transition-all shadow-lg shadow-theme-600/20 items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">ジャンル追加</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div id="app" class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-6 min-h-screen flex flex-col">
+        
+        <!-- Mobile FAB -->
+        <button id="add-genre-fab" onclick="openModal('genre')" class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-theme-600 text-white rounded-full shadow-xl flex items-center justify-center z-40 hover:scale-110 transition-transform">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Views Container -->
+        <main class="flex-1 relative">
+            
+            <!-- 1. Genre View (Home) -->
+            <div id="genre-view" class="animate-fade-in pb-20">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">My Collections</h2>
+                    <p class="text-gray-500 dark:text-gray-400">ジャンルを選択してアイテムを表示します。</p>
+                </div>
+                <div id="genre-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
+                    <!-- Dynamic Content -->
+                </div>
+                <div id="empty-state-genres" class="hidden py-20 text-center">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-theme-50 dark:bg-theme-900/20 flex items-center justify-center mb-4">
+                        <i data-lucide="layers" class="w-10 h-10 text-theme-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">コレクションがありません</h3>
+                    <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">最初のジャンルを作成して、お気に入りを整理しましょう。</p>
+                    <button onclick="openModal('genre')" class="px-6 py-2 bg-theme-600 text-white rounded-lg font-medium">ジャンルを作成</button>
+                </div>
+            </div>
+
+            <!-- 2. Items View (Improved Collection UI) -->
+            <div id="items-view" class="hidden pb-20">
+                <!-- Hero Header -->
+                <div class="relative w-full h-40 md:h-56 rounded-3xl overflow-hidden mb-8 shadow-xl animate-fade-in group transition-all">
+                    <div id="genre-hero-bg" class="absolute inset-0 bg-gradient-to-br from-theme-900 to-slate-900">
+                        <div class="absolute inset-0 hero-pattern opacity-20"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent"></div>
+                    </div>
+                    
+                    <button onclick="goHome()" class="absolute top-4 left-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 transition-colors z-20">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+
+                    <div class="absolute bottom-0 left-0 w-full p-6 md:p-8 z-10 flex items-end justify-between flex-wrap gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xl shrink-0">
+                                <i id="genre-hero-icon" data-lucide="star" class="w-7 h-7 md:w-8 md:h-8"></i>
+                            </div>
+                            <div>
+                                <h1 id="view-title" class="text-2xl md:text-3xl font-bold text-white mb-1 drop-shadow-md">Genre Name</h1>
+                                <p id="view-desc" class="text-gray-300 text-xs md:text-sm max-w-xl line-clamp-1">Description goes here...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 ml-auto">
+                            <!-- Sort Dropdown -->
+                            <div class="relative group">
+                                <select id="sort-select" onchange="handleSortChange(this.value)" class="appearance-none pl-9 pr-8 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-xl text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-theme-400 cursor-pointer transition-all">
+                                    <option value="date-desc" class="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">日付 (新しい順)</option>
+                                    <option value="date-asc" class="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">日付 (古い順)</option>
+                                    <option value="name-asc" class="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">名前順 (A-Z)</option>
+                                    <option value="rating-desc" class="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">評価順 (高い順)</option>
+                                </select>
+                                <i data-lucide="arrow-up-down" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70 pointer-events-none"></i>
+                            </div>
+
+                            <button onclick="openModal('item')" class="hidden md:flex px-5 py-2.5 bg-white text-theme-900 hover:bg-gray-100 rounded-xl font-bold shadow-lg transition-transform hover:-translate-y-1 items-center gap-2 text-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> 追加
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Grid -->
+                <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slide-up">
+                    <!-- Dynamic Items -->
+                </div>
+                
+                <div id="empty-state-items" class="hidden py-20 text-center animate-slide-up">
+                    <div class="inline-block p-4 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                        <i data-lucide="ghost" class="w-8 h-8 text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-500 dark:text-gray-400">このコレクションにはまだアイテムがありません。</p>
+                </div>
+
+                <!-- Mobile Add Button for Items -->
+                <button onclick="openModal('item')" class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-theme-600 text-white rounded-full shadow-xl flex items-center justify-center z-40 hover:scale-110 transition-transform">
+                    <i data-lucide="plus" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- 3. Detail View -->
+            <div id="detail-view" class="hidden pb-20 animate-fade-in">
+                <!-- Injected via JS -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden opacity-0 flex items-center justify-center p-4 transition-opacity duration-300">
+        
+        <!-- Add/Edit Genre Modal -->
+        <div id="modal-genre" class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl scale-95 opacity-0 hidden relative overflow-hidden">
+            <h3 class="text-2xl font-bold mb-6" id="genre-modal-title">ジャンルを作成</h3>
+            <form id="genre-form" onsubmit="handleGenreSubmit(event)">
+                <input type="hidden" id="edit-genre-id">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ジャンル名</label>
+                        <input type="text" id="genre-name" class="w-full px-4 py-3 rounded-xl modern-input" placeholder="例：SF映画、カフェ巡り" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">説明</label>
+                        <textarea id="genre-desc" class="w-full px-4 py-3 rounded-xl modern-input h-24 resize-none" placeholder="このコレクションについて..."></textarea>
+                    </div>
+                    <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-3">アイコン</label>
+                         <div class="flex gap-2 flex-wrap" id="icon-selector"></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">キャンセル</button>
+                    <button type="submit" id="genre-submit-btn" class="px-6 py-2.5 bg-theme-600 hover:bg-theme-500 text-white font-bold rounded-xl shadow-lg shadow-theme-600/20 transition-transform active:scale-95">作成</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Add/Edit Item Modal -->
+        <div id="modal-item" class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-2xl scale-95 opacity-0 hidden relative">
+            <h3 class="text-2xl font-bold mb-6" id="item-modal-title">アイテムを追加</h3>
+            <form id="item-form" onsubmit="handleItemSubmit(event)">
+                <input type="hidden" id="edit-item-id">
+                <div class="space-y-5">
+                    <div class="flex gap-4">
+                        <div class="w-28 h-28 relative group cursor-pointer overflow-hidden rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-theme-500 transition-colors bg-slate-50 dark:bg-slate-950 flex-shrink-0" onclick="document.getElementById('item-image').click()">
+                            <img id="image-preview" class="w-full h-full object-cover hidden" src="" alt="Preview">
+                            <div id="upload-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-theme-500 transition-colors">
+                                <i data-lucide="image-plus" class="w-6 h-6 mb-1"></i>
+                                <span class="text-[10px] font-bold">画像を選択</span>
+                            </div>
+                            <input type="file" id="item-image" accept="image/*" class="hidden" onchange="previewImage(this)">
+                        </div>
+                        <div class="flex-1 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">名前</label>
+                                <input type="text" id="item-name" class="w-full px-4 py-2.5 rounded-xl modern-input" required>
+                            </div>
+                             <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">タグ</label>
+                                <input type="text" id="item-tags" class="w-full px-4 py-2.5 rounded-xl modern-input" placeholder="#お気に入り">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">評価</label>
+                        <div class="flex gap-2 text-gray-300 dark:text-slate-700 star-rating w-max" id="star-input-container"></div>
+                        <input type="hidden" id="item-rating" value="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">好きな理由・メモ</label>
+                        <textarea id="item-desc" class="w-full px-4 py-3 rounded-xl modern-input h-24 resize-none" placeholder="熱い思いを..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">キャンセル</button>
+                    <button type="submit" id="item-submit-btn" class="px-6 py-2.5 bg-theme-600 hover:bg-theme-500 text-white font-bold rounded-xl shadow-lg shadow-theme-600/20 transition-transform active:scale-95">保存</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Data & Settings Modal -->
+        <div id="modal-data" class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl scale-95 opacity-0 hidden relative">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-bold">設定・データ管理</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Theme Color Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-3">テーマカラー</label>
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="changeTheme('indigo')" class="w-8 h-8 rounded-full bg-indigo-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-transparent focus:ring-indigo-300"></button>
+                        <button onclick="changeTheme('emerald')" class="w-8 h-8 rounded-full bg-emerald-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-transparent focus:ring-emerald-300"></button>
+                        <button onclick="changeTheme('rose')" class="w-8 h-8 rounded-full bg-rose-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-transparent focus:ring-rose-300"></button>
+                        <button onclick="changeTheme('amber')" class="w-8 h-8 rounded-full bg-amber-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-transparent focus:ring-amber-300"></button>
+                        <button onclick="changeTheme('sky')" class="w-8 h-8 rounded-full bg-sky-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 ring-transparent focus:ring-sky-300"></button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+
+                <!-- Backup & Restore -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">手動バックアップ</label>
+                        <button onclick="manualBackup()" class="w-full flex items-center justify-center gap-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <i data-lucide="cloud-upload" class="w-4 h-4"></i> クラウドへ手動バックアップ
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ファイル操作 (ZIP)</label>
+                        <button onclick="exportDataZip()" class="w-full flex items-center justify-center gap-2 py-3 mb-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4"></i> エクスポート (ZIP)
+                        </button>
+                        <div class="relative">
+                            <input type="file" id="import-zip" accept=".zip" class="hidden" onchange="importDataZip(this)">
+                            <button onclick="document.getElementById('import-zip').click()" class="w-full flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                                <i data-lucide="upload" class="w-4 h-4"></i> インポート (ZIP)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">データ復元 (ID)</label>
+                        <input type="text" id="restore-id-input" placeholder="user_xxxxx" class="w-full px-4 py-3 text-center text-lg font-mono rounded-xl modern-input border-2 border-dashed border-gray-300 dark:border-slate-700 mb-3">
+                        <button onclick="restoreFromCloud()" class="w-full py-3 bg-theme-600 hover:bg-theme-500 text-white font-bold rounded-xl shadow-lg shadow-theme-600/20 transition-transform active:scale-95">
+                            IDから復元する
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-xs text-gray-400">現在のID: <span id="current-id-footer" class="font-mono text-theme-500"></span></p>
+                <button onclick="closeModal()" class="mt-4 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const DB_NAME = 'MyFavArchivesDB_v2';
+        const DB_VERSION = 1;
+        const STORE_GENRES = 'genres';
+        const STORE_ITEMS = 'items';
+
+        // Theme Definitions (RGB values)
+        const THEMES = {
+            indigo: { 
+                50: '238 242 255', 100: '224 231 255', 200: '199 210 254', 300: '165 180 252', 
+                400: '129 140 248', 500: '99 102 241', 600: '79 70 229', 700: '67 56 202', 800: '55 48 163', 900: '49 46 129', 950: '30 27 75'
+            },
+            emerald: {
+                50: '236 253 245', 100: '209 250 229', 200: '167 243 208', 300: '110 231 183',
+                400: '52 211 153', 500: '16 185 129', 600: '5 150 105', 700: '4 120 87', 800: '6 95 70', 900: '6 78 59', 950: '2 44 34'
+            },
+            rose: {
+                50: '255 241 242', 100: '255 228 230', 200: '254 205 211', 300: '253 164 175',
+                400: '251 113 133', 500: '244 63 94', 600: '225 29 72', 700: '190 18 60', 800: '159 18 57', 900: '136 19 55', 950: '76 5 25'
+            },
+            amber: {
+                50: '255 251 235', 100: '254 243 199', 200: '253 230 138', 300: '252 211 77',
+                400: '251 191 36', 500: '245 158 11', 600: '217 119 6', 700: '180 83 9', 800: '146 64 14', 900: '120 53 15', 950: '69 26 3'
+            },
+            sky: {
+                50: '240 249 255', 100: '224 242 254', 200: '186 230 253', 300: '125 211 252',
+                400: '56 189 248', 500: '14 165 233', 600: '2 132 199', 700: '3 105 161', 800: '7 89 133', 900: '12 74 110', 950: '8 47 73'
+            }
+        };
+
+        let db = null;
+        let userId = null;
+        let appData = { genres: [], items: {} };
+        let currentGenreId = null;
+        let selectedIcon = 'star';
+        let currentRating = 0;
+        let currentView = 'genre';
+        let currentSort = 'date-desc';
+        let syncTimeout = null; // for debounce
+
+        const availableIcons = ['star', 'heart', 'camera', 'music', 'book', 'gamepad-2', 'coffee', 'plane', 'code', 'clapperboard', 'utensils', 'shirt', 'car', 'flower-2', 'gift', 'zap', 'anchor', 'mountain'];
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            initTheme();
+            initUserId();
+            await initDB();
+            await loadDataFromDB();
+            
+            renderGenreView();
+            generateIconSelector();
+            generateStarRatingInput();
+            lucide.createIcons();
+            
+            document.addEventListener('mousemove', handleTilt);
+        });
+
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcon();
+
+            const savedColor = localStorage.getItem('theme_color') || 'indigo';
+            changeTheme(savedColor);
+        }
+
+        function changeTheme(colorKey) {
+            const theme = THEMES[colorKey];
+            if (!theme) return;
+            
+            const root = document.documentElement;
+            for (const [shade, value] of Object.entries(theme)) {
+                root.style.setProperty(`--theme-${shade}`, value);
+            }
+            localStorage.setItem('theme_color', colorKey);
+            
+            if(currentView === 'genre') renderGenreView();
+            if(currentView === 'items') renderItemsView(currentGenreId);
+        }
+
+        function initUserId() {
+            let storedId = localStorage.getItem('archive_user_id');
+            if (!storedId) {
+                storedId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('archive_user_id', storedId);
+            }
+            userId = storedId;
+            document.getElementById('user-id-display').innerText = `ID: ${userId}`;
+            document.getElementById('current-id-footer').innerText = userId;
+        }
+
+        // --- IndexedDB ---
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = (e) => reject(e.target.error);
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_GENRES)) db.createObjectStore(STORE_GENRES, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORE_ITEMS)) {
+                        const store = db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
+                        store.createIndex('genreId', 'genreId', { unique: false });
+                    }
+                };
+            });
+        }
+
+        async function dbOp(type, storeName, val) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([storeName], 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = (type === 'put') ? store.put(val) : (type === 'delete' ? store.delete(val) : store.getAll());
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function loadDataFromDB() {
+            try {
+                const genres = await dbOp('getAll', STORE_GENRES);
+                const allItems = await dbOp('getAll', STORE_ITEMS);
+
+                appData.genres = genres.sort((a, b) => b.id - a.id);
+                appData.items = {};
+                allItems.forEach(item => {
+                    if (!appData.items[item.genreId]) appData.items[item.genreId] = [];
+                    appData.items[item.genreId].push(item);
+                });
+            } catch (error) {
+                console.error("DB Load Error", error);
+            }
+        }
+
+        // --- Auto Sync Logic with Debounce & Retry ---
+        function autoSync() {
+            if (syncTimeout) clearTimeout(syncTimeout);
+            showSyncIndicator(false); // Reset status while waiting
+            
+            // Wait 2 seconds of inactivity before syncing
+            syncTimeout = setTimeout(async () => {
+                await performSyncWithRetry();
+            }, 2000);
+        }
+
+        async function performSyncWithRetry(retries = 3) {
+            if (!GAS_URL) return;
+            
+            showSyncIndicator(true, 'syncing');
+            
+            const allGenres = await dbOp('getAll', STORE_GENRES);
+            const allItems = await dbOp('getAll', STORE_ITEMS);
+            const payload = { userId: userId, genres: allGenres, items: allItems };
+
+            try {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                });
+                showSyncIndicator(true, 'success');
+                setTimeout(() => showSyncIndicator(false), 2000);
+            } catch (e) {
+                console.error("Sync failed", e);
+                if (retries > 0) {
+                    // Retry after 2 seconds
+                    setTimeout(() => performSyncWithRetry(retries - 1), 2000);
+                } else {
+                    showSyncIndicator(true, 'error');
+                }
+            }
+        }
+
+        async function manualBackup() {
+            if (!GAS_URL) return alert("システムエラー: 接続先が設定されていません");
+            if (!confirm("現在のデータをクラウドへ保存しますか？")) return;
+
+            try {
+                // Bypass debounce and sync immediately
+                await performSyncWithRetry(1); // 1 retry for manual
+                alert("バックアップが完了しました！");
+            } catch(e) {
+                alert("バックアップに失敗しました: " + e);
+            }
+        }
+
+        function showSyncIndicator(show, status = 'success') {
+            const el = document.getElementById('sync-indicator');
+            const icon = document.getElementById('sync-icon');
+            const text = document.getElementById('sync-text');
+
+            if (show) {
+                el.classList.remove('translate-y-[-100px]', 'opacity-0');
+                if (status === 'syncing') {
+                    icon.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-ping';
+                    text.innerText = '保存中...';
+                } else if (status === 'error') {
+                    icon.className = 'w-2 h-2 rounded-full bg-red-500';
+                    text.innerText = '保存失敗';
+                } else {
+                    icon.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                    text.innerText = 'クラウドに保存済み';
+                }
+            } else {
+                el.classList.add('translate-y-[-100px]', 'opacity-0');
+            }
+        }
+
+        async function restoreFromCloud() {
+            const inputId = document.getElementById('restore-id-input').value.trim();
+            if (!inputId) return alert("バックアップIDを入力してください");
+            
+            if(!confirm(`ID: ${inputId} のデータを復元しますか？\n現在のローカルデータは上書きされます。`)) return;
+
+            try {
+                const res = await fetch(`${GAS_URL}?userId=${inputId}`);
+                const data = await res.json();
+
+                if (data.status === 'error') throw new Error(data.message);
+
+                userId = inputId;
+                localStorage.setItem('archive_user_id', userId);
+                document.getElementById('user-id-display').innerText = `ID: ${userId}`;
+                document.getElementById('current-id-footer').innerText = userId;
+
+                const tx = db.transaction([STORE_GENRES, STORE_ITEMS], 'readwrite');
+                tx.objectStore(STORE_GENRES).clear();
+                tx.objectStore(STORE_ITEMS).clear();
+                
+                await new Promise(r => setTimeout(r, 100));
+
+                if (data.genres) for (const g of data.genres) await dbOp('put', STORE_GENRES, g);
+                if (data.items) for (const i of data.items) await dbOp('put', STORE_ITEMS, i);
+
+                await loadDataFromDB();
+                goHome();
+                closeModal();
+                alert("復元が完了しました！");
+
+            } catch (e) {
+                alert("復元に失敗しました: " + e.message);
+            }
+        }
+
+        // --- ZIP Import/Export ---
+        async function exportDataZip() {
+            try {
+                const genres = await dbOp('getAll', STORE_GENRES);
+                const items = await dbOp('getAll', STORE_ITEMS);
+                const data = { genres, items, version: 1, exportDate: new Date().toISOString() };
+                
+                const zip = new JSZip();
+                zip.file("archive_backup.json", JSON.stringify(data, null, 2));
+                
+                const content = await zip.generateAsync({type: "blob"});
+                
+                // Create download link
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `archive_${new Date().toISOString().slice(0,10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                closeModal();
+            } catch(e) {
+                console.error(e);
+                alert("エクスポートに失敗しました。");
+            }
+        }
+
+        async function importDataZip(input) {
+            if (!input.files || !input.files[0]) return;
+            if (!confirm("現在のデータをZIPファイルの内容で上書きしますか？")) {
+                input.value = '';
+                return;
+            }
+
+            try {
+                const file = input.files[0];
+                const zip = new JSZip();
+                const unzipped = await zip.loadAsync(file);
+                
+                if (!unzipped.file("archive_backup.json")) throw new Error("無効なアーカイブ形式です。");
+                
+                const text = await unzipped.file("archive_backup.json").async("text");
+                const data = JSON.parse(text);
+
+                // Restore
+                const tx = db.transaction([STORE_GENRES, STORE_ITEMS], 'readwrite');
+                tx.objectStore(STORE_GENRES).clear();
+                tx.objectStore(STORE_ITEMS).clear();
+                await new Promise(r => setTimeout(r, 100));
+
+                for (const g of data.genres) await dbOp('put', STORE_GENRES, g);
+                for (const i of data.items) await dbOp('put', STORE_ITEMS, i);
+
+                await loadDataFromDB();
+                goHome();
+                closeModal();
+                alert("インポートが完了しました！");
+            } catch(e) {
+                console.error(e);
+                alert("インポートに失敗しました: " + e.message);
+            }
+            input.value = '';
+        }
+
+
+        // --- UI Logic: Navigation ---
+        function goHome() {
+            currentGenreId = null;
+            currentView = 'genre';
+            document.getElementById('genre-view').classList.remove('hidden');
+            document.getElementById('items-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('add-genre-btn').classList.remove('hidden');
+            document.getElementById('add-genre-fab').classList.remove('hidden');
+            renderGenreView();
+            window.scrollTo(0,0);
+        }
+
+        function openGenre(id) {
+            currentGenreId = id;
+            currentView = 'items';
+            const genre = appData.genres.find(g => g.id === id);
+            if (!genre) return;
+
+            document.getElementById('genre-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('items-view').classList.remove('hidden');
+            
+            document.getElementById('add-genre-btn').classList.add('hidden');
+            document.getElementById('add-genre-fab').classList.add('hidden');
+
+            document.getElementById('view-title').innerText = genre.name;
+            document.getElementById('view-desc').innerText = genre.desc || '説明なし';
+            
+            const iconContainer = document.getElementById('genre-hero-icon');
+            iconContainer.setAttribute('data-lucide', genre.icon);
+            
+            renderItemsView(id);
+            lucide.createIcons();
+            window.scrollTo(0,0);
+        }
+
+        function backToGenre() {
+            if (currentGenreId) openGenre(currentGenreId);
+            else goHome();
+        }
+
+        // --- UI Logic: Rendering ---
+        function getThemeGradient() {
+            return `linear-gradient(135deg, rgb(var(--theme-500)), rgb(var(--theme-700)))`;
+        }
+        
+        function getSoftThemeGradient() {
+            return `linear-gradient(135deg, rgb(var(--theme-100)), rgb(var(--theme-200)))`;
+        }
+
+        function renderGenreView() {
+            const container = document.getElementById('genre-grid');
+            const empty = document.getElementById('empty-state-genres');
+            container.innerHTML = '';
+            
+            if (appData.genres.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            appData.genres.forEach((g, i) => {
+                const count = appData.items[g.id] ? appData.items[g.id].length : 0;
+                const div = document.createElement('div');
+                div.className = 'glass-card p-6 rounded-2xl cursor-pointer group relative overflow-hidden tilt-element aspect-[16/9] flex flex-col justify-between border-none';
+                div.onclick = (e) => {
+                    if (e.target.closest('.action-btn')) return;
+                    openGenre(g.id);
+                };
+                div.style.background = getThemeGradient();
+                
+                div.innerHTML = `
+                    <div class="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors pointer-events-none"></div>
+                    <div class="relative z-10 flex justify-between items-start">
+                        <div class="p-3 bg-white/20 backdrop-blur-md rounded-xl text-white">
+                            <i data-lucide="${g.icon}" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex gap-2">
+                             <button onclick="openEditGenreModal('${g.id}')" class="action-btn p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-colors">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                             <button onclick="deleteGenre('${g.id}')" class="action-btn p-2 bg-white/20 hover:bg-red-500/60 backdrop-blur-md rounded-full text-white transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white mb-1 group-hover:translate-x-1 transition-transform">${g.name}</h3>
+                                <p class="text-white/80 text-sm line-clamp-1">${g.desc || 'コレクション'}</p>
+                            </div>
+                            <span class="px-3 py-1 bg-black/20 backdrop-blur-md rounded-full text-xs font-medium text-white">${count} アイテム</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function handleSortChange(val) {
+            currentSort = val;
+            if(currentGenreId) renderItemsView(currentGenreId);
+        }
+
+        function sortItems(items, sortKey) {
+            return items.sort((a, b) => {
+                if (sortKey === 'date-desc') return new Date(b.date) - new Date(a.date);
+                if (sortKey === 'date-asc') return new Date(a.date) - new Date(b.date);
+                if (sortKey === 'name-asc') return a.name.localeCompare(b.name, 'ja');
+                if (sortKey === 'rating-desc') return b.rating - a.rating;
+                return 0;
+            });
+        }
+
+        function renderItemsView(genreId) {
+            const container = document.getElementById('items-grid');
+            const empty = document.getElementById('empty-state-items');
+            
+            let items = appData.items[genreId] || [];
+            items = sortItems([...items], currentSort);
+
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'glass-card rounded-2xl overflow-hidden cursor-pointer group flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800';
+                div.onclick = () => openDetail(item);
+
+                const hasImg = item.image && item.image.length > 0;
+                const visual = hasImg 
+                    ? `<img src="${item.image}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">`
+                    : `<div class="w-full h-full flex items-center justify-center text-theme-500 font-bold text-6xl" style="background:${getSoftThemeGradient()}">${item.name[0]}</div>`;
+
+                let stars = '';
+                for(let i=1; i<=5; i++) stars += `<i data-lucide="star" class="w-3 h-3 ${i<=item.rating ? 'text-amber-400 fill-current':'text-gray-300 dark:text-slate-700'}"></i>`;
+
+                div.innerHTML = `
+                    <div class="aspect-[4/3] w-full relative overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        ${visual}
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-80" ${hasImg ? '' : 'hidden'}></div>
+                        <div class="absolute bottom-4 left-4 right-4" ${hasImg ? '' : 'hidden'}>
+                            <h4 class="text-white font-bold text-lg truncate drop-shadow-md">${item.name}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex">${stars}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col">
+                        <div class="${hasImg ? 'hidden' : 'mb-2'}">
+                            <h4 class="font-bold text-slate-800 dark:text-slate-100 truncate">${item.name}</h4>
+                            <div class="flex mt-1">${stars}</div>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">${item.desc || 'No description'}</p>
+                        ${item.tags ? `<p class="mt-auto pt-3 text-xs text-theme-500 font-medium">${item.tags}</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function openDetail(item) {
+            currentView = 'detail';
+            const genre = appData.genres.find(g => g.id === item.genreId);
+            document.getElementById('items-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.remove('hidden');
+            renderDetailView(item, genre);
+            window.scrollTo(0,0);
+        }
+
+        function renderDetailView(item, genre) {
+            const container = document.getElementById('detail-view');
+            
+            const hasImg = item.image && item.image.length > 0;
+            const visual = hasImg 
+                ? `<img src="${item.image}" class="w-full h-full object-cover" alt="${item.name}">`
+                : `<div class="w-full h-full flex items-center justify-center text-theme-500/30" style="background:${getSoftThemeGradient()}"><span class="text-9xl font-bold">${item.name[0]}</span></div>`;
+
+            let stars = '';
+            for(let i=1; i<=5; i++) stars += `<i data-lucide="star" class="w-5 h-5 ${i<=item.rating ? 'text-amber-400 fill-current':'text-slate-300'}"></i>`;
+
+            container.innerHTML = `
+                <div class="w-full max-w-4xl mx-auto animate-fade-in">
+                    <!-- Nav & Actions -->
+                    <div class="flex items-center justify-between mb-6">
+                        <button onclick="backToGenre()" class="flex items-center gap-2 text-gray-500 hover:text-theme-500 transition-colors">
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i> 戻る
+                        </button>
+                        <button onclick='openEditModal(${JSON.stringify(item)})' class="flex items-center gap-2 px-4 py-2 bg-theme-100 dark:bg-theme-900/30 text-theme-600 dark:text-theme-400 rounded-lg hover:bg-theme-200 dark:hover:bg-theme-900/50 transition-colors font-medium text-sm">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> 編集
+                        </button>
+                    </div>
+
+                    <!-- Layout: Image Top (Simpler style) -->
+                    <div class="relative w-full aspect-[3/1] md:aspect-[4/1] rounded-3xl overflow-hidden shadow-lg mb-8 group">
+                         ${visual}
+                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" ${hasImg ? '' : 'hidden'}></div>
+                         <div class="absolute bottom-6 left-6 md:left-10 md:bottom-10" ${hasImg ? 'text-white' : 'text-slate-800 dark:text-white'}>
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="px-3 py-1 bg-theme-500/90 backdrop-blur-md text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">${genre ? genre.name : 'Item'}</span>
+                                <span class="${hasImg?'text-gray-300':'text-gray-500 dark:text-gray-400'} text-sm flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${new Date(item.date).toLocaleDateString()}</span>
+                            </div>
+                            <h1 class="text-4xl md:text-5xl font-bold drop-shadow-sm ${hasImg ? 'text-white' : 'text-slate-800 dark:text-white'}">${item.name}</h1>
+                         </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="glass-panel p-8 rounded-2xl bg-white/40 dark:bg-slate-900/40">
+                                <div class="flex items-center gap-2 mb-4">
+                                     <div class="flex">${stars}</div>
+                                     <span class="text-lg font-bold text-slate-700 dark:text-white ml-2">${item.rating}.0</span>
+                                </div>
+                                <h3 class="text-sm font-bold uppercase text-theme-500 dark:text-theme-400 tracking-wider mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Why I Like It</h3>
+                                <div class="prose dark:prose-invert max-w-none">
+                                    <p class="text-lg leading-loose text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-medium">${item.desc || 'メモはありません。'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            ${item.tags ? `
+                                <div class="glass-panel p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40">
+                                    <h3 class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider mb-4">Tags</h3>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${item.tags.split(/\s+/).map(tag => `<span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/10">#${tag.replace('#','')}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div class="glass-panel p-6 rounded-2xl bg-white/40 dark:bg-slate-900/40">
+                                <button onclick="deleteItem('${item.id}')" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-xl transition-colors border border-red-100 dark:border-red-900/30">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    <span>削除する</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // --- Modals & Forms ---
+        function openModal(type) {
+            const overlay = document.getElementById('modal-overlay');
+            ['modal-genre', 'modal-item', 'modal-data'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('hidden', 'scale-95', 'opacity-0');
+            });
+            
+            const target = document.getElementById(`modal-${type}`);
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            
+            target.classList.remove('hidden');
+            setTimeout(() => target.classList.remove('scale-95', 'opacity-0'), 10);
+
+            if (type === 'item') {
+                resetItemForm();
+                document.getElementById('item-modal-title').innerText = 'アイテムを追加';
+                document.getElementById('item-submit-btn').innerText = '保存';
+            }
+            if (type === 'genre') {
+                resetGenreForm();
+                document.getElementById('genre-modal-title').innerText = 'ジャンルを作成';
+                document.getElementById('genre-submit-btn').innerText = '作成';
+            }
+        }
+
+        function openEditModal(item) {
+            openModal('item');
+            document.getElementById('item-modal-title').innerText = 'アイテムを編集';
+            document.getElementById('item-submit-btn').innerText = '更新';
+            
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-tags').value = item.tags;
+            document.getElementById('item-desc').value = item.desc;
+            setRating(item.rating);
+            
+            if (item.image) {
+                const img = document.getElementById('image-preview');
+                img.src = item.image;
+                img.classList.remove('hidden');
+                document.getElementById('upload-placeholder').classList.add('hidden');
+            }
+        }
+
+        function openEditGenreModal(genreId) {
+            const genre = appData.genres.find(g => g.id === genreId);
+            if (!genre) return;
+
+            openModal('genre');
+            document.getElementById('genre-modal-title').innerText = 'ジャンルを編集';
+            document.getElementById('genre-submit-btn').innerText = '更新';
+
+            document.getElementById('edit-genre-id').value = genre.id;
+            document.getElementById('genre-name').value = genre.name;
+            document.getElementById('genre-desc').value = genre.desc;
+            selectIcon(genre.icon);
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            const modals = document.querySelectorAll('.modal-content');
+            
+            overlay.classList.add('opacity-0');
+            modals.forEach(m => m.classList.add('scale-95', 'opacity-0'));
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                modals.forEach(m => m.classList.add('hidden'));
+                
+                resetGenreForm();
+                resetItemForm();
+                selectIcon(availableIcons[0]);
+            }, 300);
+        }
+
+        function resetItemForm() {
+            document.getElementById('item-form').reset();
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-preview').src = "";
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            setRating(0);
+        }
+        
+        function resetGenreForm() {
+            document.getElementById('genre-form').reset();
+            document.getElementById('edit-genre-id').value = '';
+        }
+
+        // --- Handlers ---
+        async function handleGenreSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-genre-id').value;
+            const name = document.getElementById('genre-name').value;
+            const desc = document.getElementById('genre-desc').value;
+            
+            const genre = {
+                id: editId || Date.now().toString(),
+                name,
+                desc,
+                icon: selectedIcon
+            };
+            
+            await dbOp('put', STORE_GENRES, genre);
+            
+            if (editId) {
+                const idx = appData.genres.findIndex(g => g.id === editId);
+                if (idx !== -1) appData.genres[idx] = genre;
+            } else {
+                appData.genres.unshift(genre);
+                appData.items[genre.id] = [];
+            }
+            
+            renderGenreView();
+            closeModal();
+            autoSync();
+        }
+
+        async function deleteGenre(id) {
+            if (!confirm("本当にこのジャンルを削除しますか？\n含まれるアイテムもすべて削除されます。")) return;
+            
+            await dbOp('delete', STORE_GENRES, id);
+            
+            if (appData.items[id]) {
+                const deletePromises = appData.items[id].map(item => dbOp('delete', STORE_ITEMS, item.id));
+                await Promise.all(deletePromises);
+            }
+            
+            appData.genres = appData.genres.filter(g => g.id !== id);
+            delete appData.items[id];
+            
+            renderGenreView();
+            autoSync();
+        }
+
+        async function handleItemSubmit(e) {
+            e.preventDefault();
+            if (!currentGenreId) return;
+
+            const editId = document.getElementById('edit-item-id').value;
+            const name = document.getElementById('item-name').value;
+            const desc = document.getElementById('item-desc').value;
+            const tags = document.getElementById('item-tags').value;
+            const rating = parseInt(document.getElementById('item-rating').value);
+            const imageInput = document.getElementById('item-image');
+
+            const processSave = async (base64) => {
+                const item = {
+                    id: editId || Date.now().toString(),
+                    genreId: currentGenreId,
+                    name, desc, tags, rating,
+                    image: base64, 
+                    date: new Date().toISOString()
+                };
+
+                if (editId && !base64) {
+                    const oldItem = appData.items[currentGenreId].find(i => i.id === editId);
+                    if (oldItem) item.image = oldItem.image;
+                }
+
+                await dbOp('put', STORE_ITEMS, item);
+                
+                if (editId) {
+                    const idx = appData.items[currentGenreId].findIndex(i => i.id === editId);
+                    if (idx !== -1) appData.items[currentGenreId][idx] = item;
+                } else {
+                    if (!appData.items[currentGenreId]) appData.items[currentGenreId] = [];
+                    appData.items[currentGenreId].unshift(item);
+                }
+
+                if (editId && currentView === 'detail') {
+                    const genre = appData.genres.find(g => g.id === currentGenreId);
+                    renderDetailView(item, genre);
+                } else {
+                    renderItemsView(currentGenreId);
+                }
+                
+                closeModal();
+                autoSync();
+            };
+
+            if (imageInput.files && imageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (evt) => processSave(evt.target.result);
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                processSave(null);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("本当にこのアイテムを削除しますか？")) return;
+            
+            await dbOp('delete', STORE_ITEMS, id);
+            appData.items[currentGenreId] = appData.items[currentGenreId].filter(i => i.id !== id);
+            
+            backToGenre();
+            autoSync();
+        }
+
+        // --- Utils ---
+        function generateIconSelector() {
+            const container = document.getElementById('icon-selector');
+            container.innerHTML = '';
+            availableIcons.forEach(iconName => {
+                const btn = document.createElement('div');
+                btn.className = `w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer border transition-all ${iconName === selectedIcon ? 'bg-theme-600 border-theme-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-gray-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`;
+                btn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
+                btn.onclick = () => selectIcon(iconName);
+                container.appendChild(btn);
+            });
+        }
+        function selectIcon(n) { selectedIcon = n; generateIconSelector(); lucide.createIcons(); }
+
+        function generateStarRatingInput() {
+            const container = document.getElementById('star-input-container');
+            container.innerHTML = '';
+            for(let i=1; i<=5; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'hover:scale-125 transition-transform focus:outline-none';
+                btn.onclick = () => setRating(i);
+                btn.innerHTML = `<i data-lucide="star" class="w-8 h-8 transition-colors pointer-events-none text-slate-300 dark:text-slate-700"></i>`;
+                container.appendChild(btn);
+            }
+            updateStarDisplay();
+        }
+        function setRating(v) { currentRating = v; document.getElementById('item-rating').value = v; updateStarDisplay(); }
+        function updateStarDisplay() {
+            const container = document.getElementById('star-input-container');
+            Array.from(container.children).forEach((btn, i) => {
+                const icon = btn.querySelector('svg') || btn.querySelector('i');
+                if (i < currentRating) {
+                    icon.classList.add('text-amber-400', 'fill-current');
+                    icon.classList.remove('text-slate-300', 'dark:text-slate-700');
+                } else {
+                    icon.classList.remove('text-amber-400', 'fill-current');
+                    icon.classList.add('text-slate-300', 'dark:text-slate-700');
+                }
+            });
+        }
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById('image-preview');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    document.getElementById('upload-placeholder').classList.add('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            const isDark = document.documentElement.classList.contains('dark');
+            icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        function handleTilt(e) {
+            const cards = document.querySelectorAll('.tilt-element');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (x>=0 && x<=rect.width && y>=0 && y<=rect.height) {
+                    const cx = rect.width/2; const cy = rect.height/2;
+                    const rx = ((y-cy)/cy)*-5; const ry = ((x-cx)/cx)*5;
+                    card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02,1.02,1.02)`;
+                } else {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1,1,1)';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
