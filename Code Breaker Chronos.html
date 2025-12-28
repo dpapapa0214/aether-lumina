@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Breaker Chronos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', 'Noto Sans JP', sans-serif;
+            background-color: #111827;
+            color: #F3F4F6;
+            overscroll-behavior: none;
+        }
+        .screen {
+            display: none;
+            min-height: 100vh;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(15deg);
+            transition: transform 0.5s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 30px rgba(0, 200, 255, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        .card-bg-attacker { background: linear-gradient(135deg, #4a044e, #1e293b); }
+        .card-bg-buffer { background: linear-gradient(135deg, #064e3b, #1e293b); }
+        .card-bg-shielder { background: linear-gradient(135deg, #1e3a8a, #1e293b); }
+        .card-bg-healer { background: linear-gradient(135deg, #581c87, #1e293b); }
+        .card-bg-debuffer { background: linear-gradient(135deg, #4a1d13, #1e293b); }
+        .card-bg-specialist { background: linear-gradient(135deg, #363636, #1e293b); }
+
+
+        .rarity-4 { border-color: #a855f7; }
+        .rarity-5 { border-color: #f59e0b; }
+        .rarity-6 { border-color: #ef4444; }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #22d3ee, #0ea5e9);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.7);
+        }
+        .btn-secondary {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .disabled-btn {
+            background-color: #374151;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ultimate-gauge-bg { background-color: #374151; }
+        .ultimate-gauge-fill {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            transition: width 0.5s ease-out;
+        }
+        .sp-icon { color: #facc15; }
+        .hp-bar-bg { background-color: #374151; }
+        .hp-bar-fill {
+            background: linear-gradient(90deg, #f87171, #ef4444);
+            transition: width 0.5s ease-out;
+        }
+        .shield-bar-fill {
+            background: linear-gradient(90deg, #60a5fa, #3b82f6);
+            transition: width 0.5s ease-out;
+        }
+        
+        .buff-icon {
+            background-color: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+        .buff { color: #f87171; border: 1px solid #f87171; }
+        .debuff { color: #60a5fa; border: 1px solid #60a5fa; }
+
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+        .modal-content {
+            background-color: #1f2937;
+            border: 1px solid #4b5563;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+        .star-gold { color: #f59e0b; }
+        .glow-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ea5e9, 0 0 20px #0ea5e9;
+        }
+        .battle-bg {
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            #card-to-print-clone {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <!-- ホーム画面 -->
+    <div id="home-screen" class="screen active flex-col justify-center items-center p-8 bg-cover bg-center" style="background-image: linear-gradient(rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.8)), url('https://placehold.co/1920x1080/111827/000000?text=BG');">
+        <h1 class="text-6xl md:text-8xl font-bold glow-text mb-4">Code Breaker</h1>
+        <h2 class="text-4xl md:text-6xl font-bold text-cyan-400 mb-12">CHRONOS</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-6xl">
+            <button onclick="showScreen('battle-select-screen')" class="p-6 rounded-lg text-2xl font-bold btn-primary flex flex-col items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M12.22 2h-4.44a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8.88a2 2 0 0 0 2-2v-8.88Z"/><path d="M18 2h-2v4h4V4h-2Z"/><path d="M18 8h-2v4h4V8h-2Z"/><path d="m9 13 2 2 4-4"/></svg>
+                <span>BATTLE</span>
+                <span class="text-sm font-normal opacity-80">戦闘開始</span>
+            </button>
+            <button onclick="showScreen('gacha-screen')" class="p-6 rounded-lg text-2xl font-bold btn-primary flex flex-col items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><rect width="8" height="8" x="2" y="2" rx="2"/><path d="M14 2h6a2 2 0 0 1 2 2v6"/><path d="M2 14h6a2 2 0 0 1 2 2v6"/><path d="M14 14h6a2 2 0 0 1 2 2v6"/></svg>
+                <span>GET CARDS</span>
+                <span class="text-sm font-normal opacity-80">カード入手</span>
+            </button>
+             <button onclick="showScreen('deck-screen')" class="p-6 rounded-lg text-2xl font-bold btn-primary flex flex-col items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                 <span>DECK</span>
+                 <span class="text-sm font-normal opacity-80">デッキ編成</span>
+            </button>
+            <button onclick="showScreen('collection-screen')" class="p-6 rounded-lg text-2xl font-bold btn-primary flex flex-col items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                 <span>COLLECTION</span>
+                 <span class="text-sm font-normal opacity-80">カード図鑑</span>
+            </button>
+        </div>
+        <div class="mt-8 flex gap-4">
+            <button onclick="saveData()" class="px-6 py-2 rounded-lg text-lg font-bold btn-secondary flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>セーブ</span>
+            </button>
+            <button onclick="showLoadModal()" class="px-6 py-2 rounded-lg text-lg font-bold btn-secondary flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>ロード</span>
+            </button>
+            <button onclick="resetGame()" class="px-6 py-2 rounded-lg text-lg font-bold btn-secondary flex items-center gap-2 bg-red-800/50 border-red-600 hover:bg-red-700/50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                <span>リセット</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- デッキ編成画面 -->
+    <div id="deck-screen" class="screen flex-col p-4 md:p-8">
+        <div class="w-full max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-cyan-400">デッキ編成</h1>
+                <button onclick="showScreen('home-screen')" class="px-6 py-2 rounded-md btn-secondary">ホームへ戻る</button>
+            </div>
+            
+            <div class="mb-6 p-4 bg-gray-900/50 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">現在のデッキ</h2>
+                <div id="current-deck" class="grid grid-cols-2 md:grid-cols-4 gap-4 min-h-[220px]"></div>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3">所持カード一覧</h2>
+                <div id="owned-cards-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- カード入手画面 -->
+    <div id="gacha-screen" class="screen flex-col p-4 md:p-8">
+        <div class="w-full max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-cyan-400">カード入手</h1>
+                <button onclick="showScreen('home-screen')" class="px-6 py-2 rounded-md btn-secondary">ホームへ戻る</button>
+            </div>
+            <p class="mb-6 text-gray-400">好きなカードを選択して入手できます。同じカードを複数入手すると強化されます。</p>
+            <div id="gacha-card-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+            </div>
+        </div>
+    </div>
+    
+    <!-- カード図鑑画面 -->
+    <div id="collection-screen" class="screen flex-col p-4 md:p-8">
+        <div class="w-full max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-cyan-400">カード図鑑</h1>
+                <button onclick="showScreen('home-screen')" class="px-6 py-2 rounded-md btn-secondary">ホームへ戻る</button>
+            </div>
+            <div id="collection-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+            </div>
+        </div>
+    </div>
+    
+    <!-- バトル選択画面 -->
+    <div id="battle-select-screen" class="screen flex-col justify-center items-center p-8">
+        <h1 class="text-4xl font-bold text-cyan-400 mb-8">モード選択</h1>
+        <div class="space-y-4 text-center">
+             <div class="mb-8">
+                <h2 class="text-2xl mb-2">ストーリー</h2>
+                <button onclick="startBattle()" class="px-12 py-4 text-xl rounded-lg btn-primary w-64">ステージ 1-1</button>
+             </div>
+             <div>
+                <h2 class="text-2xl mb-2">対戦</h2>
+                <button onclick="showScreen('pvp-select-screen')" class="px-12 py-4 text-xl rounded-lg btn-primary w-64">PVPモード</button>
+            </div>
+        </div>
+         <button onclick="showScreen('home-screen')" class="mt-12 px-6 py-2 rounded-md btn-secondary">ホームへ戻る</button>
+    </div>
+
+    <!-- 対戦モード選択画面 -->
+    <div id="pvp-select-screen" class="screen flex-col justify-center items-center p-8">
+        <h1 class="text-4xl font-bold text-cyan-400 mb-8">対戦モード</h1>
+        <div class="space-y-4">
+            <button onclick="hostPvp()" class="px-12 py-4 text-xl rounded-lg btn-primary w-80">ホストになる (コード生成)</button>
+            <button onclick="joinPvp()" class="px-12 py-4 text-xl rounded-lg btn-primary w-80">参加する (コード入力)</button>
+        </div>
+        <button onclick="showScreen('battle-select-screen')" class="mt-8 px-6 py-2 rounded-md btn-secondary">モード選択へ戻る</button>
+    </div>
+
+    <!-- バトル画面 (ストーリー) -->
+    <div id="battle-screen" class="screen battle-bg flex-col justify-between p-2 md:p-4 overflow-hidden">
+        <!-- 敵エリア -->
+        <div id="enemy-area" class="w-full flex flex-col items-center p-4">
+            <div id="enemy-icon-display" class="text-8xl md:text-9xl mb-4"></div>
+            <div class="w-full max-w-md">
+                <span id="enemy-name" class="font-bold text-lg text-center block"></span>
+                <div class="w-full hp-bar-bg rounded-full h-6 overflow-hidden relative border-2 border-gray-700 mt-1">
+                    <div id="enemy-shield-bar" class="shield-bar-fill h-full absolute top-0 left-0"></div>
+                    <div id="enemy-hp-bar" class="hp-bar-fill h-full"></div>
+                     <span id="enemy-hp-text" class="absolute inset-0 text-center text-sm font-bold flex items-center justify-center text-white" style="text-shadow: 1px 1px 2px black;"></span>
+                </div>
+                <div id="enemy-buffs" class="flex justify-center items-center mt-2 space-x-2 h-6"></div>
+            </div>
+        </div>
+
+        <!-- ログ & プレイヤー ステータス -->
+        <div class="w-full max-w-4xl mx-auto mb-4">
+            <div id="log-area" class="w-full h-20 bg-black/50 rounded-lg p-2 mb-4 overflow-y-auto text-sm text-center text-cyan-300"></div>
+            <div class="w-full max-w-md mx-auto">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-bold">PLAYER</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="sp-icon text-2xl">★</span>
+                        <span id="skill-points" class="font-bold text-2xl"></span>
+                    </div>
+                </div>
+                 <div class="w-full hp-bar-bg rounded-full h-8 overflow-hidden relative border-2 border-gray-700 mt-1">
+                    <div id="player-shield-bar" class="shield-bar-fill h-full absolute top-0 left-0"></div>
+                    <div id="player-hp-bar" class="hp-bar-fill h-full"></div>
+                    <span id="player-hp-text" class="absolute inset-0 text-center font-bold flex items-center justify-center text-white" style="text-shadow: 1px 1px 2px black;"></span>
+                </div>
+                 <div id="player-buffs" class="flex justify-start items-center mt-2 space-x-2 h-6"></div>
+            </div>
+        </div>
+
+        <!-- プレイヤーの手札 -->
+        <div id="player-hand" class="flex justify-center items-end gap-2 md:gap-4 w-full mb-4">
+        </div>
+    </div>
+    
+    <!-- PVPバトル画面 -->
+    <div id="pvp-battle-screen" class="screen battle-bg flex-col justify-between p-2 md:p-4 overflow-hidden">
+        <!-- Player 2 (Top) -->
+        <div class="w-full flex flex-col items-center p-4">
+             <div class="w-full max-w-md">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-bold">PLAYER 2</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="sp-icon text-2xl">★</span>
+                        <span id="pvp-p2-sp" class="font-bold text-2xl"></span>
+                    </div>
+                </div>
+                 <div class="w-full hp-bar-bg rounded-full h-8 overflow-hidden relative border-2 border-gray-700 mt-1">
+                    <div id="pvp-p2-shield-bar" class="shield-bar-fill h-full absolute top-0 left-0"></div>
+                    <div id="pvp-p2-hp-bar" class="hp-bar-fill h-full"></div>
+                    <span id="pvp-p2-hp-text" class="absolute inset-0 text-center font-bold flex items-center justify-center text-white" style="text-shadow: 1px 1px 2px black;"></span>
+                </div>
+                 <div id="pvp-p2-buffs" class="flex justify-start items-center mt-2 space-x-2 h-6"></div>
+            </div>
+            <div id="pvp-p2-hand" class="flex justify-center items-start gap-2 md:gap-4 w-full mt-4"></div>
+        </div>
+
+        <!-- Center Log / Turn info -->
+        <div class="w-full max-w-4xl mx-auto my-2">
+            <h2 id="pvp-turn-indicator" class="text-3xl font-bold text-center glow-text mb-2"></h2>
+            <div id="pvp-log-area" class="w-full h-20 bg-black/50 rounded-lg p-2 overflow-y-auto text-sm text-center text-cyan-300"></div>
+        </div>
+
+        <!-- Player 1 (Bottom) -->
+        <div class="w-full flex flex-col items-center p-4">
+             <div id="pvp-p1-hand" class="flex justify-center items-end gap-2 md:gap-4 w-full mb-4"></div>
+             <div class="w-full max-w-md">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-bold">PLAYER 1</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="sp-icon text-2xl">★</span>
+                        <span id="pvp-p1-sp" class="font-bold text-2xl"></span>
+                    </div>
+                </div>
+                 <div class="w-full hp-bar-bg rounded-full h-8 overflow-hidden relative border-2 border-gray-700 mt-1">
+                    <div id="pvp-p1-shield-bar" class="shield-bar-fill h-full absolute top-0 left-0"></div>
+                    <div id="pvp-p1-hp-bar" class="hp-bar-fill h-full"></div>
+                    <span id="pvp-p1-hp-text" class="absolute inset-0 text-center font-bold flex items-center justify-center text-white" style="text-shadow: 1px 1px 2px black;"></span>
+                </div>
+                 <div id="pvp-p1-buffs" class="flex justify-start items-center mt-2 space-x-2 h-6"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- モーダル表示領域 -->
+    <div id="modal-container"></div>
+    <!-- 印刷用領域 -->
+    <div id="print-area"></div>
+
+<script>
+// =================================================================================
+// グローバル変数と定数
+// =================================================================================
+
+const SCREENS = {
+    'home-screen': document.getElementById('home-screen'),
+    'gacha-screen': document.getElementById('gacha-screen'),
+    'deck-screen': document.getElementById('deck-screen'),
+    'collection-screen': document.getElementById('collection-screen'),
+    'battle-select-screen': document.getElementById('battle-select-screen'),
+    'pvp-select-screen': document.getElementById('pvp-select-screen'),
+    'battle-screen': document.getElementById('battle-screen'),
+    'pvp-battle-screen': document.getElementById('pvp-battle-screen'),
+};
+
+const cardDatabase = [
+    // --- Attacker ---
+    { id: 1, name: 'レイジ', icon: '🔥', rarity: 4, role: 'Attacker', element: 'Fire', hp: 100, atk: 60,
+      normalDesc: '単体100%ダメージ', skillDesc: '次の通常攻撃ダメージ+100%', ultDesc: '単体600%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'normal_attack_up', value: 2.0, turns: 99, target: 'caster', selfOnly: true }],
+      ultAction: [{ type: 'damage', value: 600, target: 'enemy_single' }]
+    },
+    { id: 2, name: 'ゼファー', icon: '🌪️', rarity: 5, role: 'Attacker', element: 'Wind', hp: 140, atk: 80,
+      normalDesc: '単体100%ダメージ', skillDesc: '単体150%ダメージ', ultDesc: '3ターン通常攻撃が全体化',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'damage', value: 150, target: 'enemy_single' }],
+      ultAction: [{ type: 'buff', effect: 'aoe_normal', value: 1, turns: 3, target: 'caster' }]
+    },
+    { id: 3, name: 'ヴォルテックス', icon: '⚡️', rarity: 6, role: 'Attacker', element: 'Wind', hp: 180, atk: 110,
+      normalDesc: '単体100%ダメージ', skillDesc: '次の通常攻撃ダメージ+200%', ultDesc: '全体400%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'normal_attack_up', value: 3.0, turns: 99, target: 'caster', selfOnly: true }],
+      ultAction: [{ type: 'damage', value: 400, target: 'enemy_all' }]
+    },
+    { id: 101, name: 'サラマンダー', icon: '🦎', rarity: 4, role: 'Attacker', element: 'Fire', hp: 110, atk: 55,
+      normalDesc: '単体100%ダメージ', skillDesc: '単体120%ダメージ + 燃焼(2T)', ultDesc: '単体500%ダメージ、燃焼の敵に+50%',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'damage', value: 120, target: 'enemy_single' }], // Simplified
+      ultAction: [{ type: 'damage', value: 500, target: 'enemy_single' }] // Simplified
+    },
+    { id: 102, name: 'リヴァイアサン', icon: '🌊', rarity: 6, role: 'Attacker', element: 'Water', hp: 200, atk: 100,
+      normalDesc: '単体100%ダメージ', skillDesc: '全体70%ダメージ', ultDesc: '全体350%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'damage', value: 70, target: 'enemy_all' }],
+      ultAction: [{ type: 'damage', value: 350, target: 'enemy_all' }]
+    },
+    { id: 103, name: 'ベヒーモス', icon: '🦣', rarity: 5, role: 'Attacker', element: 'Earth', hp: 160, atk: 75,
+      normalDesc: '単体100%ダメージ', skillDesc: '自身のHP5%を消費し、単体200%ダメージ', ultDesc: '単体700%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'self_damage_percent', value: 5, target: 'caster' }, { type: 'damage', value: 200, target: 'enemy_single' }],
+      ultAction: [{ type: 'damage', value: 700, target: 'enemy_single' }]
+    },
+    { id: 104, name: 'ジャッジメント', icon: '⚖️', rarity: 6, role: 'Attacker', element: 'Light', hp: 190, atk: 105,
+      normalDesc: '単体100%ダメージ', skillDesc: '敵のHPが多いほどダメージ増(最大200%)', ultDesc: '敵の強化効果を1つ解除し、全体300%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'damage', value: 200, target: 'enemy_single' }], // Simplified
+      ultAction: [{ type: 'dispel', value: 1, target: 'enemy_all' }, { type: 'damage', value: 300, target: 'enemy_all' }]
+    },
+    { id: 105, name: 'アビス', icon: '🐙', rarity: 5, role: 'Attacker', element: 'Dark', hp: 150, atk: 70,
+      normalDesc: '単体100%ダメージ', skillDesc: '単体130%ダメージ、与ダメの30%回復', ultDesc: '単体650%ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'lifesteal', value: 130, heal_percent: 30, target: 'enemy_single' }],
+      ultAction: [{ type: 'damage', value: 650, target: 'enemy_single' }]
+    },
+
+    // --- Buffer ---
+    { id: 4, name: 'オラクル', icon: '👁️', rarity: 4, role: 'Buffer', element: 'Light', hp: 120, atk: 30,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方全体の攻撃力+30%(2T)', ultDesc: '味方全体の攻撃力+50%(3T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'atk_up', value: 1.3, turns: 2, target: 'allies' }],
+      ultAction: [{ type: 'buff', effect: 'atk_up', value: 1.5, turns: 3, target: 'allies' }]
+    },
+    { id: 5, name: 'ハーモニー', icon: '🎶', rarity: 5, role: 'Buffer', element: 'Wind', hp: 180, atk: 40,
+      normalDesc: '単体100%ダメージ', skillDesc: 'SPを2回復', ultDesc: 'SPを最大まで回復',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'sp_gain', value: 2, target: 'caster_side' }],
+      ultAction: [{ type: 'sp_gain', value: 99, target: 'caster_side' }]
+    },
+    { id: 6, name: 'クロノス', icon: '⏳', rarity: 6, role: 'Buffer', element: 'Specialist', hp: 220, atk: 50,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体の必殺技ゲージ+50%', ultDesc: '味方全体の必殺技ゲージを100%チャージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'ult_gain', value: 50, target: 'ally_single_random_other' }],
+      ultAction: [{ type: 'ult_gain', value: 100, target: 'allies_except_caster' }]
+    },
+    { id: 106, name: 'ヴァルキリー', icon: '🕊️', rarity: 5, role: 'Buffer', element: 'Light', hp: 170, atk: 45,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体の会心率+40%(2T)', ultDesc: '味方全体の会心ダメージ+60%(3T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'crit_rate_up', value: 1.4, turns: 2, target: 'ally_single_random' }],
+      ultAction: [{ type: 'buff', effect: 'crit_dmg_up', value: 1.6, turns: 3, target: 'allies' }]
+    },
+    { id: 107, name: 'ミューズ', icon: '🎭', rarity: 4, role: 'Buffer', element: 'Dark', hp: 130, atk: 25,
+      normalDesc: '単体100%ダメージ', skillDesc: 'ランダムな味方1人の攻撃力+60%(2T)', ultDesc: '味方全体の全ステータス+20%(3T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'atk_up', value: 1.6, turns: 2, target: 'ally_single_random' }],
+      ultAction: [{ type: 'buff', effect: 'all_stats_up', value: 1.2, turns: 3, target: 'allies' }]
+    },
+    
+    // --- Shielder ---
+    { id: 7, name: 'イージス', icon: '🛡️', rarity: 5, role: 'Shielder', element: 'Earth', hp: 200, atk: 35,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方全体に自身の最大HP15%分のシールド', ultDesc: '味方全体に自身の最大HP45%分のシールド',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'shield', value: 15, basedOn: 'casterMaxHP', target: 'allies' }],
+      ultAction: [{ type: 'shield', value: 45, basedOn: 'casterMaxHP', target: 'allies' }]
+    },
+    { id: 108, name: 'アダマンタイト', icon: '💎', rarity: 6, role: 'Shielder', element: 'Earth', hp: 250, atk: 40,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体に自身の最大HP30%分のシールド+挑発', ultDesc: '自身に最大HP100%分のシールド+ダメージ反射(1T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'shield', value: 30, basedOn: 'casterMaxHP', target: 'ally_single_lowest_hp' }],
+      ultAction: [{ type: 'shield', value: 100, basedOn: 'casterMaxHP', target: 'caster' }, { type: 'buff', effect: 'reflect', value: 0.5, turns: 1, target: 'caster' }]
+    },
+    { id: 109, name: 'ミラージュ', icon: '🌫️', rarity: 4, role: 'Shielder', element: 'Wind', hp: 150, atk: 20,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方全体に回避率UP(1T)', ultDesc: '味方全体にダメージ無効1回',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'evade_up', value: 1.5, turns: 1, target: 'allies' }],
+      ultAction: [{ type: 'buff', effect: 'invincible', value: 1, turns: 99, target: 'allies' }]
+    },
+
+    // --- Healer ---
+    { id: 8, name: 'セレスティア', icon: '💖', rarity: 5, role: 'Healer', element: 'Light', hp: 190, atk: 30,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方全体のHPを自身の最大HP20%分回復', ultDesc: '味方全体のHPを全回復',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'heal', value: 20, basedOn: 'casterMaxHP', target: 'allies' }],
+      ultAction: [{ type: 'heal', value: 9999, target: 'allies' }]
+    },
+    { id: 110, name: 'フェニックス', icon: '🐦', rarity: 6, role: 'Healer', element: 'Fire', hp: 210, atk: 45,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体をHP50%で蘇生', ultDesc: '味方全体をHP30%で蘇生',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [], // Not implemented
+      ultAction: [] // Not implemented
+    },
+    { id: 111, name: 'ネクター', icon: '🍯', rarity: 4, role: 'Healer', element: 'Water', hp: 140, atk: 25,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体のHPを自身の最大HP40%分回復', ultDesc: '味方全体のデバフを全て解除し、HPを50%回復',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'heal', value: 40, basedOn: 'casterMaxHP', target: 'ally_single_lowest_hp' }],
+      ultAction: [{ type: 'cleanse', value: 99, target: 'allies' }, { type: 'heal', value: 50, basedOn: 'targetMaxHP', target: 'allies' }]
+    },
+
+    // --- Debuffer ---
+    { id: 112, name: 'パンデミック', icon: '🦠', rarity: 5, role: 'Debuffer', element: 'Dark', hp: 160, atk: 50,
+      normalDesc: '単体100%ダメージ', skillDesc: '敵単体に防御力-40%(2T)', ultDesc: '敵全体に全属性耐性-25%(3T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'debuff', effect: 'def_down', value: 0.6, turns: 2, target: 'enemy_single' }],
+      ultAction: [{ type: 'debuff', effect: 'res_down', value: 0.75, turns: 3, target: 'enemy_all' }]
+    },
+    { id: 113, name: 'メデューサ', icon: '🐍', rarity: 6, role: 'Debuffer', element: 'Earth', hp: 200, atk: 60,
+      normalDesc: '単体100%ダメージ', skillDesc: '敵単体を確率で石化(1T)', ultDesc: '敵全体に攻撃力-50%(2T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'debuff', effect: 'stun', value: 1, turns: 1, target: 'enemy_single' }],
+      ultAction: [{ type: 'debuff', effect: 'atk_down', value: 0.5, turns: 2, target: 'enemy_all' }]
+    },
+    { id: 114, name: 'ポイズンウィッチ', icon: '☠️', rarity: 4, role: 'Debuffer', element: 'Dark', hp: 110, atk: 40,
+      normalDesc: '単体100%ダメージ', skillDesc: '敵単体に猛毒(3T)', ultDesc: '敵全体のSPを1減少させる',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'debuff', effect: 'poison', value: 5, turns: 3, target: 'enemy_single' }],
+      ultAction: [{ type: 'sp_drain', value: 1, target: 'enemy_all' }]
+    },
+    
+    // --- Specialist ---
+    { id: 115, name: 'ドッペルゲンガー', icon: '👥', rarity: 6, role: 'Specialist', element: 'Dark', hp: 180, atk: 80,
+      normalDesc: '単体100%ダメージ', skillDesc: '選択した味方に変身(3T)', ultDesc: '選択した敵に変身(3T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [], // Complex
+      ultAction: [] // Complex
+    },
+    { id: 116, name: 'ギャンブラー', icon: '🎲', rarity: 5, role: 'Specialist', element: 'Specialist', hp: 150, atk: 70,
+      normalDesc: '単体100%ダメージ', skillDesc: 'SPを1消費。50%でSP3回復、50%で失敗', ultDesc: 'ランダムな必殺技を放つ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'gamble_sp', success: 3, failure: 0, target: 'caster_side' }],
+      ultAction: [] // Complex
+    },
+     // --- NEW CARDS ---
+    { id: 201, name: 'アポロン', icon: '☀️', rarity: 6, role: 'Attacker', element: 'Light', hp: 200, atk: 100,
+      normalDesc: '単体100%ダメージ', skillDesc: '単体150%ダメージ。自身のデバフを1つ解除', ultDesc: '全体300%ダメージ。味方全体のHPを10%回復',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'damage', value: 150, target: 'enemy_single' }, { type: 'cleanse', value: 1, target: 'caster' }],
+      ultAction: [{ type: 'damage', value: 300, target: 'enemy_all' }, { type: 'heal', value: 10, basedOn: 'targetMaxHP', target: 'allies' }]
+    },
+    { id: 202, name: 'ノーム', icon: '🌱', rarity: 4, role: 'Healer', element: 'Earth', hp: 160, atk: 20,
+      normalDesc: '単体100%ダメージ', skillDesc: '味方単体に継続回復(3T)', ultDesc: '味方全体に継続回復(2T)と防御力UP(2T)',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'regen', value: 10, turns: 3, target: 'ally_single_lowest_hp' }],
+      ultAction: [{ type: 'buff', effect: 'regen', value: 10, turns: 2, target: 'allies' }, { type: 'buff', effect: 'def_up', value: 1.3, turns: 2, target: 'allies' }]
+    },
+    { id: 203, name: 'カオス', icon: '💥', rarity: 6, role: 'Debuffer', element: 'Dark', hp: 180, atk: 70,
+      normalDesc: '単体100%ダメージ', skillDesc: '敵単体にランダムなデバフを2つ付与', ultDesc: '敵全体のバフを全て解除し、大ダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'random_debuff', value: 2, turns: 2, target: 'enemy_single' }],
+      ultAction: [{ type: 'dispel', value: 99, target: 'enemy_all' }, { type: 'damage', value: 450, target: 'enemy_all' }]
+    },
+    { id: 204, name: 'ガーディアン', icon: '🏰', rarity: 5, role: 'Shielder', element: 'Light', hp: 220, atk: 30,
+      normalDesc: '単体100%ダメージ', skillDesc: '自身に挑発(1T)と防御力UP(1T)', ultDesc: '味方全体にデバフ無効(1回)とシールド',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [{ type: 'buff', effect: 'taunt', value: 1, turns: 1, target: 'caster' }, { type: 'buff', effect: 'def_up', value: 1.5, turns: 1, target: 'caster' }],
+      ultAction: [{ type: 'buff', effect: 'debuff_immunity', value: 1, turns: 99, target: 'allies' }, { type: 'shield', value: 25, basedOn: 'casterMaxHP', target: 'allies' }]
+    },
+    { id: 205, name: 'スプリガン', icon: '🌲', rarity: 4, role: 'Specialist', element: 'Earth', hp: 130, atk: 45,
+      normalDesc: '単体100%ダメージ', skillDesc: 'SPを1消費し、自身の攻撃力をHP割合に応じてUP', ultDesc: '自身のHPを1にし、その値 만큼 敵にダメージ',
+      normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+      skillAction: [], // Complex
+      ultAction: [] // Complex
+    },
+    { id: 206, name: 'ブリザード', icon: '❄️', rarity: 5, role: 'Attacker', element: 'Water', hp: 140, atk: 85,
+        normalDesc: '単体100%ダメージ', skillDesc: '敵全体に60%ダメージ + 確率で速度DOWN', ultDesc: '単体に400%ダメージ + 確定で凍結(1T)',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'damage', value: 60, target: 'enemy_all' }, { type: 'debuff', effect: 'spd_down', value: 0.8, turns: 2, target: 'enemy_all' }],
+        ultAction: [{ type: 'damage', value: 400, target: 'enemy_single' }, { type: 'debuff', effect: 'stun', value: 1, turns: 1, target: 'enemy_single' }]
+    },
+    { id: 207, name: 'シルフ', icon: '🦋', rarity: 4, role: 'Buffer', element: 'Wind', hp: 120, atk: 30,
+        normalDesc: '単体100%ダメージ', skillDesc: '味方単体のデバフを1つ解除し、SPを1回復', ultDesc: '味方全体の速度UP(3T)',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'cleanse', value: 1, target: 'ally_single_random' }, { type: 'sp_gain', value: 1, target: 'caster_side' }],
+        ultAction: [{ type: 'buff', effect: 'spd_up', value: 1.3, turns: 3, target: 'allies' }]
+    },
+    { id: 208, name: 'ヴァンパイア', icon: '🦇', rarity: 6, role: 'Specialist', element: 'Dark', hp: 170, atk: 90,
+        normalDesc: '与ダメの50%を吸収', skillDesc: '単体150%ダメージ + 吸血効果を味方全体に付与(2T)', ultDesc: '敵全体のHPを20%吸収する',
+        normalAction: [{ type: 'lifesteal', value: 80, heal_percent: 50, target: 'enemy_single' }],
+        skillAction: [{ type: 'damage', value: 150, target: 'enemy_single' }, { type: 'buff', effect: 'vampirism', value: 0.2, turns: 2, target: 'allies' }],
+        ultAction: [{ type: 'lifesteal_percent', value: 20, target: 'enemy_all' }]
+    },
+    { id: 209, name: 'ゴーレム', icon: '🗿', rarity: 4, role: 'Shielder', element: 'Earth', hp: 180, atk: 15,
+        normalDesc: '単体100%ダメージ', skillDesc: '自身に被ダメージ-25%を付与(2T)', ultDesc: '自身が受けたダメージの50%を敵全体に反射',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'buff', effect: 'damage_reduction', value: 0.75, turns: 2, target: 'caster' }],
+        ultAction: [{ type: 'damage', value: 0, target: 'enemy_all' }] //Needs logic
+    },
+    { id: 210, name: 'アルケミスト', icon: '⚗️', rarity: 5, role: 'Buffer', element: 'Specialist', hp: 160, atk: 55,
+        normalDesc: '単体100%ダメージ', skillDesc: '味方単体のバフを1ターン延長', ultDesc: '味方単体のHPを全回復し、必殺技ゲージを100%にする',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'extend_buffs', value: 1, target: 'ally_single_random' }],
+        ultAction: [{ type: 'heal', value: 9999, target: 'ally_single_random' }, { type: 'ult_gain', value: 100, target: 'ally_single_random' }]
+    },
+    { id: 211, name: 'ナイトメア', icon: '魇', rarity: 6, role: 'Debuffer', element: 'Dark', hp: 190, atk: 65,
+        normalDesc: '単体100%ダメージ', skillDesc: '敵単体に回復阻害(2T)を付与', ultDesc: '敵全体に2ターンの間、強化不能を付与',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'debuff', effect: 'heal_block', value: 1, turns: 2, target: 'enemy_single' }],
+        ultAction: [{ type: 'debuff', effect: 'buff_block', value: 1, turns: 2, target: 'enemy_all' }]
+    },
+    { id: 212, name: 'ケンタウロス', icon: '🏹', rarity: 4, role: 'Attacker', element: 'Wind', hp: 90, atk: 65,
+        normalDesc: '単体100%ダメージ', skillDesc: '敵の防御力を一部無視して120%ダメージ', ultDesc: '3回連続で単体150%ダメージ',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'damage', value: 120, target: 'enemy_single', ignore_def: 0.3 }],
+        ultAction: [{ type: 'multihit', value: 150, hits: 3, target: 'enemy_single' }]
+    },
+    { id: 213, name: 'エンジェル', icon: '😇', rarity: 6, role: 'Healer', element: 'Light', hp: 240, atk: 40,
+        normalDesc: '単体100%ダメージ', skillDesc: '味方全体のデバフを1つ解除し、HPを15%回復', ultDesc: '味方単体に1度だけ戦闘不能を防ぐバフを付与',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'cleanse', value: 1, target: 'allies' }, { type: 'heal', value: 15, basedOn: 'targetMaxHP', target: 'allies' }],
+        ultAction: [{ type: 'buff', effect: 'endure', value: 1, turns: 99, target: 'ally_single_lowest_hp' }]
+    },
+    { id: 214, name: 'バーサーカー', icon: '🪓', rarity: 5, role: 'Attacker', element: 'Fire', hp: 130, atk: 90,
+        normalDesc: '単体100%ダメージ', skillDesc: '自身の防御力を下げ、攻撃力を大幅にUP(2T)', ultDesc: '自身の残りHPが少ないほど威力が上がる単体攻撃',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'debuff', effect: 'def_down', value: 0.5, turns: 2, target: 'caster' }, { type: 'buff', effect: 'atk_up', value: 1.8, turns: 2, target: 'caster' }],
+        ultAction: [{ type: 'damage', value: 500, target: 'enemy_single' }] // Needs reverse HP scaling
+    },
+    { id: 215, name: 'インプ', icon: '😈', rarity: 4, role: 'Debuffer', element: 'Fire', hp: 100, atk: 45,
+        normalDesc: '単体100%ダメージ', skillDesc: '敵単体のSPを1減少させる', ultDesc: '敵単体の必殺技ゲージを0にする',
+        normalAction: [{ type: 'damage', value: 100, target: 'enemy_single' }],
+        skillAction: [{ type: 'sp_drain', value: 1, target: 'enemy_single' }],
+        ultAction: [{ type: 'ult_drain', value: 100, target: 'enemy_single' }]
+    }
+];
+
+let playerState = {
+    ownedCards: { 1: { count: 1 }, 4: { count: 1 }, 7: { count: 1 }, 8: { count: 1 } },
+    deckIds: [1, 4, 7, 8],
+};
+const initialPlayerState = JSON.parse(JSON.stringify(playerState));
+
+
+let gameState = {};
+
+// =================================================================================
+// 画面遷移 & 初期化
+// =================================================================================
+
+function showScreen(screenId) {
+    Object.values(SCREENS).forEach(screen => screen.classList.remove('active'));
+    SCREENS[screenId].classList.add('active');
+    if (screenId === 'collection-screen') {
+        renderCollectionScreen();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    autoLoadData();
+    // 不足しているカードデータを補完
+    cardDatabase.forEach(card => {
+        if (!card.normalAction) card.normalAction = [{ type: 'damage', value: 0, target: 'enemy_single' }];
+        if (!card.skillAction) card.skillAction = [];
+        if (!card.ultAction) card.ultAction = [];
+    });
+
+    renderGachaScreen();
+    renderDeckScreen();
+    showScreen('home-screen');
+});
+
+
+// =================================================================================
+// カードとUIのレンダリング
+// =================================================================================
+
+function getElementColor(element) {
+    const colors = { Fire: 'red', Water: 'blue', Wind: 'green', Earth: 'yellow', Light: 'white', Dark: 'purple', Specialist: 'gray' };
+    return colors[element] || 'gray';
+}
+
+function createCardHTML(card, context, isDeckCard = false) {
+    const isOwned = playerState.ownedCards[card.id] && playerState.ownedCards[card.id].count > 0;
+    const ownedCount = isOwned ? playerState.ownedCards[card.id].count : 0;
+    const isInDeck = playerState.deckIds.includes(card.id);
+    const cardBgClass = `card-bg-${card.role.toLowerCase()}`;
+    
+    let buttonHTML = '';
+    if (context === 'gacha') {
+        const buttonText = isOwned ? `入手済み (x${ownedCount})` : '入手する';
+        buttonHTML = `<button onclick="event.stopPropagation(); acquireCard(${card.id})" class="w-full mt-2 py-1 text-xs rounded bg-green-600 hover:bg-green-500 transition-colors z-10">${buttonText}</button>`;
+    } else if (context === 'deck') {
+        if (isDeckCard) {
+            buttonHTML = `<button onclick="event.stopPropagation(); removeFromDeck(${card.id})" class="w-full mt-2 py-1 text-xs rounded bg-red-600 hover:bg-red-500 transition-colors z-10">外す</button>`;
+        } else {
+            if (isInDeck) {
+                buttonHTML = `<button class="w-full mt-2 py-1 text-xs rounded bg-gray-600 cursor-not-allowed z-10">編成済み</button>`;
+            } else if (playerState.deckIds.length < 4) {
+                buttonHTML = `<button onclick="event.stopPropagation(); addToDeck(${card.id})" class="w-full mt-2 py-1 text-xs rounded bg-blue-600 hover:bg-blue-500 transition-colors z-10">入れる</button>`;
+            } else {
+                buttonHTML = `<button class="w-full mt-2 py-1 text-xs rounded bg-gray-600 cursor-not-allowed z-10">満員</button>`;
+            }
+        }
+    }
+
+    return `
+        <div id="card-${context}-${card.id}" onclick="showCardDetails(${card.id})" class="card rounded-lg overflow-hidden p-2 rarity-${card.rarity} ${cardBgClass} flex flex-col justify-between h-56">
+            <div class="text-center flex-grow flex flex-col justify-center">
+                <div class="text-5xl">${card.icon}</div>
+                <h3 class="font-bold text-sm mt-1">${card.name}</h3>
+                <div class="flex justify-center my-1">${createStars(card.rarity)}</div>
+                <p class="text-xs text-gray-400">${card.role}</p>
+                 <p class="text-xs font-bold" style="color:${getElementColor(card.element)}">${card.element}</p>
+                 ${(isOwned && ownedCount > 1) ? `<p class="text-xs text-cyan-400 font-bold mt-1">+${Math.round((getBonusMultiplier(card.id) - 1) * 100)}%</p>` : ''}
+            </div>
+            ${buttonHTML}
+        </div>
+    `;
+}
+
+function createStars(rarity) {
+    let stars = '';
+    for (let i = 0; i < rarity; i++) {
+        stars += `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="star-gold"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`;
+    }
+    return `<div class="flex justify-center">${stars}</div>`;
+}
+
+
+// =================================================================================
+// カード入手 & デッキ編成 & 図鑑
+// =================================================================================
+
+function renderGachaScreen() {
+    document.getElementById('gacha-card-list').innerHTML = cardDatabase.map(card => createCardHTML(card, 'gacha')).join('');
+}
+
+function acquireCard(cardId) {
+    const card = cardDatabase.find(c => c.id === cardId);
+    if (!playerState.ownedCards[cardId]) {
+        playerState.ownedCards[cardId] = { count: 0 };
+    }
+    playerState.ownedCards[cardId].count++;
+    
+    const bonus = getBonusMultiplier(cardId, true);
+    const message = playerState.ownedCards[cardId].count > 1 
+        ? `${card.name}を入手しました！<br>効果が <span class="text-cyan-400 font-bold">${bonus}% UP</span> しました！`
+        : `${card.name}を新たに入手しました！`;
+    showModal('カード入手', message);
+
+    renderGachaScreen();
+    renderDeckScreen();
+    autoSaveData();
+}
+
+function renderDeckScreen() {
+    const deckContainer = document.getElementById('current-deck');
+    const ownedContainer = document.getElementById('owned-cards-list');
+
+    deckContainer.innerHTML = playerState.deckIds
+        .map(id => cardDatabase.find(c => c.id === id))
+        .map(card => createCardHTML(card, 'deck', true)).join('');
+        
+    ownedContainer.innerHTML = Object.keys(playerState.ownedCards)
+        .map(id => cardDatabase.find(c => c.id == id))
+        .map(card => createCardHTML(card, 'deck', false)).join('');
+}
+
+function renderCollectionScreen() {
+    document.getElementById('collection-grid').innerHTML = cardDatabase.map(card => {
+        const isOwned = playerState.ownedCards[card.id] && playerState.ownedCards[card.id].count > 0;
+        const ownedCount = isOwned ? playerState.ownedCards[card.id].count : 0;
+        return `
+            <div onclick="showCardDetails(${card.id})" class="card rounded-lg p-2 text-center h-40 flex flex-col justify-center ${isOwned ? `rarity-${card.rarity} card-bg-${card.role.toLowerCase()}` : 'bg-gray-800 opacity-50'}">
+                <div class="text-4xl">${card.icon}</div>
+                <h3 class="font-bold text-xs mt-1">${card.name}</h3>
+                ${isOwned ? `<span class="text-xs text-yellow-400">x${ownedCount}</span>` : '<span class="text-xs text-gray-500">未入手</span>'}
+            </div>
+        `;
+    }).join('');
+}
+
+
+function addToDeck(cardId) {
+    if (playerState.deckIds.length < 4 && !playerState.deckIds.includes(cardId)) {
+        playerState.deckIds.push(cardId);
+        renderDeckScreen();
+        autoSaveData();
+    }
+}
+
+function removeFromDeck(cardId) {
+    playerState.deckIds = playerState.deckIds.filter(id => id !== cardId);
+    renderDeckScreen();
+    autoSaveData();
+}
+
+
+// =================================================================================
+// バトルロジック
+// =================================================================================
+
+function getBonusMultiplier(cardId, forDisplay = false) {
+    const card = cardDatabase.find(c => c.id === cardId);
+    if (!card) return forDisplay ? 0 : 1;
+    const ownedInfo = playerState.ownedCards[cardId];
+    if (!ownedInfo || ownedInfo.count <= 1) return forDisplay ? 0 : 1;
+    const count = ownedInfo.count;
+    let bonusPerCard = 0;
+    if (card.rarity === 4) bonusPerCard = 0.10;
+    else if (card.rarity === 5) bonusPerCard = 0.20;
+    else if (card.rarity === 6) bonusPerCard = 0.30;
+    const totalBonus = bonusPerCard * (count - 1);
+    return forDisplay ? Math.round(totalBonus * 100) : 1 + totalBonus;
+}
+
+function createBattleCharacter(deckIds, isPlayer, fullPlayerState = null, forceHpCalculation = false) {
+    const stateSource = fullPlayerState || (isPlayer ? playerState : null);
+    let totalHp = 0;
+    const battleDeck = deckIds.map(id => {
+        const originalCard = { ...cardDatabase.find(c => c.id === id) };
+        totalHp += originalCard.hp;
+        if (stateSource && stateSource.ownedCards[id]) {
+            const count = stateSource.ownedCards[id].count;
+            if (count > 1) {
+                let bonusPerCard = 0;
+                if (originalCard.rarity === 4) bonusPerCard = 0.10;
+                else if (originalCard.rarity === 5) bonusPerCard = 0.20;
+                else if (originalCard.rarity === 6) bonusPerCard = 0.30;
+                originalCard.powerMultiplier = 1 + (bonusPerCard * (count - 1));
+            } else {
+                 originalCard.powerMultiplier = 1;
+            }
+        } else {
+            originalCard.powerMultiplier = 1;
+        }
+        return { ...originalCard, ultimateGauge: 0, buffs: [] };
+    });
+    
+    const finalHp = (isPlayer || forceHpCalculation) ? (totalHp > 0 ? totalHp : 500) : 1000;
+
+    return {
+        isPlayer,
+        maxHp: finalHp,
+        hp: finalHp,
+        shield: 0,
+        maxSp: 5,
+        sp: 3,
+        buffs: [],
+        deck: battleDeck,
+    };
+}
+
+
+function startBattle() {
+    if (playerState.deckIds.length === 0) {
+        showModal("エラー", "デッキにカードがありません。デッキを編成してください。");
+        return;
+    }
+    gameState = {
+        player: createBattleCharacter(playerState.deckIds, true, playerState, true),
+        enemy: { ...createBattleCharacter([1, 7, 101, 114], false), name: "シャドウ・ゴーレム", icon: '👿' },
+        turn: 1, log: [], isPlayerTurn: true, isGameOver: false,
+    };
+    addLog('バトル開始！', 'log-area');
+    showScreen('battle-screen');
+    renderBattleUI();
+}
+
+function renderBattleUI() {
+    ['player', 'enemy'].forEach(type => {
+        const entity = gameState[type];
+        const hpPercent = (entity.hp / entity.maxHp) * 100;
+        const shieldPercent = (entity.shield / entity.maxHp) * 100;
+        document.getElementById(`${type}-hp-bar`).style.width = `${hpPercent}%`;
+        document.getElementById(`${type}-shield-bar`).style.width = `${Math.min(100, hpPercent + shieldPercent)}%`;
+        document.getElementById(`${type}-hp-text`).textContent = `${entity.hp} / ${entity.maxHp}${entity.shield > 0 ? ` (+${entity.shield})` : ''}`;
+    });
+    document.getElementById('enemy-icon-display').textContent = gameState.enemy.icon;
+    document.getElementById('enemy-name').textContent = gameState.enemy.name;
+    document.getElementById('skill-points').textContent = `${gameState.player.sp} / ${gameState.player.maxSp}`;
+    document.getElementById('player-hand').innerHTML = gameState.player.deck.map((card, index) => createBattleCardHTML(card, index, 'player')).join('');
+    renderBuffs('player', 'player-buffs');
+    renderBuffs('enemy', 'enemy-buffs');
+}
+
+function createBattleCardHTML(card, index, entityType) {
+    const entity = (entityType === 'player' || entityType === 'p1') ? gameState.player1 || gameState.player : gameState.player2 || gameState.enemy;
+    const isPvp = !!gameState.player1;
+    const isMyTurn = isPvp ? (gameState.isPlayer1Turn && entityType === 'p1') || (!gameState.isPlayer1Turn && entityType === 'p2') : gameState.isPlayerTurn;
+
+    const canUseSkill = entity.sp >= 1 && isMyTurn;
+    const canUseUlt = card.ultimateGauge >= 100 && isMyTurn;
+    const cardBgClass = `card-bg-${card.role.toLowerCase()}`;
+    
+    const actionHandler = isPvp ? `handlePvpAction('${entityType}', ${index}` : `handlePlayerAction(${index}`;
+
+    return `
+        <div class="flex flex-col items-center">
+            <div onclick="showCardDetails(${card.id})" class="card ${cardBgClass} rounded-lg p-2 w-28 md:w-32 relative rarity-${card.rarity} h-48 flex flex-col justify-between">
+                <div class="text-center">
+                   <div class="text-4xl md:text-5xl">${card.icon}</div>
+                   <h3 class="font-bold text-xs md:text-sm">${card.name}</h3>
+                </div>
+                <div class="w-full ultimate-gauge-bg rounded-full h-3 my-1 overflow-hidden border border-gray-600">
+                    <div class="ultimate-gauge-fill h-full" style="width: ${card.ultimateGauge}%;"></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-1 mt-1 w-28 md:w-32">
+                <button onclick="${actionHandler}, 'normal')" class="text-xs py-1 rounded ${isMyTurn ? 'btn-secondary' : 'disabled-btn'}" ${!isMyTurn && 'disabled'}>通常</button>
+                <button onclick="${actionHandler}, 'skill')" class="text-xs py-1 rounded ${canUseSkill ? 'btn-secondary' : 'disabled-btn'}" ${!canUseSkill && 'disabled'}>S:1</button>
+                <button onclick="${actionHandler}, 'ultimate')" class="text-xs py-1 rounded ${canUseUlt ? 'btn-primary' : 'disabled-btn'}" ${!canUseUlt && 'disabled'}>必殺</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderBuffs(target, elementId) {
+    const container = document.getElementById(elementId);
+    const entity = gameState[target];
+    if(!entity) return;
+    let allBuffs = [...entity.buffs];
+    entity.deck.forEach(c => allBuffs.push(...c.buffs));
+    
+    container.innerHTML = allBuffs.map(b => {
+        let icon = '?';
+        let type = b.type === 'buff' ? 'buff' : 'debuff';
+        switch(b.effect) {
+            case 'atk_up': icon = '⚔️+'; break;
+            case 'def_down': icon = '🛡️-'; break;
+            case 'normal_attack_up': icon = '🔥+'; break;
+            case 'aoe_normal': icon = '💥'; break;
+            case 'regen': icon = '💖+'; break;
+            default: icon = '✨'; break;
+        }
+        return `<span class="buff-icon ${type}">${icon} (${b.turns})</span>`;
+    }).join('');
+}
+
+function handlePlayerAction(cardIndex, actionType) {
+    if (!gameState.isPlayerTurn || gameState.isGameOver) return;
+    performAction(gameState.player, gameState.enemy, cardIndex, actionType, true);
+    if (gameState.isGameOver) return;
+    
+    gameState.isPlayerTurn = false;
+    updateBuffs(gameState.player, true);
+    renderBattleUI();
+    if (checkGameOver('player', 'enemy')) return;
+    
+    setTimeout(enemyTurn, 1500);
+}
+
+function enemyTurn() {
+    if (gameState.isGameOver) return;
+    const enemy = gameState.enemy;
+    
+    const actionType = enemy.sp > 0 && Math.random() < 0.6 ? 'skill' : 'normal';
+    const cardIndex = Math.floor(Math.random() * enemy.deck.length);
+
+    performAction(enemy, gameState.player, cardIndex, actionType, false);
+    if (gameState.isGameOver) return;
+
+    updateBuffs(enemy, false);
+    if (checkGameOver('player', 'enemy')) return;
+    
+    gameState.isPlayerTurn = true;
+    gameState.turn++;
+    renderBattleUI();
+}
+
+function performAction(caster, target, cardIndex, actionType, isPlayer) {
+    const card = caster.deck[cardIndex];
+    let spCost = actionType === 'skill' ? 1 : 0;
+    if (caster.sp < spCost) return;
+    
+    caster.sp -= spCost;
+    let action;
+    if (actionType === 'normal') action = card.normalAction;
+    else if (actionType === 'skill') action = card.skillAction;
+    else if (actionType === 'ultimate') {
+        if (card.ultimateGauge < 100) { caster.sp += spCost; return; }
+        card.ultimateGauge = 0;
+        action = card.ultAction;
+    }
+    
+    if (!action) return;
+
+    addLog(`${gameState.turn}T: ${isPlayer ? 'プレイヤー' : caster.name}が${card.name}の${actionType}を使用！`, 'log-area');
+    executeAction(caster, target, cardIndex, action);
+    
+    if (actionType === 'normal') {
+        gainSp(caster, 1);
+        gainUltimateGauge(caster.deck[cardIndex], 20);
+    } else if(actionType === 'skill') {
+        gainUltimateGauge(caster.deck[cardIndex], 30);
+    }
+}
+
+function executeAction(caster, primaryTarget, casterCardIndex, actions) {
+    actions.forEach(action => {
+        let targets = resolveTargets(caster, primaryTarget, action.target, casterCardIndex);
+        targets.forEach(target => {
+            applyEffect(caster, target, action, casterCardIndex);
+        });
+    });
+}
+
+function resolveTargets(caster, primaryTarget, targetString, casterCardIndex) {
+    const casterSide = caster.isPlayer ? gameState.player1 || gameState.player : gameState.player2 || gameState.enemy;
+    const enemySide = caster.isPlayer ? gameState.player2 || gameState.enemy : gameState.player1 || gameState.player;
+    switch(targetString) {
+        case 'caster': return [caster];
+        case 'enemy_single': return [primaryTarget];
+        case 'enemy_all': return [primaryTarget]; // Simplified for now
+        case 'allies': return [casterSide];
+        case 'caster_side': return [casterSide];
+        case 'allies_except_caster':
+            return casterSide.deck.filter((_, i) => i !== casterCardIndex);
+        case 'ally_single_random_other':
+             const otherAllies = casterSide.deck.filter((_, i) => i !== casterCardIndex);
+             if (otherAllies.length === 0) return [];
+             return [otherAllies[Math.floor(Math.random() * otherAllies.length)]];
+        case 'ally_single_lowest_hp':
+            // This needs to target the entity, not a card.
+            return [casterSide];
+        default: return [primaryTarget];
+    }
+}
+
+function applyEffect(caster, target, effect, casterCardIndex) {
+    const casterCard = caster.deck[casterCardIndex];
+    const powerMultiplier = casterCard.powerMultiplier || 1;
+    const logId = gameState.player1 ? 'pvp-log-area' : 'log-area';
+
+    switch (effect.type) {
+        case 'damage':
+            let baseDamage = (casterCard.atk || 50) * (effect.value / 100);
+            let atkMultiplier = 1;
+            caster.buffs.forEach(b => { if(b.effect === 'atk_up') atkMultiplier *= b.value; });
+            casterCard.buffs.forEach(b => { if(b.effect === 'normal_attack_up') atkMultiplier *= b.value; });
+            
+            let defMultiplier = 1;
+            target.buffs.forEach(b => { if(b.effect === 'def_down') defMultiplier *= b.value; });
+            
+            let finalDamage = Math.round(baseDamage * powerMultiplier * atkMultiplier / defMultiplier);
+            dealDamage(target, finalDamage);
+            addLog(`${target.name || '敵'}に${finalDamage}ダメージ！`, logId);
+            casterCard.buffs = casterCard.buffs.filter(b => !b.selfOnly);
+            break;
+        case 'heal':
+            let healAmount = effect.basedOn === 'casterMaxHP' ? Math.round(caster.maxHp * (effect.value / 100)) : effect.value;
+            healAmount = Math.round(healAmount * powerMultiplier);
+            target.hp = Math.min(target.maxHp, target.hp + healAmount);
+             addLog(`${target.name || '味方'}のHPが${healAmount}回復。`, logId);
+            break;
+        case 'shield':
+            let shieldAmount = effect.basedOn === 'casterMaxHP' ? Math.round(caster.maxHp * (effect.value / 100)) : effect.value;
+            shieldAmount = Math.round(shieldAmount * powerMultiplier);
+            target.shield += shieldAmount;
+             addLog(`${target.name || '味方'}に${shieldAmount}のシールドを付与。`, logId);
+            break;
+        case 'buff':
+        case 'debuff':
+            const buffTarget = effect.target.includes('caster') ? casterCard : target;
+            if(effect.target.includes('allies')){
+                target.buffs.push({ ...effect, type: effect.type });
+            } else {
+                 buffTarget.buffs.push({ ...effect, type: effect.type });
+            }
+             addLog(`${effect.type === 'buff' ? '強化' : '弱体'}効果を付与。`, logId);
+            break;
+        case 'sp_gain':
+            gainSp(target, effect.value);
+            addLog(`SPが${effect.value}回復。`, logId);
+            break;
+        case 'ult_gain':
+            let ultTargetCard = target;
+            if (Array.isArray(target.deck)) {
+                ultTargetCard = target.deck[Math.floor(Math.random()*target.deck.length)];
+            }
+            gainUltimateGauge(ultTargetCard, effect.value);
+            addLog(`${ultTargetCard.name}の必殺技ゲージが${effect.value}%増加。`, logId);
+            break;
+        case 'sp_drain':
+            target.sp = Math.max(0, target.sp - effect.value);
+            addLog(`${target.name}のSPが${effect.value}減少。`, logId);
+            break;
+    }
+}
+
+// =================================================================================
+// バトルヘルパー関数
+// =================================================================================
+function dealDamage(target, damage) {
+    let absorbed = Math.min(target.shield, damage);
+    target.shield -= absorbed;
+    damage -= absorbed;
+    target.hp -= damage;
+    if (target.hp < 0) target.hp = 0;
+}
+function gainUltimateGauge(card, amount) { card.ultimateGauge = Math.min(100, card.ultimateGauge + amount); }
+function gainSp(entity, amount) { entity.sp = Math.min(entity.maxSp, entity.sp + amount); }
+function addLog(message, elementId) { 
+    const logArea = document.getElementById(elementId);
+    logArea.innerHTML = message + '<br>' + logArea.innerHTML;
+    const logs = logArea.innerHTML.split('<br>');
+    if (logs.length > 10) {
+        logArea.innerHTML = logs.slice(0, 10).join('<br>');
+    }
+}
+function checkGameOver(p1Key, p2Key) {
+    const p1 = gameState[p1Key];
+    const p2 = gameState[p2Key];
+    if (p1.hp <= 0) {
+        endGame(false, p2.name || 'Player 2');
+        return true;
+    }
+    if (p2.hp <= 0) {
+        endGame(true, p1.name || 'Player 1');
+        return true;
+    }
+    return false;
+}
+
+function endGame(isP1Win, winnerName) { 
+    gameState.isGameOver = true;
+    const message = `${winnerName}の勝利！`
+    setTimeout(() => {
+        showModal('決着！', message, () => showScreen('home-screen')); 
+    }, 1000);
+}
+
+
+function updateBuffs(entity, isPlayerTurnEnd) {
+    // This function needs rework for PVP
+}
+
+
+
+// =================================================================================
+// モーダル & データ管理
+// =================================================================================
+
+function showModal(title, message, onclose) {
+    const modalContainer = document.getElementById('modal-container');
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+            <h2 class="text-3xl font-bold mb-4 text-cyan-400">${title}</h2>
+            <div class="mb-6">${message}</div>
+            <button class="px-8 py-2 rounded-md btn-primary modal-close-btn">閉じる</button>
+        </div>
+    `;
+    modalContainer.appendChild(modal);
+    modal.querySelector('.modal-close-btn').onclick = () => {
+        modal.remove();
+        if (onclose) onclose();
+    };
+}
+
+function showCardDetails(cardId) {
+    const card = cardDatabase.find(c => c.id === cardId);
+    if (!card) return;
+    const isOwned = playerState.ownedCards[card.id] && playerState.ownedCards[card.id].count > 0;
+    const ownedCount = isOwned ? playerState.ownedCards[card.id].count : 0;
+    const bonus = getBonusMultiplier(cardId, true);
+    const cardBgClass = `card-bg-${card.role.toLowerCase()}`;
+    const modalContainer = document.getElementById('modal-container');
+    
+    modalContainer.innerHTML = `
+        <div class="modal-overlay" id="details-overlay">
+            <div class="modal-content rounded-lg p-6 w-11/12 max-w-lg text-left relative flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/2 flex flex-col items-center">
+                    <div id="card-to-print" class="card ${cardBgClass} rounded-lg p-4 rarity-${card.rarity} w-64 text-white flex flex-col justify-between" style="height: 24rem;">
+                        <div class="text-center">
+                            <div class="text-6xl">${card.icon}</div>
+                            <h3 class="font-bold text-xl mt-1">${card.name}</h3>
+                            <div class="my-1">${createStars(card.rarity)}</div>
+                        </div>
+                        <div class="flex justify-between items-center text-md font-bold px-2 py-1 bg-black/30 rounded-md">
+                            <span>HP: ${card.hp}</span>
+                            <span>ATK: ${card.atk}</span>
+                        </div>
+                        <div class="text-left text-xs p-2 bg-black/30 rounded-md my-2 space-y-1 grow flex flex-col justify-center">
+                            <p><strong class="font-semibold text-cyan-300">通常:</strong> ${card.normalDesc}</p>
+                            <p><strong class="font-semibold text-green-300">スキル:</strong> ${card.skillDesc}</p>
+                            <p><strong class="font-semibold text-purple-300">必殺技:</strong> ${card.ultDesc}</p>
+                        </div>
+                         <div class="text-center">
+                            <p class="text-sm text-gray-300 font-semibold">${card.role}</p>
+                            <p class="text-sm font-bold" style="color:${getElementColor(card.element)}">${card.element}</p>
+                        </div>
+                    </div>
+                     ${isOwned ? `<div class="mt-4 text-center"><p>所持数: <span class="font-bold text-yellow-400">x${ownedCount}</span></p><p>強化ボーナス: <span class="font-bold text-cyan-400">+${bonus}%</span></p></div>` : '<p class="mt-4 text-gray-500">未入手</p>'}
+                </div>
+                <div class="md:w-1/2">
+                    <h2 class="text-2xl font-bold text-cyan-400 border-b-2 border-cyan-400/50 pb-2 mb-4">カード情報</h2>
+                     <div class="space-y-4 text-gray-300">
+                        <div><strong class="font-semibold text-white">HP:</strong> ${card.hp}</div>
+                        <div><strong class="font-semibold text-white">攻撃力:</strong> ${card.atk}</div>
+                        <div><strong class="font-semibold text-white">通常:</strong> ${card.normalDesc}</div>
+                        <div><strong class="font-semibold text-white">スキル:</strong> ${card.skillDesc}</div>
+                        <div><strong class="font-semibold text-white">必殺技:</strong> ${card.ultDesc}</div>
+                    </div>
+                    <div class="mt-6 text-center flex justify-center gap-4">
+                        <button id="modal-print-btn" class="px-6 py-2 rounded-md btn-secondary flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            印刷
+                       </button>
+                       <button id="modal-close-btn" class="px-6 py-2 rounded-md btn-secondary">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('modal-print-btn').onclick = () => printCard();
+    document.getElementById('modal-close-btn').onclick = () => { modalContainer.innerHTML = ''; };
+    document.getElementById('details-overlay').onclick = (e) => { if (e.target.id === 'details-overlay') modalContainer.innerHTML = ''; };
+}
+
+async function printCard() {
+    const cardElement = document.getElementById('card-to-print');
+    if (!cardElement) return;
+
+    try {
+        const clone = cardElement.cloneNode(true);
+        clone.id = 'card-to-print-clone';
+        document.body.appendChild(clone);
+
+        const canvas = await html2canvas(clone, {
+            backgroundColor: null, 
+            scale: 2,
+            useCORS: true 
+        });
+        
+        clone.remove();
+
+        const printContainer = document.getElementById('print-area');
+        printContainer.innerHTML = '';
+        
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.style.width = '350px';
+        img.style.borderRadius = '15px';
+        img.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+
+        printContainer.appendChild(img);
+        
+        setTimeout(() => {
+            window.print();
+            printContainer.innerHTML = '';
+        }, 100);
+
+    } catch (error) {
+        console.error('Printing failed:', error);
+        showModal('印刷エラー', 'カードの画像生成に失敗しました。');
+    }
+}
+
+function saveData() {
+    try {
+        const saveDataString = btoa(JSON.stringify(playerState));
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+                    <h2 class="text-3xl font-bold mb-4 text-cyan-400">セーブデータ</h2>
+                    <p class="mb-4 text-left">以下のセーブデータをコピーするか、QRコードを読み取って保管してください。</p>
+                    <textarea id="save-data-textarea" class="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded border border-gray-600" readonly>${saveDataString}</textarea>
+                    <div class="flex justify-center my-4">
+                        <canvas id="qrcode-canvas"></canvas>
+                    </div>
+                    <div class="flex justify-center gap-4">
+                        <button id="copy-btn" class="px-6 py-2 rounded-md btn-secondary">クリップボードにコピー</button>
+                        <button id="close-save-modal-btn" class="px-6 py-2 rounded-md btn-primary">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('copy-btn').onclick = () => copyToClipboard(saveDataString);
+        document.getElementById('close-save-modal-btn').onclick = () => modalContainer.innerHTML = '';
+
+        const canvas = document.getElementById('qrcode-canvas');
+        if (canvas) {
+            QRCode.toCanvas(canvas, saveDataString, { width: 200, margin: 1 }, function (error) {
+                if (error) {
+                    console.error('QR Code generation failed:', error);
+                    canvas.parentElement.innerHTML = '<p class="text-red-500">QRコードの生成に失敗しました。</p>';
+                }
+            });
+        }
+    } catch (e) {
+        showModal('エラー', 'セーブモーダルの表示に失敗しました。');
+        console.error("Save failed:", e);
+    }
+}
+
+function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showModal('成功', 'クリップボードにコピーしました！');
+}
+
+function showLoadModal() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+                <h2 class="text-3xl font-bold mb-4 text-cyan-400">データをロード</h2>
+                <p class="mb-4 text-left">セーブデータを以下に貼り付けてロードしてください。</p>
+                <textarea id="load-data-textarea" class="w-full h-32 p-2 bg-gray-900 text-gray-300 rounded border border-gray-600"></textarea>
+                <div class="flex justify-center gap-4 mt-6">
+                    <button onclick="loadData(document.getElementById('load-data-textarea').value)" class="px-6 py-2 rounded-md btn-primary">ロードする</button>
+                    <button onclick="document.getElementById('modal-container').innerHTML = ''" class="px-6 py-2 rounded-md btn-secondary">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function loadData(saveString) {
+    if (!saveString.trim()) {
+        showModal('エラー', 'セーブデータが入力されていません。');
+        return;
+    }
+    try {
+        const decodedString = atob(saveString);
+        const loadedState = JSON.parse(decodedString);
+
+        if (loadedState && typeof loadedState.ownedCards === 'object' && Array.isArray(loadedState.deckIds)) {
+            playerState = loadedState;
+            autoSaveData();
+            document.getElementById('modal-container').innerHTML = '';
+            showModal('成功', 'データをロードしました！');
+            renderGachaScreen();
+            renderDeckScreen();
+            renderCollectionScreen();
+        } else {
+            throw new Error('Invalid data structure');
+        }
+    } catch (e) {
+        showModal('エラー', 'データの読み込みに失敗しました。<br>データが破損しているか、形式が正しくありません。');
+        console.error("Load failed:", e);
+    }
+}
+
+function autoSaveData() {
+    try {
+        localStorage.setItem('cbc_saveData_autosave', JSON.stringify(playerState));
+    } catch (e) {
+        console.error("Auto-save failed:", e);
+    }
+}
+
+function autoLoadData() {
+    try {
+        const savedData = localStorage.getItem('cbc_saveData_autosave');
+        if (savedData) {
+            const loadedState = JSON.parse(savedData);
+            if (loadedState && typeof loadedState.ownedCards === 'object' && Array.isArray(loadedState.deckIds)) {
+                playerState = loadedState;
+            }
+        }
+    } catch (e) {
+        console.error("Auto-load failed:", e);
+    }
+}
+
+function resetGame() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+                <h2 class="text-3xl font-bold mb-4 text-red-500">ゲームリセット</h2>
+                <p class="mb-6">本当にすべてのデータをリセットしますか？この操作は元に戻せません。</p>
+                <div class="flex justify-center gap-4">
+                    <button id="confirm-reset-btn" class="px-6 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white">はい、リセットします</button>
+                    <button onclick="document.getElementById('modal-container').innerHTML = ''" class="px-6 py-2 rounded-md btn-secondary">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('confirm-reset-btn').onclick = () => {
+        localStorage.removeItem('cbc_saveData_autosave');
+        playerState = JSON.parse(JSON.stringify(initialPlayerState));
+        document.getElementById('modal-container').innerHTML = '';
+        showModal('成功', 'ゲームデータをリセットしました。');
+        renderGachaScreen();
+        renderDeckScreen();
+        renderCollectionScreen();
+    };
+}
+
+
+// =================================================================================
+// PVP Functions
+// =================================================================================
+
+function hostPvp() {
+    try {
+        const saveDataString = btoa(JSON.stringify(playerState));
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+                    <h2 class="text-3xl font-bold mb-4 text-cyan-400">対戦コード</h2>
+                    <p class="mb-4 text-left">このコードを対戦相手に渡してください。</p>
+                    <textarea id="save-data-textarea" class="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded border border-gray-600" readonly>${saveDataString}</textarea>
+                    <div class="flex justify-center my-4">
+                        <canvas id="qrcode-canvas"></canvas>
+                    </div>
+                    <div class="flex justify-center gap-4">
+                        <button id="copy-btn" class="px-6 py-2 rounded-md btn-secondary">コピー</button>
+                        <button id="close-save-modal-btn" class="px-6 py-2 rounded-md btn-primary">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('copy-btn').onclick = () => copyToClipboard(saveDataString);
+        document.getElementById('close-save-modal-btn').onclick = () => modalContainer.innerHTML = '';
+        const canvas = document.getElementById('qrcode-canvas');
+        if (canvas) {
+            QRCode.toCanvas(canvas, saveDataString, { width: 200, margin: 1 }, function (error) { 
+                if (error) {
+                     console.error(error);
+                     canvas.parentElement.innerHTML = '<p class="text-red-500">QRコードの生成に失敗しました。</p>';
+                }
+            });
+        }
+    } catch (e) {
+        showModal('エラー', '対戦コードの生成に失敗しました。');
+        console.error("Host PVP failed:", e);
+    }
+}
+
+function joinPvp() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content rounded-lg p-8 w-11/12 max-w-md text-center">
+                <h2 class="text-3xl font-bold mb-4 text-cyan-400">対戦コード入力</h2>
+                <p class="mb-4 text-left">ホストから受け取った対戦コードを貼り付けてください。</p>
+                <textarea id="load-data-textarea" class="w-full h-32 p-2 bg-gray-900 text-gray-300 rounded border border-gray-600"></textarea>
+                <div class="flex justify-center gap-4 mt-6">
+                    <button id="start-pvp-btn" class="px-6 py-2 rounded-md btn-primary">対戦開始</button>
+                    <button onclick="document.getElementById('modal-container').innerHTML = ''" class="px-6 py-2 rounded-md btn-secondary">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('start-pvp-btn').onclick = () => {
+        const code = document.getElementById('load-data-textarea').value;
+        loadPvpDataAndStart(code);
+    };
+}
+
+function loadPvpDataAndStart(saveString) {
+    if (!saveString.trim()) {
+        showModal('エラー', '対戦コードが入力されていません。');
+        return;
+    }
+    try {
+        const decodedString = atob(saveString);
+        const enemyPlayerState = JSON.parse(decodedString);
+
+        if (enemyPlayerState && typeof enemyPlayerState.ownedCards === 'object' && Array.isArray(enemyPlayerState.deckIds) && enemyPlayerState.deckIds.length > 0) {
+            document.getElementById('modal-container').innerHTML = '';
+            startPvpBattle(enemyPlayerState);
+        } else {
+            throw new Error('Invalid data structure or empty deck');
+        }
+    } catch (e) {
+        showModal('エラー', '対戦コードの読み込みに失敗しました。<br>データが破損しているか、形式が正しくありません。');
+        console.error("Load PVP data failed:", e);
+    }
+}
+
+function startPvpBattle(enemyPlayerState) {
+    if (playerState.deckIds.length === 0) {
+        showModal("エラー", "自分のデッキにカードがありません。デッキを編成してください。");
+        return;
+    }
+    
+    gameState = {
+        player1: { ...createBattleCharacter(playerState.deckIds, true, playerState, true), name: 'Player 1'},
+        player2: { ...createBattleCharacter(enemyPlayerState.deckIds, false, enemyPlayerState, true), name: 'Player 2'},
+        turn: 1,
+        log: [],
+        isPlayer1Turn: true,
+        isGameOver: false,
+    };
+
+    addLog('対戦開始！', 'pvp-log-area');
+    showScreen('pvp-battle-screen');
+    renderPvpBattleUI();
+}
+
+function renderPvpBattleUI() {
+    const p1 = gameState.player1;
+    const p2 = gameState.player2;
+
+    // P1 UI
+    let hpPercent = (p1.hp / p1.maxHp) * 100;
+    let shieldPercent = (p1.shield / p1.maxHp) * 100;
+    document.getElementById('pvp-p1-hp-bar').style.width = `${hpPercent}%`;
+    document.getElementById('pvp-p1-shield-bar').style.width = `${Math.min(100, hpPercent + shieldPercent)}%`;
+    document.getElementById('pvp-p1-hp-text').textContent = `${p1.hp} / ${p1.maxHp}${p1.shield > 0 ? ` (+${p1.shield})` : ''}`;
+    document.getElementById('pvp-p1-sp').textContent = `${p1.sp} / ${p1.maxSp}`;
+    document.getElementById('pvp-p1-hand').innerHTML = p1.deck.map((card, index) => createBattleCardHTML(card, index, 'p1')).join('');
+    renderBuffs('player1', 'pvp-p1-buffs');
+
+    // P2 UI
+    hpPercent = (p2.hp / p2.maxHp) * 100;
+    shieldPercent = (p2.shield / p2.maxHp) * 100;
+    document.getElementById('pvp-p2-hp-bar').style.width = `${hpPercent}%`;
+    document.getElementById('pvp-p2-shield-bar').style.width = `${Math.min(100, hpPercent + shieldPercent)}%`;
+    document.getElementById('pvp-p2-hp-text').textContent = `${p2.hp} / ${p2.maxHp}${p2.shield > 0 ? ` (+${p2.shield})` : ''}`;
+    document.getElementById('pvp-p2-sp').textContent = `${p2.sp} / ${p2.maxSp}`;
+    document.getElementById('pvp-p2-hand').innerHTML = p2.deck.map((card, index) => createBattleCardHTML(card, index, 'p2')).join('');
+    renderBuffs('player2', 'pvp-p2-buffs');
+    
+    // Turn Indicator
+    document.getElementById('pvp-turn-indicator').textContent = gameState.isPlayer1Turn ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
+}
+
+function handlePvpAction(playerType, cardIndex, actionType) {
+    if (gameState.isGameOver) return;
+    if ((playerType === 'p1' && !gameState.isPlayer1Turn) || (playerType === 'p2' && gameState.isPlayer1Turn)) return;
+
+    const caster = (playerType === 'p1') ? gameState.player1 : gameState.player2;
+    const target = (playerType === 'p1') ? gameState.player2 : gameState.player1;
+    const logId = 'pvp-log-area';
+    
+    const card = caster.deck[cardIndex];
+    let spCost = actionType === 'skill' ? 1 : 0;
+    if (caster.sp < spCost) return;
+    
+    caster.sp -= spCost;
+    let action;
+    if (actionType === 'normal') action = card.normalAction;
+    else if (actionType === 'skill') action = card.skillAction;
+    else if (actionType === 'ultimate') {
+        if (card.ultimateGauge < 100) { caster.sp += spCost; return; }
+        card.ultimateGauge = 0;
+        action = card.ultAction;
+    }
+    
+    if (!action) return;
+
+    addLog(`${gameState.turn}T: ${caster.name}が${card.name}の${actionType}を使用！`, logId);
+    executeAction(caster, target, cardIndex, action);
+    
+    if (actionType === 'normal') {
+        gainSp(caster, 1);
+        gainUltimateGauge(caster.deck[cardIndex], 20);
+    } else if(actionType === 'skill') {
+        gainUltimateGauge(caster.deck[cardIndex], 30);
+    }
+    
+    if (checkGameOver('player1', 'player2')) {
+        renderPvpBattleUI();
+        return;
+    }
+
+    gameState.isPlayer1Turn = !gameState.isPlayer1Turn;
+    if(gameState.isPlayer1Turn) {
+        gameState.turn++;
+    }
+
+    renderPvpBattleUI();
+}
+
+</script>
+</body>
+</html>
+
