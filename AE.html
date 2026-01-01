@@ -443,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         EARTH: { name: '地', icon: '🌍' },
         TIME: { name: '時空', icon: '⏳' },
         NEUTRAL: { name: '無', icon: '💫' },
+        WORLD : { name: '世', icon: '縺' },
     };
 
     const RARITIES = {
@@ -574,6 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
         b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
+        b003 : { name: '世界', element: 'WORLD', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 10000, baseCost: 1000, isAoe: true, description: '世界'},
     };
 
     const EQUIPMENT_MASTER = {
@@ -624,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
         boss002: { name: 'ニャルラトホテプ', icon: '🐙', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 20000, magics: ['m303', 'm305', 'm212'], isBoss: true },
         boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 10000, magics: ['m308', 'm210', 'm108'], isBoss: true },
         boss004: { name: 'ヨグ＝ソトース', icon: '✨', rarity: 'LEGENDARY', baseHp: 250000, baseMp: 50000, magics: ['m307', 'm313', 'b002'], isBoss: true },
-        boss005: { name: '  ', icon: '縺', rarity: 'LEGENDARY', baseHp: 250000, baseMp: 50000, magics: ['m307', 'm313', 'm_ex32'], isBoss: true },
+        boss005: { name: '辟｡蜷肴ｭｦ閠', icon: '縺', rarity: 'LEGENDARY', baseHp: 250000, baseMp: 50000, magics: ['m307', 'b003', 'm_ex32'], isBoss: true },
     };
     
     const DUNGEON_MASTER = [
