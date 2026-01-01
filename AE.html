@@ -291,8 +291,10 @@
                 <div class="p-8 glassmorphism rounded-xl">
                     <p class="mb-4">己の限界に挑み、階層を踏破せよ。</p>
                     <p class="mb-6 text-lg">自己最高記録: <span id="highest-floor" class="font-bold text-yellow-400">0</span>階</p>
+                    <div id="tower-status" class="mb-4 text-cyan-300"></div>
                     <button id="start-tower-button" class="magic-button px-10 py-4 text-xl">挑戦開始</button>
                     <div class="mt-6 text-sm text-gray-400">
+                        <p>・1日2回まで挑戦可能。</p>
                         <p>・敗北するまで戦闘は続きます。</p>
                         <p>・階層突破時にHP・MPが全回復します。</p>
                         <p>・5階層ごとに強化素材、10階層ごとに魔法石が手に入ります。</p>
@@ -560,14 +562,16 @@ document.addEventListener('DOMContentLoaded', () => {
         en101: { name: 'オーク', icon: '👹', rarity: 'RARE', baseHp: 200, baseMp: 50, magics: ['m102', 'm005'] },
         en102: { name: 'サンダーバード', icon: '🦅', rarity: 'RARE', baseHp: 150, baseMp: 80, magics: ['m103', 'm105'] },
         en103: { name: 'グリフィン', icon: '🦁', rarity: 'RARE', baseHp: 180, baseMp: 60, magics: ['m003', 'm105'] },
+        en104: { name: 'ウェアウルフ', icon: '🐺', rarity: 'RARE', baseHp: 220, baseMp: 40, magics: ['m103', 'm105'] },
         en201: { name: 'ゴーレム', icon: '🗿', rarity: 'EPIC', baseHp: 500, baseMp: 100, magics: ['m210', 'm108'] },
         en202: { name: 'キマイラ', icon: '🦄', rarity: 'EPIC', baseHp: 400, baseMp: 200, magics: ['m202', 'm107', 'm104'] },
         en203: { name: 'ヒュドラ', icon: '🐍', rarity: 'EPIC', baseHp: 600, baseMp: 150, magics: ['m201', 'm104'] },
-        en204: { name: 'リッチ', icon: '💀', rarity: 'EPIC', baseHp: 600, baseMp: 300, magics: ['m208', 'm212', 'm110'] },
-        en205: { name: 'サイクロプス', icon: '👁️‍🗨️', rarity: 'EPIC', baseHp: 800, baseMp: 80, magics: ['m210'] },
+        en204: { name: 'デュラハン', icon: '🎃', rarity: 'EPIC', baseHp: 650, baseMp: 120, magics: ['m208', 'm108'] },
+        en205: { name: 'クラーケン', icon: '🦑', rarity: 'EPIC', baseHp: 800, baseMp: 150, magics: ['m201', 'm106'] },
         en301: { name: 'ドラゴン', icon: '🐉', rarity: 'LEGENDARY', baseHp: 2000, baseMp: 500, magics: ['m202', 'm302'] },
         en302: { name: '虚無の監視者', icon: '👁️', rarity: 'LEGENDARY', baseHp: 5000, baseMp: 1000, magics: ['m303', 'm305', 'm304'] },
         en303: { name: 'ベヒーモス', icon: '🐗', rarity: 'LEGENDARY', baseHp: 3000, baseMp: 300, magics: ['m308', 'm108'] },
+        en304: { name: '機械神デウス', icon: '🤖', rarity: 'LEGENDARY', baseHp: 4000, baseMp: 800, magics: ['m307', 'm311'] },
         boss001: { name: 'クロノス', icon: '⏳', rarity: 'LEGENDARY', baseHp: 75000, baseMp: 15000, magics: ['b001', 'b002', 'm310'], isBoss: true },
         boss002: { name: 'ニャルラトホテプ', icon: '🐙', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 20000, magics: ['m303', 'm305', 'm212'], isBoss: true },
         boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 10000, magics: ['m308', 'm210', 'm108'], isBoss: true },
@@ -582,9 +586,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: '古代遺跡', levelRange: [31, 45], enemies: ['en101', 'en201', 'en202'], boss: 'en202' },
         { name: '灼熱の火山', levelRange: [46, 60], enemies: ['en201', 'en203'], boss: 'en301' },
         { name: '竜の巣', levelRange: [61, 80], enemies: ['en202', 'en301'], boss: 'en301' },
+        { name: '呪われた廃村', levelRange: [70, 90], enemies: ['en104', 'en204'], boss: 'en204' },
         { name: '深淵の門', levelRange: [81, 100], enemies: ['en301', 'en302'], boss: 'en302' },
+        { name: '深海都市', levelRange: [90, 110], enemies: ['en205', 'en301'], boss: 'en205' },
         { name: '月光の森', levelRange: [101, 120], enemies: ['en202', 'en104'], boss: 'en204' },
         { name: '巨人の山脈', levelRange: [121, 140], enemies: ['en201', 'en205'], boss: 'en303' },
+        { name: '機械仕掛けの塔', levelRange: [130, 150], enemies: ['en304', 'en201'], boss: 'en304' },
         { name: '終焉の地', levelRange: [141, 160], enemies: ['en301', 'en302', 'en303'], boss: 'boss002' },
     ];
     
@@ -620,7 +627,9 @@ document.addEventListener('DOMContentLoaded', () => {
         unlockedDungeon: 0,
         infiniteTower: {
             highestFloor: 0,
-            lastChallenge: null,
+            lastChallenge: null, // Legacy
+            lastDailyReset: null,
+            dailyCount: 0
         },
         defeatedTeachers: [], // teacherIds
         lastRiftChallenge: null, // Date string
@@ -700,8 +709,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameData = JSON.parse(savedData);
             // 下位互換性のため、新しいデータ構造がない場合は追加
              if (!gameData.player.tomesOfSecrets) gameData.player.tomesOfSecrets = 0;
-            if (!gameData.infiniteTower) gameData.infiniteTower = { highestFloor: 0, lastChallenge: null };
-            if (!gameData.infiniteTower.lastChallenge) gameData.infiniteTower.lastChallenge = null;
+            if (!gameData.infiniteTower) gameData.infiniteTower = { highestFloor: 0, lastDailyReset: null, dailyCount: 0 };
+            if (!gameData.infiniteTower.lastDailyReset) gameData.infiniteTower.lastDailyReset = null;
+            if (typeof gameData.infiniteTower.dailyCount === 'undefined') gameData.infiniteTower.dailyCount = 0;
             if (gameData.player.singularityTrait === undefined) gameData.player.singularityTrait = null;
             if (!gameData.player.permanentMpBonus) gameData.player.permanentMpBonus = 0;
             if (!gameData.defeatedTeachers) gameData.defeatedTeachers = [];
@@ -1328,7 +1338,8 @@ document.addEventListener('DOMContentLoaded', () => {
             applyMagicEffect(magicInstance, enemy, battleState.player);
         } else {
             addLog(`${enemy.name} の通常攻撃！`);
-            const damage = Math.floor(enemy.level * 3 * (Math.random() * 0.4 + 0.8));
+            // 通常攻撃の威力調整 (レベル * 3 -> レベル * 5 に強化)
+            const damage = Math.floor(enemy.level * 5 * (Math.random() * 0.4 + 0.8));
             takeDamage(battleState.player, damage);
         }
         
@@ -1361,6 +1372,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (caster === battleState.player && (master.type === 'ATTACK' || master.type === 'HEAL' || master.type === 'DEFENSE')) {
             const levelBonus = 1 + (gameData.player.level * 0.05);
             finalPower = Math.floor(finalPower * levelBonus);
+        }
+        
+        // 敵の魔法威力を強化
+        if (caster !== battleState.player && (master.type === 'ATTACK' || master.type === 'DOT')) {
+             finalPower = Math.floor(finalPower * 1.5); // 1.5倍に強化
         }
 
         const applyToTarget = (t) => {
@@ -1964,19 +1980,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // 無限の塔
     function renderInfiniteTowerScreen() {
         document.getElementById('highest-floor').textContent = gameData.infiniteTower.highestFloor;
-        const lastChallengeDate = gameData.infiniteTower.lastChallenge ? new Date(gameData.infiniteTower.lastChallenge).toDateString() : null;
-        const todayDate = new Date().toDateString();
-        const canChallenge = lastChallengeDate !== todayDate;
+        
+        // 1日のリセット処理チェック
+        const today = new Date().toDateString();
+        if (gameData.infiniteTower.lastDailyReset !== today) {
+            gameData.infiniteTower.lastDailyReset = today;
+            gameData.infiniteTower.dailyCount = 0;
+            saveGame();
+        }
 
+        const remaining = 2 - gameData.infiniteTower.dailyCount;
+        document.getElementById('tower-status').textContent = `本日の残り挑戦回数: ${remaining}回`;
+        
+        const canChallenge = remaining > 0;
         const startButton = document.getElementById('start-tower-button');
         startButton.disabled = !canChallenge;
-        startButton.textContent = canChallenge ? '挑戦開始' : '挑戦済み';
+        startButton.textContent = canChallenge ? '挑戦開始' : '本日の挑戦終了';
     }
 
     function startInfiniteTowerBattle(floor) {
         if (floor === 1) { // 初回のみ
-            gameData.infiniteTower.lastChallenge = new Date().toISOString();
+            const today = new Date().toDateString();
+            // 回数チェック
+            if (gameData.infiniteTower.lastDailyReset !== today) {
+                gameData.infiniteTower.lastDailyReset = today;
+                gameData.infiniteTower.dailyCount = 0;
+            }
+            if (gameData.infiniteTower.dailyCount >= 2) {
+                showModal("制限", "本日の挑戦回数は終了しました。");
+                renderInfiniteTowerScreen();
+                return;
+            }
+            
+            gameData.infiniteTower.dailyCount++;
+            gameData.infiniteTower.lastChallenge = new Date().toISOString(); // Keep legacy for record
             saveGame();
+            
             battleState = {
                 mode: 'infinite',
                 currentFloor: 1,
@@ -2199,6 +2238,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
-
