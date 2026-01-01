@@ -605,6 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e304: { name: '生命のオーブ', rarity: 'LEGENDARY', type: 'HP_REGEN', value: 0.1, description: '戦闘中、ターン終了時に最大HPの10%を回復する。' },
         e305: { name: 'クロノマンサーのペンダント', rarity: 'LEGENDARY', type: 'COST_REDUCTION', value: 0.25, description: '魔法の消費MPが25%減少し、デバフ効果を短縮する。' },
         e306: { name: '支配の王錫', rarity: 'LEGENDARY', type: 'POWER', value: 0.60, description: '魔法威力が60%増加する。' },
+        e307: { name: '世界の核', rarity: 'LEGENDARY', type: 'ALL', value: 0.3, description: '最大HP、最大MP、魔法威力を30%増加させる。'},
     };
     
     const ENEMY_MASTER = {
@@ -661,6 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
         t004: { name: '校長 (伝説)', icon: '🧙‍♂️', level: 80, baseHp: 20000, baseMp: 5000, magics: ['m301', 'm304', 'm302'], reward: { type: 'equipment', id: 'e303' }, description: '全ての魔法の根源に触れる試練。' },
         t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。' },
         t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。' },
+        t007: { name: '始炎', icon: '🔥', level: 360, baseHp: 1250000, baseMp: 50000000, magics: ['b002', 'm307', 'b003', 'b004', 'm_ex29', 'm_ex31', 'm_ex32'], reward: { type: 'equipment', id: 'e307' }, description: '始まりの炎の試練。' },
     };
 
     // ゲームデータ
