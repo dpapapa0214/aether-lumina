@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 光属性 (LIGHT) ---
         m_ex21: { name: 'シャインレイ', element: 'LIGHT', rarity: 'RARE', type: 'ATTACK', basePower: 30, baseCost: 18, description: '閃光のビームを放つ。' },
         m_ex22: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'EPIC', type: 'HEAL', basePower: 80, baseCost: 55, isAoe: true, description: '天使の歌声でHPを大きく回復する。' },
-        m_ex23: { name: 'ディバインバスター', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 450, baseCost: 160, description: '神聖なる魔力砲撃を行う。' },
+        m_ex23: { name: 'ディバインバスター', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 900, baseCost: 160, description: '神聖なる魔力砲撃を行う。' },
         m_ex24: { name: 'スターライトブレイカー', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 380, baseCost: 140, isAoe: true, description: '星々の光を集束させ、敵全体を浄化する。' },
 
         // --- 虚無・時空・無属性 (VOID, TIME, NEUTRAL) ---
@@ -576,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
         b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
         b003 : { name: '世界', element: 'WORLD', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 10000, baseCost: 1000, isAoe: true, description: '世界'},
+        b004 : { name: '始炎', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 10000, baseCost: 10000000, isAoe: true, description: '始まりの炎を放つ。人間の魔術師は耐えきれず使用できない。'},
     };
 
     const EQUIPMENT_MASTER = {
@@ -627,7 +628,8 @@ document.addEventListener('DOMContentLoaded', () => {
         boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 10000, magics: ['m308', 'm210', 'm108'], isBoss: true },
         boss004: { name: 'ヨグ＝ソトース', icon: '✨', rarity: 'LEGENDARY', baseHp: 250000, baseMp: 50000, magics: ['m307', 'm313', 'b002'], isBoss: true },
         boss005: { name: '辟｡蜷肴ｭｦ閠', icon: '縺', rarity: 'LEGENDARY', baseHp: 500000, baseMp: 50000, magics: ['m307', 'b003', 'm_ex32'], isBoss: true },
-        boss006: { name: '末光', icon: '✨', rarity: 'LEGENDARY', baseHp: 1150000, baseMp: 10000, magics: ['b001', 'b002', 'm307', 'b003', 'm_ex31', 'm_ex32'], isBoss: true },
+        boss006: { name: '末光', icon: '✨', rarity: 'LEGENDARY', baseHp: 1250000, baseMp: 1000000, magics: ['b002', 'm307', 'b003', 'm_ex31', 'm_ex32'], isBoss: true },
+        boss007: { name: '始炎', icon: '🔥', rarity: 'LEGENDARY', baseHp: 1250000, baseMp: 50000000, magics: ['b002', 'm307', 'b003', 'b004', 'm_ex29', 'm_ex31', 'm_ex32'], isBoss: true },
     };
     
     const DUNGEON_MASTER = [
@@ -648,7 +650,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'タイタン', levelRange: [161, 200], enemies: ['en302', 'en303', 'en304'], boss: 'boss003' },
         { name: '亜東京', levelRange: [201, 240], enemies: ['en302', 'en303', 'en001'], boss: 'boss004' },
         { name: '世界', levelRange: [241, 280], enemies: ['en302', 'en303'], boss: 'boss005' },
-        { name: '光', levelRange: [281, 320], enemies: ['boss005'], boss: 'boss006' },
+        { name: '末光', levelRange: [281, 320], enemies: ['boss005'], boss: 'boss006' },
+        { name: '始炎', levelRange: [321, 360], enemies: ['boss006'], boss: 'boss007' },
     ];
     
     const TEACHER_MASTER = {
