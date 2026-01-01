@@ -785,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Singularity Trait
             let magicSlots = 4;
-            if (Math.random() < 0.01) { // 1% chance
+            if (Math.random() < 0.05) { // 1% chance
                 const traits = Object.keys(SINGULARITY_TRAITS);
                 const chosenTrait = traits[Math.floor(Math.random() * traits.length)];
                 gameData.player.singularityTrait = chosenTrait;
