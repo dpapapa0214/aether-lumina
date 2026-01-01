@@ -522,6 +522,54 @@ document.addEventListener('DOMContentLoaded', () => {
         m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 480, baseCost: 160, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
         m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', type: 'BUFF', basePower: 2.0, baseCost: 150, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
         m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 200, baseCost: 150, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+         // --- 火属性 (FIRE) ---
+        m_ex01: { name: 'ヒートウェイブ', element: 'FIRE', rarity: 'RARE', type: 'ATTACK', basePower: 20, baseCost: 16, isAoe: true, description: '熱波を放ち、敵全体を攻撃する。' },
+        m_ex02: { name: 'バーニングソウル', element: 'FIRE', rarity: 'EPIC', type: 'BUFF', basePower: 1.5, baseCost: 45, duration: 3, description: '燃える魂で3ターンの間、魔法威力を50%増加させる。' },
+        m_ex03: { name: '紅蓮の魔剣', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 400, baseCost: 140, description: '魔力で生成した巨大な炎の剣で敵を両断する。' },
+        m_ex04: { name: 'フェニックスの羽ばたき', element: 'FIRE', rarity: 'LEGENDARY', type: 'HEAL', basePower: 150, baseCost: 110, duration: 4, description: '不死鳥の炎でHPを回復し、4ターンの間リジェネ効果を与える。' },
+
+        // --- 水属性 (WATER) ---
+        m_ex05: { name: 'アクアピラー', element: 'WATER', rarity: 'RARE', type: 'ATTACK', basePower: 40, baseCost: 20, description: '足元から水柱を噴出させて攻撃する。' },
+        m_ex06: { name: 'ミラーイメージ', element: 'WATER', rarity: 'EPIC', type: 'DEFENSE', basePower: 100, baseCost: 50, duration: 3, description: '水の幻影を作り出し、3ターンの間シールドを展開する。' },
+        m_ex07: { name: 'タイダルウェイブ', element: 'WATER', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 350, baseCost: 130, isAoe: true, description: '巨大な津波ですべてを押し流す広範囲攻撃。' },
+        m_ex08: { name: 'クリスタルプリズン', element: 'WATER', rarity: 'EPIC', type: 'DEBUFF', basePower: 0.6, baseCost: 45, duration: 3, description: '氷の牢獄に閉じ込め、3ターンの間敵の攻撃力を40%低下させる。' },
+
+        // --- 雷属性 (THUNDER) ---
+        m_ex09: { name: 'スパークネット', element: 'THUNDER', rarity: 'RARE', type: 'DEBUFF', basePower: 0.8, baseCost: 22, duration: 2, description: '電撃の網で2ターンの間、敵の攻撃力を20%低下させる。' },
+        m_ex10: { name: 'ライトニングスピア', element: 'THUNDER', rarity: 'EPIC', type: 'ATTACK', basePower: 100, baseCost: 45, description: '高密度の雷の槍を投擲する。' },
+        m_ex11: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 170, description: '極大の雷を一点に集中させ、敵単体を消滅させる。' },
+        m_ex12: { name: 'ボルトストーム', element: 'THUNDER', rarity: 'EPIC', type: 'ATTACK', basePower: 60, baseCost: 40, isAoe: true, description: '無数の落雷により敵全体を攻撃する。' },
+
+        // --- 風属性 (WIND) ---
+        m_ex13: { name: 'エアロブラスト', element: 'WIND', rarity: 'RARE', type: 'ATTACK', basePower: 25, baseCost: 14, description: '圧縮した空気を爆発させる。' },
+        m_ex14: { name: 'シルフィードの加護', element: 'WIND', rarity: 'EPIC', type: 'DEFENSE', basePower: 80, baseCost: 35, duration: 3, description: '風の精霊の守りにより、3ターンの間シールドを張る。' },
+        m_ex15: { name: 'テンペスト', element: 'WIND', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 320, baseCost: 120, isAoe: true, description: '嵐を呼び起こし、敵全体を切り刻む。' },
+        m_ex16: { name: 'ソニックブーム', element: 'WIND', rarity: 'EPIC', type: 'ATTACK', basePower: 90, baseCost: 40, description: '音速の衝撃波を放つ。' },
+
+        // --- 土属性 (EARTH) ---
+        m_ex17: { name: 'ロックバレット', element: 'EARTH', rarity: 'RARE', type: 'ATTACK', basePower: 35, baseCost: 16, description: '岩の弾丸を連続で発射する。' },
+        m_ex18: { name: 'アイアンメイデン', element: 'EARTH', rarity: 'EPIC', type: 'ATTACK', basePower: 50, baseCost: 40, duration: 3, isDot: true, description: '鋼鉄の処刑具で3ターンの間、継続ダメージを与える。' },
+        m_ex19: { name: 'メテオフォール', element: 'EARTH', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 550, baseCost: 190, description: '小惑星を召喚し、敵単体に壊滅的な打撃を与える。' },
+        m_ex20: { name: 'ダイヤモンドスキン', element: 'EARTH', rarity: 'LEGENDARY', type: 'DEFENSE', basePower: 300, baseCost: 100, duration: 4, description: '4ターンの間、金剛石の硬度を持つシールドを展開する。' },
+
+        // --- 光属性 (LIGHT) ---
+        m_ex21: { name: 'シャインレイ', element: 'LIGHT', rarity: 'RARE', type: 'ATTACK', basePower: 30, baseCost: 18, description: '閃光のビームを放つ。' },
+        m_ex22: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'EPIC', type: 'HEAL', basePower: 80, baseCost: 55, isAoe: true, description: '天使の歌声でHPを大きく回復する。' },
+        m_ex23: { name: 'ディバインバスター', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 450, baseCost: 160, description: '神聖なる魔力砲撃を行う。' },
+        m_ex24: { name: 'スターライトブレイカー', element: 'LIGHT', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 380, baseCost: 140, isAoe: true, description: '星々の光を集束させ、敵全体を浄化する。' },
+
+        // --- 虚無・時空・無属性 (VOID, TIME, NEUTRAL) ---
+        m_ex25: { name: 'マインドブラスト', element: 'NEUTRAL', rarity: 'RARE', type: 'ATTACK', basePower: 40, baseCost: 20, description: '精神衝撃波で敵を攻撃する。' },
+        m_ex26: { name: 'ブラックホール', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 666, baseCost: 250, description: '極小のブラックホールを生成し、対象を事象の地平線ごと飲み込む。' },
+        m_ex27: { name: 'エントロピー拡散', element: 'VOID', rarity: 'EPIC', type: 'DEBUFF', basePower: 0.5, baseCost: 60, duration: 4, description: '秩序を崩壊させ、4ターンの間敵の攻撃力を半減させる。' },
+        m_ex28: { name: 'クロノスタシス', element: 'TIME', rarity: 'EPIC', type: 'BUFF', basePower: 1.6, baseCost: 80, duration: 2, description: '自身の時間を加速させ、2ターンの間魔法威力を60%増加させる。' },
+        m_ex29: { name: 'タイムリワインド', element: 'TIME', rarity: 'LEGENDARY', type: 'HEAL', basePower: 300, baseCost: 150, description: '肉体の時間を巻き戻し、HPを超回復する。' },
+        m_ex30: { name: 'アカシックレコード', element: 'NEUTRAL', rarity: 'LEGENDARY', type: 'BUFF', basePower: 2.5, baseCost: 200, duration: 2, description: '全知の記録にアクセスし、2ターンの間魔法威力を150%増加させる。' },
+        m_ex31: { name: '次元斬', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 1100, baseCost: 550, description: '次元ごと敵を切り裂く防御不能の一撃。' },
+    
+        // --- 特殊ロマン魔法 ---
+        m_ex32: { name: 'ギガ・エクスプロージョン', element: 'NEUTRAL', rarity: 'RARE', type: 'ATTACK', basePower: 5000, baseCost: 10000, isAoe: true, description: '全ての魔力を犠牲にして放つ、規格外の大爆発。神話級の魔法。' },
+
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
