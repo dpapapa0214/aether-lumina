@@ -577,6 +577,29 @@ document.addEventListener('DOMContentLoaded', () => {
         b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
         b003 : { name: '世界', element: 'WORLD', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 10000, baseCost: 1000, isAoe: true, description: '世界'},
         b004 : { name: '始炎', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 10000, baseCost: 10000000, isAoe: true, description: '始まりの炎を放つ。人間の魔術師は耐えきれず使用できない。'},
+        
+        // --- 剣術 (Sword Arts) ---
+
+        m_ken01: { name: '白露一刀流・壱式「紫電」', element: 'THUNDER', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 3800, baseCost: 13000, description: '神速の領域に達した、雷を纏う防御不能の突き。' },
+        m_ken02: { name: '白露一刀流・弐式「流水」', element: 'WATER', rarity: 'LEGENDARY', type: 'DEFENSE', basePower: 2500, baseCost: 10000, duration: 4, description: 'あらゆる攻撃を無に帰す水の構え。4ターンの間、強力なシールドを展開。' },
+        m_ken03: { name: '白露一刀流・参式「岩砕」', element: 'EARTH', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 4500, baseCost: 15000, description: '大地を割り、敵の存在ごと粉砕する一撃。' },
+        m_ken04: { name: '白露一刀流・肆式「不知火」', element: 'FIRE', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 3200, baseCost: 14000, isAoe: true, description: '蜃気楼のような炎の斬撃で、戦場全体を焼き払う。' },
+        m_ken05: { name: '白露一刀流・伍式「鎌鼬」', element: 'WIND', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 2000, baseCost: 13000, isAoe: true, duration: 3, isDot: true, description: '不可視の暴風刃で敵全体を切り刻み、甚大な継続ダメージを与える。' },
+        m_ken06: { name: '白露一刀流・陸式「氷牙」', element: 'WATER', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0.4, baseCost: 12000, duration: 4, description: '絶対零度の刃で魂を凍らせ、4ターンの間敵の攻撃力を60%低下させる。' },
+        m_ken07: { name: '白露一刀流・漆式「明鏡止水」', element: 'NEUTRAL', rarity: 'LEGENDARY', type: 'BUFF', basePower: 2.5, baseCost: 18000, duration: 3, description: '武の極致に至り、3ターンの間攻撃力を150%増加させる。' },
+        m_ken08: { name: '白露一刀流・捌式「虚空」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 12000, baseCost: 22000, description: '空間ごと敵を断ち切り、存在を消滅させる必殺の絶技。' },
+
+        // --- 裏剣術 (Void Sword Arts) ---
+
+        m_ura01: { name: '刹那神去・壱式「影断」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 4000, baseCost: 14000, description: '影を踏み、実体を切り裂く防御不能の神速剣。' },
+        m_ura02: { name: '刹那神去・弐式「虚空突き」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 4200, baseCost: 15000, description: '次元の彼方から刃を出現させ、敵の心臓を貫く。' },
+        m_ura03: { name: '刹那神去・参式「蝕む闇」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 1500, baseCost: 12000, isDot: true, duration: 5, description: '深淵の闇で斬りつけ、4ターンの間、絶大な継続ダメージを与える。' },
+        m_ura04: { name: '刹那神去・肆式「無我」', element: 'VOID', rarity: 'LEGENDARY', type: 'BUFF', basePower: 3.0, baseCost: 16000, duration: 4, description: '自我を捨て去り修羅と化す。3ターンの間魔法威力を200%増加させる。' },
+        m_ura05: { name: '刹那神去・伍式「黒閃」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 5500, baseCost: 18000, description: '空間が歪むほどの黒い閃光で、敵単体を両断する。' },
+        m_ura06: { name: '刹那神去・陸式「次元断」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 3500, baseCost: 15000, isAoe: true, description: '次元境界線を切断し、敵全体を異空間へ葬り去る。' },
+        m_ura07: { name: '刹那神去・漆式「因果崩壊」', element: 'VOID', rarity: 'LEGENDARY', type: 'DEBUFF', basePower: 0.3, baseCost: 15000, duration: 4, description: '因果律を破壊し、4ターンの間敵の攻撃力を70%低下させる。' },
+        m_ura08: { name: '刹那神去・捌式「万物帰灰」', element: 'VOID', rarity: 'LEGENDARY', type: 'ATTACK', basePower: 25000, baseCost: 50000, description: '触れるもの全てを灰へと変える、虚無の極致に至った終焉の一太刀。' },
+
     };
 
     const EQUIPMENT_MASTER = {
@@ -663,6 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
         t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。' },
         t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。' },
         t007: { name: '始炎', icon: '🔥', level: 500, baseHp: 2500000, baseMp: 50000000, magics: ['m307', 'b003', 'b004', 'm_ex29', 'm_ex31', 'm_ex32'], reward: { type: 'equipment', id: 'e307' }, description: '始まりの炎の試練。' },
+        t008: { name: '白露', icon: '💧', level: 750, baseHp: 5000000, baseMp: 50000000, magics: ['m_ken01', 'm_ken02', 'm_ken03', 'm_ken04', 'm_ken05', 'm_ken06', 'm_ken07', 'm_ken08'], reward: { type: 'equipment', id: 'e307' }, description: '白露一刀流' },
+        t009: { name: '神去', icon: '⛩️', level: 1000, baseHp: 7500000, baseMp: 50000000, magics: ['m_ura01', 'm_ura02', 'm_ura03', 'm_ura04', 'm_ura05', 'm_ura06', 'm_ura07', 'm_ura08'], reward: { type: 'equipment', id: 'e307' }, description: '刹那神去' },
     };
 
     // ゲームデータ
