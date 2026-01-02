@@ -1638,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (!gameData.defeatedTeachers.includes(battleState.teacherId)) {
                         gameData.defeatedTeachers.push(battleState.teacherId);
-                        let mpBonus = {t001:50, t002:75, t003:100, t004:150, t005:200, t006:250}[battleState.teacherId] || 0;
+                        let mpBonus = {t001:50, t002:75, t003:100, t004:150, t005:200, t006:250, t009:2000}[battleState.teacherId] || 0;
                         if (mpBonus > 0) {
                             gameData.player.permanentMpBonus += mpBonus;
                             message += `<br>初回勝利ボーナスとして最大MPが ${mpBonus} 増加した！`;
