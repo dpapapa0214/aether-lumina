@@ -1448,7 +1448,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (magicMaster.type === 'ATTACK' && !magicMaster.isAoe) {
+        // 修正: DEBUFFかつ単体対象の場合もターゲット選択モードに移行するように変更
+        if ((magicMaster.type === 'ATTACK' || magicMaster.type === 'DEBUFF') && !magicMaster.isAoe) {
             enterTargetingMode(magicInstance);
         } else {
             executePlayerAction(magicInstance, -1); // -1 for no specific target (AoE or non-attack)
@@ -1594,7 +1595,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const applyToTarget = (t) => {
-            if (t.currentHp <= 0) return;
+            // 修正: ターゲットが存在しない場合の安全策を追加
+            if (!t || t.currentHp <= 0) return;
+            
             let targetPowerMultiplier = 1;
             t.effects.forEach(effect => {
                 if (effect.type === 'DEBUFF') targetPowerMultiplier *= MAGIC_MASTER[effect.magicId].basePower;
@@ -1617,6 +1620,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'DEBUFF':
                      t.effects.push({ magicId: magicInstance.masterId, type: master.type, turnsLeft: master.duration });
+                     // 追加: デバフ付与時のログ
+                     addLog(`${t.name || '敵'}に${master.name}の効果を与えた！`);
                     break;
             }
         };
