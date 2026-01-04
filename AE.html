@@ -652,9 +652,17 @@ document.addEventListener('DOMContentLoaded', () => {
         en203: { name: 'ヒュドラ', icon: '🐍', rarity: 'EPIC', baseHp: 600, baseMp: 150, magics: ['m201', 'm104'] },
         en301: { name: 'ドラゴン', icon: '🐉', rarity: 'LEGENDARY', baseHp: 2000, baseMp: 500, magics: ['m202', 'm302'] },
         en302: { name: '虚無の監視者', icon: '👁️', rarity: 'LEGENDARY', baseHp: 5000, baseMp: 1000, magics: ['m303', 'm305', 'm304'] },
+        // New Enemies
+        en401: { name: 'ヘルハウンド', icon: '🐕‍🦺', rarity: 'EPIC', baseHp: 800, baseMp: 200, magics: ['m102', 'm008'] },
+        en402: { name: 'サイクロプス', icon: '👁️', rarity: 'EPIC', baseHp: 1200, baseMp: 100, magics: ['m006', 'm210'] },
+        en403: { name: 'エンシェントドラゴン', icon: '🐲', rarity: 'LEGENDARY', baseHp: 8000, baseMp: 2000, magics: ['m302', 'm308', 'i001'] },
+        
+        // Bosses
         boss001: { name: 'クロノス', icon: '⏳', rarity: 'LEGENDARY', baseHp: 50000, baseMp: 10000, magics: ['b001', 'b002', 'm310'], isBoss: true },
         boss002: { name: 'ニャルラトホテプ', icon: '🐙', rarity: 'LEGENDARY', baseHp: 75000, baseMp: 15000, magics: ['m303', 'm305', 'm212'], isBoss: true },
         boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 8000, magics: ['m308', 'm210', 'm108'], isBoss: true },
+        boss004: { name: 'リヴァイアサン', icon: '🐋', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 20000, magics: ['m307', 'i012', 'm201'], isBoss: true },
+        boss005: { name: 'バハムート', icon: '🦖', rarity: 'LEGENDARY', baseHp: 200000, baseMp: 25000, magics: ['m309', 'i004', 'm312'], isBoss: true },
     };
     
     const DUNGEON_MASTER = [
@@ -663,9 +671,11 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: '雷鳴の平原', levelRange: [11, 20], enemies: ['en002', 'en102', 'en103'], boss: 'en102' },
         { name: '忘れられた神殿', levelRange: [21, 30], enemies: ['en101', 'en102'], boss: 'en201' },
         { name: '古代遺跡', levelRange: [31, 45], enemies: ['en101', 'en201', 'en202'], boss: 'en202' },
-        { name: '灼熱の火山', levelRange: [46, 60], enemies: ['en201', 'en203'], boss: 'en301' },
-        { name: '竜の巣', levelRange: [61, 80], enemies: ['en202', 'en301'], boss: 'en301' },
-        { name: '深淵の門', levelRange: [81, 100], enemies: ['en301', 'en302'], boss: 'en302' },
+        { name: '灼熱の火山', levelRange: [46, 60], enemies: ['en201', 'en203', 'en401'], boss: 'en301' },
+        { name: '竜の巣', levelRange: [61, 80], enemies: ['en202', 'en301', 'en402'], boss: 'en301' },
+        { name: '深淵の門', levelRange: [81, 100], enemies: ['en301', 'en302', 'en402'], boss: 'en302' },
+        { name: '氷結の洞窟', levelRange: [90, 110], enemies: ['en203', 'en402', 'en302'], boss: 'en403' },
+        { name: '天空の回廊', levelRange: [100, 130], enemies: ['en103', 'en301', 'en403'], boss: 'en403' },
     ];
     
     const TEACHER_MASTER = {
@@ -1531,6 +1541,12 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTurnEffects(enemy);
         if (enemy.currentHp <= 0) { // Check if enemy died from DoT
              updateBattleUI();
+             // 修正: 継続ダメージで敵が全滅した場合の勝利判定を追加
+             const allEnemiesDefeated = battleState.enemies.every(e => e.currentHp <= 0);
+             if (allEnemiesDefeated) {
+                 setTimeout(() => endBattle(true), 1000);
+                 return;
+             }
              setTimeout(() => processSingleEnemyTurn(enemyIndex + 1), 1000);
              return;
         }
@@ -2005,6 +2021,10 @@ document.addEventListener('DOMContentLoaded', () => {
         listEl.innerHTML = '';
         gameData.magicInventory.forEach(instance => {
             const master = MAGIC_MASTER[instance.masterId];
+            
+            // 修正: 相伝魔法(INHERITED)はインベントリに表示しない（特殊体質エリアで管理）
+            if (master.category === 'INHERITED') return;
+
             const card = document.createElement('div');
             card.className = `h-32 rounded-lg p-2 card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} flex flex-col justify-center items-center cursor-pointer`;
             card.innerHTML = `
