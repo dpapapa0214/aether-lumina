@@ -365,10 +365,11 @@
                         <h3 class="text-2xl font-cinzel mb-4">Summon Magic</h3>
                         <p class="mb-6">魔法石を消費して新たな魔法を召喚します。</p>
                         <p class="text-xs text-red-300 mb-2">※相伝魔法、ボス魔法は排出されません</p>
-                        <div class="flex justify-center gap-4">
+                        <div class="flex justify-center gap-4 flex-wrap">
                             <button data-gacha-type="magic" data-amount="1" class="gacha-button magic-button px-6 py-3">1回召喚<br/>(石x10)</button>
                             <button data-gacha-type="magic" data-amount="10" class="gacha-button magic-button px-6 py-3">10回召喚<br/>(石x100)</button>
                             <button data-gacha-type="magic" data-amount="50" class="gacha-button magic-button px-6 py-3">50回召喚<br/>(石x500)</button>
+                            <button data-gacha-type="magic" data-amount="500" class="gacha-button magic-button px-6 py-3 border-yellow-400 text-yellow-300">500回召喚<br/>(石x5000)</button>
                         </div>
                     </div>
                  </div>
@@ -376,10 +377,11 @@
                      <div class="text-center p-8 glassmorphism rounded-xl">
                         <h3 class="text-2xl font-cinzel mb-4">Forge Equipment</h3>
                         <p class="mb-6">魔法石を消費して新たな装備を鍛造します。</p>
-                        <div class="flex justify-center gap-4">
+                        <div class="flex justify-center gap-4 flex-wrap">
                             <button data-gacha-type="equipment" data-amount="1" class="gacha-button magic-button px-6 py-3">1回鍛造<br/>(石x10)</button>
                             <button data-gacha-type="equipment" data-amount="10" class="gacha-button magic-button px-6 py-3">10回鍛造<br/>(石x100)</button>
                              <button data-gacha-type="equipment" data-amount="50" class="gacha-button magic-button px-6 py-3">50回鍛造<br/>(石x500)</button>
+                             <button data-gacha-type="equipment" data-amount="500" class="gacha-button magic-button px-6 py-3 border-yellow-400 text-yellow-300">500回鍛造<br/>(石x5000)</button>
                         </div>
                     </div>
                  </div>
@@ -639,23 +641,11 @@ document.addEventListener('DOMContentLoaded', () => {
         e402: { name: '名刀・雷切', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w002', value: 0, description: '装備すると魔法「雷切」が使用可能になる。' },
         e403: { name: '聖剣エクスカリバー', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w003', value: 0, description: '装備すると魔法「エクスカリバー」が使用可能になる。' },
         e404: { name: '神杖カドゥケウス', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w004', value: 0, description: '装備すると魔法「カドゥケウス」が使用可能になる。' },
-    };
-    
-    const ENEMY_MASTER = {
-        en001: { name: 'スライム', icon: '💧', rarity: 'NORMAL', baseHp: 50, baseMp: 10, magics: ['m001'] },
-        en002: { name: 'ゴブリン', icon: '👺', rarity: 'NORMAL', baseHp: 80, baseMp: 20, magics: ['m006'] },
-        en101: { name: 'オーク', icon: '👹', rarity: 'RARE', baseHp: 200, baseMp: 50, magics: ['m102', 'm005'] },
-        en102: { name: 'サンダーバード', icon: '🦅', rarity: 'RARE', baseHp: 150, baseMp: 80, magics: ['m103', 'm105'] },
-        en103: { name: 'グリフィン', icon: '🦁', rarity: 'RARE', baseHp: 180, baseMp: 60, magics: ['m003', 'm105'] },
-        en201: { name: 'ゴーレム', icon: '🗿', rarity: 'EPIC', baseHp: 500, baseMp: 100, magics: ['m210', 'm108'] },
-        en202: { name: 'キマイラ', icon: '🦄', rarity: 'EPIC', baseHp: 400, baseMp: 200, magics: ['m202', 'm107', 'm104'] },
-        en203: { name: 'ヒュドラ', icon: '🐍', rarity: 'EPIC', baseHp: 600, baseMp: 150, magics: ['m201', 'm104'] },
-        en301: { name: 'ドラゴン', icon: '🐉', rarity: 'LEGENDARY', baseHp: 2000, baseMp: 500, magics: ['m202', 'm302'] },
-        en302: { name: '虚無の監視者', icon: '👁️', rarity: 'LEGENDARY', baseHp: 5000, baseMp: 1000, magics: ['m303', 'm305', 'm304'] },
-        // New Enemies
-        en401: { name: 'ヘルハウンド', icon: '🐕‍🦺', rarity: 'EPIC', baseHp: 800, baseMp: 200, magics: ['m102', 'm008'] },
-        en402: { name: 'サイクロプス', icon: '👁️', rarity: 'EPIC', baseHp: 1200, baseMp: 100, magics: ['m006', 'm210'] },
-        en403: { name: 'エンシェントドラゴン', icon: '🐲', rarity: 'LEGENDARY', baseHp: 8000, baseMp: 2000, magics: ['m302', 'm308', 'i001'] },
+        en501: { name: 'フェンリル', icon: '🐺', rarity: 'LEGENDARY', baseHp: 50000, baseMp: 5000, magics: ['i009', 'i012', 'm308'] },
+        en502: { name: 'スルト', icon: '🔥', rarity: 'LEGENDARY', baseHp: 60000, baseMp: 6000, magics: ['m309', 'm202', 'w001'] },
+        // New Ultra High Level Enemies
+        en601: { name: 'カオス・キメラ', icon: '🦁', rarity: 'LEGENDARY', baseHp: 80000, baseMp: 8000, magics: ['m202', 'm205', 'i006'] },
+        en602: { name: 'ヴォイド・ロード', icon: '🌑', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 12000, magics: ['i007', 'i008', 'm310'] },
         
         // Bosses
         boss001: { name: 'クロノス', icon: '⏳', rarity: 'LEGENDARY', baseHp: 50000, baseMp: 10000, magics: ['b001', 'b002', 'm310'], isBoss: true },
@@ -663,6 +653,10 @@ document.addEventListener('DOMContentLoaded', () => {
         boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 8000, magics: ['m308', 'm210', 'm108'], isBoss: true },
         boss004: { name: 'リヴァイアサン', icon: '🐋', rarity: 'LEGENDARY', baseHp: 150000, baseMp: 20000, magics: ['m307', 'i012', 'm201'], isBoss: true },
         boss005: { name: 'バハムート', icon: '🦖', rarity: 'LEGENDARY', baseHp: 200000, baseMp: 25000, magics: ['m309', 'i004', 'm312'], isBoss: true },
+        boss006: { name: 'アザトース', icon: '🌌', rarity: 'LEGENDARY', baseHp: 999999, baseMp: 99999, magics: ['i007', 'i008', 'm305', 'm313'], isBoss: true },
+        boss007: { name: '終焉を齎すもの', icon: 'Ω', rarity: 'LEGENDARY', baseHp: 2000000, baseMp: 200000, magics: ['b001', 'b002', 'm305', 'm307'], isBoss: true }, // Status adjusted
+        boss008: { name: '原初の混沌', icon: '🌀', rarity: 'LEGENDARY', baseHp: 3500000, baseMp: 500000, magics: ['m305', 'm313', 'b002'], isBoss: true },
+        boss009: { name: 'デウス・エクス・マキナ', icon: '⚙️', rarity: 'LEGENDARY', baseHp: 5000000, baseMp: 999999, magics: ['m311', 'b001', 'm307'], isBoss: true },
     };
     
     const DUNGEON_MASTER = [
@@ -676,6 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: '深淵の門', levelRange: [81, 100], enemies: ['en301', 'en302', 'en402'], boss: 'en302' },
         { name: '氷結の洞窟', levelRange: [90, 110], enemies: ['en203', 'en402', 'en302'], boss: 'en403' },
         { name: '天空の回廊', levelRange: [100, 130], enemies: ['en103', 'en301', 'en403'], boss: 'en403' },
+        { name: '神々の黄昏', levelRange: [130, 160], enemies: ['en501', 'en502', 'en403'], boss: 'boss005' },
+        { name: '混沌の宇宙', levelRange: [160, 200], enemies: ['en302', 'boss002', 'boss006'], boss: 'boss006' },
+        { name: '幻想の回廊', levelRange: [250, 300], enemies: ['en601', 'en502', 'boss006'], boss: 'boss008' },
+        { name: '機械仕掛けの神殿', levelRange: [300, 400], enemies: ['en602', 'boss007', 'en601'], boss: 'boss009' },
     ];
     
     const TEACHER_MASTER = {
@@ -685,6 +683,10 @@ document.addEventListener('DOMContentLoaded', () => {
         t004: { name: '校長 (伝説)', icon: '🧙‍♂️', level: 80, baseHp: 20000, baseMp: 5000, magics: ['m301', 'm304', 'm302'], reward: { type: 'equipment', id: 'e303' }, description: '全ての魔法の根源に触れる試練。' },
         t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。' },
         t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。' },
+        t007: { name: 'マーリン (夢幻の魔術師)', icon: '🧙‍♂️', level: 150, baseHp: 100000, baseMp: 30000, magics: ['m310', 'i005', 'w003'], reward: { type: 'magic', id: 'i004' }, description: '伝説の魔術師による、古の魔法の伝授。' },
+        t008: { name: 'ソロモン (魔術王)', icon: '🤴', level: 200, baseHp: 200000, baseMp: 50000, magics: ['m313', 'i007', 'w004'], reward: { type: 'equipment', id: 'e306' }, description: '魔術の王による、真の支配力の試練。' },
+        t009: { name: 'ニコラ・フラメル (錬金術の祖)', icon: '⚗️', level: 250, baseHp: 300000, baseMp: 60000, magics: ['m306', 'i004', 'm204'], reward: { type: 'equipment', id: 'e303' }, description: '不老不死の探求者。生命と物質の真理を問う。' },
+        t010: { name: 'ギルガメッシュ (英雄王)', icon: '👑', level: 300, baseHp: 500000, baseMp: 100000, magics: ['w002', 'w003', 'w004'], reward: { type: 'equipment', id: 'e401' }, description: '全てを所有する英雄王。至高の財宝を賭けた決闘。' },
     };
 
     // ゲームデータ
@@ -710,6 +712,8 @@ document.addEventListener('DOMContentLoaded', () => {
         unlockedDungeon: 0,
         infiniteTower: {
             highestFloor: 0,
+            dailyAttempts: 0,
+            lastAttemptDate: null,
         },
         defeatedTeachers: [], // teacherIds
         lastRiftChallenge: null, // Date string
@@ -789,7 +793,11 @@ document.addEventListener('DOMContentLoaded', () => {
             gameData = JSON.parse(savedData);
             // 下位互換性のため、新しいデータ構造がない場合は追加
              if (!gameData.player.tomesOfSecrets) gameData.player.tomesOfSecrets = 0;
-            if (!gameData.infiniteTower) gameData.infiniteTower = { highestFloor: 0 };
+            if (!gameData.infiniteTower) gameData.infiniteTower = { highestFloor: 0, dailyAttempts: 0, lastAttemptDate: null };
+            // 追加: 無限の塔の回数制限データの互換性確保
+            if (gameData.infiniteTower.dailyAttempts === undefined) gameData.infiniteTower.dailyAttempts = 0;
+            if (gameData.infiniteTower.lastAttemptDate === undefined) gameData.infiniteTower.lastAttemptDate = null;
+
             if (!gameData.player.permanentMpBonus) gameData.player.permanentMpBonus = 0;
             if (!gameData.defeatedTeachers) gameData.defeatedTeachers = [];
             if (!gameData.lastRiftChallenge) gameData.lastRiftChallenge = null;
@@ -1911,6 +1919,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal("召喚結果", content);
 
         const grid = document.getElementById('gacha-result-grid');
+        
+        // 演出時間の調整: 数が多い場合は高速表示
+        const delayTime = results.length > 50 ? 5 : 100;
+
         results.forEach((result, index) => {
             setTimeout(() => {
                 const rarity = result.item.rarity;
@@ -1920,8 +1932,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     newTag = result.isNew ? '<span class="text-xs text-yellow-300">NEW!</span>' : '<span class="text-xs text-green-300">覚醒!</span>';
                 }
 
+                // 500回時はアニメーションを省略して負荷軽減
+                const animClass = (rarity === 'Legendary' && results.length <= 50) ? 'legendary-animation' : '';
+
                 const card = document.createElement('div');
-                card.className = `text-center p-2 rounded-lg bg-rarity-${rarity} card-border border-rarity-${rarity} ${rarity === 'Legendary' ? 'legendary-animation' : ''}`;
+                card.className = `text-center p-2 rounded-lg bg-rarity-${rarity} card-border border-rarity-${rarity} ${animClass}`;
                 card.innerHTML = `
                     <div class="text-2xl">${result.type === 'item' ? ELEMENTS[result.item.element]?.icon || '🛡️' : '🧱'}</div>
                     <div class="text-xs ${rarityClass} font-bold">${result.item.name}</div>
@@ -1929,7 +1944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>${newTag}</div>
                 `;
                 grid.appendChild(card);
-            }, index * 100);
+            }, index * delayTime);
         });
     }
 
@@ -2341,15 +2356,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 無限の塔
     function renderInfiniteTowerScreen() {
+        // 日付変更チェックとリセット
+        const today = new Date().toDateString();
+        if (gameData.infiniteTower.lastAttemptDate !== today) {
+            gameData.infiniteTower.dailyAttempts = 0;
+            gameData.infiniteTower.lastAttemptDate = today;
+            saveGame();
+        }
+
+        const maxAttempts = 2;
+        const currentAttempts = gameData.infiniteTower.dailyAttempts || 0;
+        const remaining = Math.max(0, maxAttempts - currentAttempts);
+
         document.getElementById('highest-floor').textContent = gameData.infiniteTower.highestFloor;
         
+        // 残り回数の表示要素を作成または更新
+        let attemptsEl = document.getElementById('tower-attempts-display');
+        if (!attemptsEl) {
+            attemptsEl = document.createElement('p');
+            attemptsEl.id = 'tower-attempts-display';
+            attemptsEl.className = "mb-4 text-lg";
+            const container = document.querySelector('#infinite-tower-screen .glassmorphism');
+            // 挿入位置: ボタンの前
+            const startBtn = document.getElementById('start-tower-button');
+            container.insertBefore(attemptsEl, startBtn);
+        }
+        attemptsEl.innerHTML = `本日残り挑戦回数: <span class="font-bold ${remaining > 0 ? 'text-green-400' : 'text-red-400'}">${remaining}</span> / ${maxAttempts}`;
+
         // 報酬スキップ機能のUI更新
         const startBtn = document.getElementById('start-tower-button');
         
+        // 回数切れの場合はボタンを無効化
+        if (remaining <= 0) {
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            startBtn.innerText = "本日の挑戦終了";
+        } else {
+            startBtn.disabled = false;
+            startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            startBtn.innerText = "挑戦開始";
+        }
+        
         // ボタンイベントを上書きしてスキップ処理を追加
         startBtn.onclick = () => {
+            if (remaining <= 0) return;
+
             const nextFloor = gameData.infiniteTower.highestFloor + 1;
             
+            const executeStart = (startFloor) => {
+                // 回数を消費
+                gameData.infiniteTower.dailyAttempts = (gameData.infiniteTower.dailyAttempts || 0) + 1;
+                saveGame();
+                startInfiniteTowerBattle(startFloor);
+            };
+
             if (nextFloor > 1) {
                 // スキップ時の報酬計算
                 const rewards = calculateTowerRewards(1, nextFloor - 1);
@@ -2357,7 +2417,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 確認モーダル
                 showModal(
                     "塔の探索再開", 
-                    `前回の到達階層に基づき、<span class="text-yellow-300">${nextFloor}階</span>から探索を開始します。<br><br>` +
+                    `前回の到達階層に基づき、<span class="text-yellow-300">${nextFloor}階</span>から探索を開始します。<br>` +
+                    `（挑戦回数を1回消費します）<br><br>` +
                     `【スキップ報酬】<br>` +
                     `魔法石: ${rewards.stones}<br>` +
                     `素材: ${rewards.materials}<br>` +
@@ -2368,15 +2429,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameData.player.gachaStones += rewards.stones;
                         gameData.player.materials += rewards.materials;
                         gameData.player.tomesOfSecrets += rewards.tomes;
-                        saveGame();
                         
                         dom.modalContainer.classList.add('hidden');
-                        startInfiniteTowerBattle(nextFloor);
+                        executeStart(nextFloor);
                     },
                     true
                 );
             } else {
-                startInfiniteTowerBattle(1);
+                executeStart(1);
             }
         };
     }
