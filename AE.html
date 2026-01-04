@@ -534,66 +534,66 @@ document.addEventListener('DOMContentLoaded', () => {
         m213: { name: 'ブリザード', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 50, isAoe: true, description: '激しい吹雪で敵全体を凍てつかせる。' },
         m214: { name: 'フレア', element: 'FIRE', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 120, baseCost: 60, description: '爆発的な炎で大ダメージを与える。' },
 
-        // Legendary
-        m301: { name: 'ジャッジメント', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 250, baseCost: 80, isAoe: true, description: '聖なる光で敵全体に裁きを下す。' },
-        m302: { name: 'メテオストライク', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 350, baseCost: 100, isAoe: true, description: '巨大な隕石を落下させ、敵全体を攻撃する。'},
-        m303: { name: 'アビスゲート', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 90, description: '深淵への門を開き、敵を引きずり込む。' },
-        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEFENSE', basePower: 250, baseCost: 70, duration: 5, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
-        m305: { name: 'ワールドエンド', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 600, baseCost: 250, isAoe: true, description: '世界の終わりを告げる虚無の波動を敵全体に放つ。' },
-        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'HEAL', basePower: 200, baseCost: 120, duration: 3, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
-        m307: { name: 'エレメンタルバースト', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 400, baseCost: 120, isAoe: true, description: '全属性の力を凝縮して敵全体に放つ。' },
-        m308: { name: 'ガイアズラース', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 450, baseCost: 150, isAoe: true, description: '大地の怒りを呼び起こし、敵全体を粉砕する。' },
-        m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 500, baseCost: 180, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
-        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 110, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
-        m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 160, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
-        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 150, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
-        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 150, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+        // Legendary (コスト調整: 序盤使用不可にするため大幅増)
+        m301: { name: 'ジャッジメント', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 250, baseCost: 320, isAoe: true, description: '聖なる光で敵全体に裁きを下す。' },
+        m302: { name: 'メテオストライク', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 350, baseCost: 400, isAoe: true, description: '巨大な隕石を落下させ、敵全体を攻撃する。'},
+        m303: { name: 'アビスゲート', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 350, description: '深淵への門を開き、敵を引きずり込む。' },
+        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEFENSE', basePower: 250, baseCost: 280, duration: 5, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
+        m305: { name: 'ワールドエンド', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 600, baseCost: 1000, isAoe: true, description: '世界の終わりを告げる虚無の波動を敵全体に放つ。' },
+        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'HEAL', basePower: 200, baseCost: 450, duration: 3, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
+        m307: { name: 'エレメンタルバースト', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 400, baseCost: 480, isAoe: true, description: '全属性の力を凝縮して敵全体に放つ。' },
+        m308: { name: 'ガイアズラース', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 450, baseCost: 600, isAoe: true, description: '大地の怒りを呼び起こし、敵全体を粉砕する。' },
+        m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 500, baseCost: 720, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
+        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 440, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
+        m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
+        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
+        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
         b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
 
-        // Inherited Magics (相伝の魔法) - c001 Dragon Blood
-        i001: { name: '竜の息吹', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 40, isAoe: true, description: '【竜の血脈】灼熱のブレスを吐き出す。' },
-        i002: { name: '竜鱗の守り', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 50, baseCost: 30, duration: 4, description: '【竜の血脈】硬質な竜の鱗で身を守る。' },
-        i003: { name: 'ドラゴニックロア', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.7, baseCost: 45, duration: 3, description: '【竜の血脈】敵を威圧し攻撃力を下げる。' },
-        i004: { name: 'エンシェントメテオ', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 120, isAoe: true, description: '【竜の血脈】古の隕石魔法。' },
+        // Inherited Magics (相伝の魔法) - c001 Dragon Blood (コスト調整)
+        i001: { name: '竜の息吹', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 120, isAoe: true, description: '【竜の血脈】灼熱のブレスを吐き出す。' },
+        i002: { name: '竜鱗の守り', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 50, baseCost: 100, duration: 4, description: '【竜の血脈】硬質な竜の鱗で身を守る。' },
+        i003: { name: 'ドラゴニックロア', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.7, baseCost: 150, duration: 3, description: '【竜の血脈】敵を威圧し攻撃力を下げる。' },
+        i004: { name: 'エンシェントメテオ', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 400, isAoe: true, description: '【竜の血脈】古の隕石魔法。' },
 
-        // Inherited Magics - c002 Void Walker
-        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 40, duration: 3, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
-        i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 30, duration: 5, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
-        i007: { name: 'ブラックホール', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 100, isAoe: true, description: '【虚無の器】全てを飲み込む闇。' },
-        i008: { name: '無への回帰', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 50, drain: 0.5, description: '【虚無の器】存在を喰らいHPを回復する。' },
+        // Inherited Magics - c002 Void Walker (コスト調整)
+        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 3, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
+        i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 100, duration: 5, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
+        i007: { name: 'ブラックホール', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 350, isAoe: true, description: '【虚無の器】全てを飲み込む闇。' },
+        i008: { name: '無への回帰', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 180, drain: 0.5, description: '【虚無の器】存在を喰らいHPを回復する。' },
 
-        // Inherited Magics - c007 Ice Empress
-        i009: { name: 'ダイヤモンドダスト', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 30, isAoe: true, description: '【氷の女帝】美しくも冷酷な氷の嵐。' },
-        i010: { name: '絶対零度', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.5, baseCost: 60, duration: 3, description: '【氷の女帝】敵を凍結させ、3ターンの間攻撃力を半減させる。' },
-        i011: { name: '氷の城壁', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 40, duration: 4, description: '【氷の女帝】難攻不落の氷壁を展開する。' },
-        i012: { name: 'コキュートス', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 250, baseCost: 110, isAoe: true, description: '【氷の女帝】地獄の最下層の如き寒気で敵を絶滅させる。' },
+        // Inherited Magics - c007 Ice Empress (コスト調整)
+        i009: { name: 'ダイヤモンドダスト', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 100, isAoe: true, description: '【氷の女帝】美しくも冷酷な氷の嵐。' },
+        i010: { name: '絶対零度', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.5, baseCost: 200, duration: 3, description: '【氷の女帝】敵を凍結させ、3ターンの間攻撃力を半減させる。' },
+        i011: { name: '氷の城壁', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 140, duration: 4, description: '【氷の女帝】難攻不落の氷壁を展開する。' },
+        i012: { name: 'コキュートス', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 250, baseCost: 380, isAoe: true, description: '【氷の女帝】地獄の最下層の如き寒気で敵を絶滅させる。' },
 
-        // Inherited Magics - c008 Storm Avatar
-        i013: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 60, baseCost: 35, description: '【嵐の化身】神速の雷撃。' },
-        i014: { name: 'テンペスト', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 40, isAoe: true, description: '【嵐の化身】全てを吹き飛ばす暴風雨。' },
-        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 45, duration: 3, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
-        i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 40, duration: 3, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
+        // Inherited Magics - c008 Storm Avatar (コスト調整)
+        i013: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 60, baseCost: 120, description: '【嵐の化身】神速の雷撃。' },
+        i014: { name: 'テンペスト', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 140, isAoe: true, description: '【嵐の化身】全てを吹き飛ばす暴風雨。' },
+        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 3, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
+        i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 140, duration: 3, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
 
-        // Inherited Magics - c009 Light Saintess
-        i017: { name: 'セイクリッドヒール', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 120, baseCost: 60, description: '【光の聖女】聖なる光でHPを大きく回復する。' },
-        i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 45, duration: 3, description: '【光の聖女】神聖な盾で身を守る。' },
-        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 50, duration: 3, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
-        i020: { name: 'ジャッジメントレイ', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 220, baseCost: 90, description: '【光の聖女】邪悪を滅ぼす裁きの光。' },
+        // Inherited Magics - c009 Light Saintess (コスト調整)
+        i017: { name: 'セイクリッドヒール', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 120, baseCost: 200, description: '【光の聖女】聖なる光でHPを大きく回復する。' },
+        i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 150, duration: 3, description: '【光の聖女】神聖な盾で身を守る。' },
+        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 3, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
+        i020: { name: 'ジャッジメントレイ', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 220, baseCost: 300, description: '【光の聖女】邪悪を滅ぼす裁きの光。' },
 
-        // Inherited Magics - c010 Dark Necromancer
-        i021: { name: 'ソウルリープ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 55, drain: 0.8, description: '【死霊術師】敵の魂を刈り取り、自身のHPにする。' },
-        i022: { name: 'カースクラウド', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.6, baseCost: 50, duration: 4, description: '【死霊術師】呪いの雲で敵の攻撃力を下げる。' },
-        i023: { name: 'ボーンスピア', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 160, baseCost: 65, description: '【死霊術師】骨の槍で敵を貫く。' },
-        i024: { name: 'デスマーチ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 70, baseCost: 80, duration: 3, isDot: true, isAoe: true, description: '【死霊術師】死者の行進により継続ダメージを与える。' },
+        // Inherited Magics - c010 Dark Necromancer (コスト調整)
+        i021: { name: 'ソウルリープ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 190, drain: 0.8, description: '【死霊術師】敵の魂を刈り取り、自身のHPにする。' },
+        i022: { name: 'カースクラウド', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.6, baseCost: 180, duration: 4, description: '【死霊術師】呪いの雲で敵の攻撃力を下げる。' },
+        i023: { name: 'ボーンスピア', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 160, baseCost: 220, description: '【死霊術師】骨の槍で敵を貫く。' },
+        i024: { name: 'デスマーチ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 70, baseCost: 280, duration: 3, isDot: true, isAoe: true, description: '【死霊術師】死者の行進により継続ダメージを与える。' },
 
-        // Weapon Magics
-        w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 50, description: '魔剣レヴァテインの呪いの一撃。' },
-        w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 60, description: '雷を断ち切る神速の抜刀術。' },
-        w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 100, isAoe: true, description: '約束された勝利の剣による極大の光。' },
-        w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 80, duration: 3, description: '神の杖による癒しと活性化の波動。' },
+        // Weapon Magics (コスト調整)
+        w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 180, description: '魔剣レヴァテインの呪いの一撃。' },
+        w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 200, description: '雷を断ち切る神速の抜刀術。' },
+        w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 350, isAoe: true, description: '約束された勝利の剣による極大の光。' },
+        w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 280, duration: 3, description: '神の杖による癒しと活性化の波動。' },
     };
 
     const CONSTITUTION_MASTER = {
