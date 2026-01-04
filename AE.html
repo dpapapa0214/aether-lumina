@@ -2393,20 +2393,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startInfiniteTowerBattle(floor) {
-        if (floor === 1) { // 初回のみ(またはスキップ後の初回)
+        // セッションの開始か継続かを判定
+        // 新規開始条件: まだinfiniteモードでない、または指定階層が1（リトライ等）、または階層が連続していない（スキップ等）
+        const isNewSession = battleState.mode !== 'infinite' || floor === 1 || (battleState.currentFloor && floor !== battleState.currentFloor + 1);
+
+        if (isNewSession) {
             battleState = {
                 mode: 'infinite',
                 currentFloor: floor,
-                player: createInitialPlayerBattleState(),
-                rewards: { stones: 0, materials: 0 },
-                log: [],
-                enemies: [],
-                originalEnemies: []
-            };
-        } else if (!battleState.mode) { // スキップスタートの場合
-             battleState = {
-                mode: 'infinite',
-                currentFloor: floor,
+                sessionStartFloor: floor, // 今回のセッション開始階層を記録
                 player: createInitialPlayerBattleState(),
                 rewards: { stones: 0, materials: 0 },
                 log: [],
@@ -2449,67 +2444,40 @@ document.addEventListener('DOMContentLoaded', () => {
     function endInfiniteTowerRun(wasDefeated) {
         // 現在の階層がクリア済みかどうかで分岐
         // 敗北時は現在の階層-1までクリア。撤退時も同様だが、現在の階層の報酬はもらえない
-        const floorsCleared = battleState.currentFloor - 1; // 挑戦中の階層はクリアしていない
+        const floorsCleared = battleState.currentFloor - 1; 
         
         // 最高記録更新チェック
         if (floorsCleared > gameData.infiniteTower.highestFloor) {
             gameData.infiniteTower.highestFloor = floorsCleared;
         }
 
-        // 今回のラン（スキップした分は含まない、実際に戦った分）の報酬計算
-        // スキップ機能を入れたため、battleStateの開始階層を記録しておく必要があるが、
-        // 簡易的に「今回のセッションで得た報酬」を計算するのではなく、
-        // スキップ分は開始時に付与済みなので、ここでは戦った分の報酬のみ計算するわけではない。
-        // シンプルに、スキップスタートした場合は「その階層の報酬」を都度付与する形式ではなく、
-        // 最後にまとめて付与する形式になっている。
+        // 今回のセッション（スキップ後）で獲得した報酬を計算
+        // 開始階層(sessionStartFloor) から クリア階層(floorsCleared) まで
+        let rewards = { stones: 0, materials: 0, tomes: 0 };
         
-        // しかし、スキップスタートした場合、startFloorからの報酬を計算する必要がある。
-        // ここでは簡易的に「1階からクリア階層までの報酬」から「開始時に持っていた報酬（スキップ分）」を引く...というのは複雑。
-        // なので、「今回の戦闘で得た報酬」を計算する。
-        // battleStateにstartFloorを持たせていないので、簡易実装として
-        // 「もしスキップしていたら、報酬は既に付与済み」という前提で、
-        // 今回登った分の報酬だけ計算する。
+        // セッション開始階層が存在しない場合（旧データ互換）は1から計算
+        const startFloor = battleState.sessionStartFloor || 1;
+
+        if (floorsCleared >= startFloor) {
+            rewards = calculateTowerRewards(startFloor, floorsCleared);
+        }
+
+        gameData.player.gachaStones += rewards.stones;
+        gameData.player.materials += rewards.materials;
+        gameData.player.tomesOfSecrets += rewards.tomes;
         
-        // 修正: startInfiniteTowerBattleで初期化されるので、どこから開始したかわからない。
-        // なので、報酬は「階層クリアごと」に蓄積するか、あるいはここで計算するが、
-        // ここではシンプルに「1階からの総報酬」を計算し、そこから「開始時に付与したスキップ報酬」を引く...
-        // いや、もっとシンプルに、今回登った階層分の報酬を計算しよう。
-        // そのために、開始階層を記録する必要があるが、変数がない。
+        const message = `
+            到達階層: ${battleState.currentFloor}階 (クリア: ${floorsCleared}階)<br>
+            獲得魔法石: ${rewards.stones}個<br>
+            獲得素材: ${rewards.materials}個<br>
+            獲得した秘伝の書: ${rewards.tomes}冊
+        `;
         
-        // 妥協案: 今回のランでの獲得報酬は、1階あたりの報酬計算関数を使って、
-        // (現在の階層 - 1) までの報酬を計算するが、スキップ分を二重取りしないようにする制御が難しい。
-        
-        // 解決策: スキップ機能実装時に「スキップ報酬は即時付与」した。
-        // なので、ここでは「スキップ後の開始階層」から「現在の階層-1」までの報酬を計算して付与すればよい。
-        // ただし開始階層が不明。
-        
-        // そこで、battleStateに `startFloor` プロパティを追加して管理する形に修正する。
-        // しかしコード量が大きくなるため、ここでは
-        // 「1階だけ戦って撤退」のケース等を考慮し、
-        // 「今回の戦闘で倒した敵の数」等ではなく、単純に
-        // 「現在の階層」だけの報酬を計算して付与するのは、連戦の意味がない。
-        
-        // 今回の修正範囲で最も安全なのは、
-        // 1. スキップ時に報酬付与済み。
-        // 2. 戦闘勝利時(endBattle)ではなく、階層突破時に報酬をプールしておく? 
-        // 3. 現状のコードは `endInfiniteTowerRun` で 1階からまとめて計算している。
-        //    これだとスキップ分と重複する。
-        
-        // 修正方針: 
-        // `endInfiniteTowerRun` では、
-        // 「前回記録(gameData.infiniteTower.highestFloor) より上の階層」の分だけ報酬を出す？
-        // いや、周回プレイの報酬が出なくなる。
-        
-        // 正しいロジック:
-        // 「今回のプレイ開始階層」から「クリア階層」までの報酬を出す。
-        // そのために `battleState` に `sessionStartFloor` を追加する。
-        
-        // startInfiniteTowerBattle の修正が必要。
-        // 上記の startInfiniteTowerBattle 関数内で `sessionStartFloor` を設定していないので、
-        // 既存の `battleState` 初期化部分に手を入れる。
-        
-        // しかし、既に startInfiniteTowerBattle は定義済み。
-        // ここでは `battleState` の初期化時に `sessionStartFloor` がセットされるように修正済みのコードを提供する。
+        showModal(wasDefeated ? "挑戦失敗" : "撤退", message, () => {
+            dom.modalContainer.classList.add('hidden');
+            saveGame();
+            showScreen('home-screen');
+        });
     }
 
     // --- Modal Functions ---
