@@ -209,6 +209,8 @@
             <input type="file" id="import-save" class="hidden" accept=".json">
             <button id="reset-game-button" class="magic-button px-6 py-2">ゲームリセット</button>
         </div>
+        <!-- 新規追加: ゲーム説明ボタン -->
+        <button id="show-manual-button" class="mt-4 text-gray-400 hover:text-white underline text-sm">ゲーム説明を見る</button>
     </div>
 
     <!-- ゲーム本体 -->
@@ -270,6 +272,11 @@
                     <button data-screen="encyclopedia-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
                         <span class="text-5xl">📚</span>
                         <span class="mt-2 text-lg font-cinzel">Encyclopedia</span>
+                    </button>
+                    <!-- 新規追加: 対戦ボタン -->
+                    <button data-screen="pvp-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center border-red-500 text-red-100">
+                        <span class="text-5xl">⚔️</span>
+                        <span class="mt-2 text-lg font-cinzel">PvP Arena</span>
                     </button>
                     <button id="export-save-button" class="h-32 md:h-40 magic-button flex flex-col justify-center items-center">
                         <span class="text-5xl">💾</span>
@@ -442,6 +449,33 @@
                 </div>
             </div>
 
+            <!-- 新規追加: 対戦画面 -->
+            <div id="pvp-screen" class="hidden text-center">
+                <h2 class="text-3xl font-cinzel mb-4">PvP Arena</h2>
+                <div class="p-8 glassmorphism rounded-xl">
+                    <p class="mb-4">育てたキャラクターデータを使って、他のプレイヤーと対戦できます。</p>
+                    <p class="mb-6 text-sm text-gray-400">
+                        1. 下の「データをコピー」ボタンを押して、現在のデータを暗号化してコピーします。<br>
+                        2. 「対戦アプリへ移動」ボタンを押して対戦ページを開きます。<br>
+                        3. コピーしたデータを対戦アプリに貼り付けて開始してください。
+                    </p>
+                    
+                    <div class="flex flex-col gap-4 items-center">
+                        <button id="copy-data-btn" class="magic-button px-8 py-4 text-xl w-full max-w-md">
+                            📋 データをコピー
+                        </button>
+                        
+                        <!-- URLは空で設置 -->
+                        <a href="" target="_blank" id="go-to-pvp-btn" class="magic-button px-8 py-4 text-xl w-full max-w-md text-yellow-300 border-yellow-500 block">
+                            ⚔️ 対戦アプリへ移動
+                        </a>
+                    </div>
+                    
+                    <!-- コピー用非表示エリア (画面外に配置) -->
+                    <textarea id="hidden-copy-area" class="fixed -left-[9999px] top-0"></textarea>
+                </div>
+            </div>
+
         </main>
 
         <!-- フッター/ナビゲーション -->
@@ -548,6 +582,10 @@ document.addEventListener('DOMContentLoaded', () => {
         m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
         m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
         m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+        // New Magics
+        m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
+        m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
+        m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
@@ -594,6 +632,8 @@ document.addEventListener('DOMContentLoaded', () => {
         w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 200, description: '雷を断ち切る神速の抜刀術。' },
         w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 350, isAoe: true, description: '約束された勝利の剣による極大の光。' },
         w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 280, duration: 3, description: '神の杖による癒しと活性化の波動。' },
+        w005: { name: '魂切り', element: 'DARK', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 250, baseCost: 250, drain: 0.5, description: '妖刀ムラマサによる、魂を喰らう一撃。' },
+        w006: { name: '流星雨', element: 'WIND', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 220, baseCost: 300, isAoe: true, description: '神弓アルテミスから放たれる無数の光矢。' },
     };
 
     const CONSTITUTION_MASTER = {
@@ -641,6 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e402: { name: '名刀・雷切', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w002', value: 0, description: '装備すると魔法「雷切」が使用可能になる。' },
         e403: { name: '聖剣エクスカリバー', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w003', value: 0, description: '装備すると魔法「エクスカリバー」が使用可能になる。' },
         e404: { name: '神杖カドゥケウス', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w004', value: 0, description: '装備すると魔法「カドゥケウス」が使用可能になる。' },
+        e405: { name: '妖刀ムラマサ', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w005', value: 0, description: '装備すると魔法「魂切り」が使用可能になる。' },
+        e406: { name: '神弓アルテミス', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w006', value: 0, description: '装備すると魔法「流星雨」が使用可能になる。' },
     };
     
     const ENEMY_MASTER = {
@@ -749,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameContainer: document.getElementById('game-container'),
         startGameButton: document.getElementById('start-game-button'),
         resetGameButton: document.getElementById('reset-game-button'),
+        showManualButton: document.getElementById('show-manual-button'), // 新規追加
         mainContent: document.getElementById('main-content'),
         backToHomeButton: document.getElementById('back-to-home'),
         headerTitle: document.querySelector('#game-container h1'),
@@ -756,6 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip: document.getElementById('tooltip'),
         importSaveInput: document.getElementById('import-save'),
         exportSaveButton: document.getElementById('export-save-button'),
+        // awakenConstitutionBtn: document.getElementById('awaken-constitution-btn'), // 削除済み
     };
 
     // 初期化
@@ -764,10 +808,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         dom.startGameButton.addEventListener('click', startGame);
         dom.resetGameButton.addEventListener('click', confirmResetGame);
+        dom.showManualButton.addEventListener('click', showGameManual); // 新規追加
         dom.backToHomeButton.addEventListener('click', () => showScreen('home-screen'));
         dom.importSaveInput.addEventListener('change', importData);
         dom.exportSaveButton.addEventListener('click', exportData);
         
+        // PvP関連イベントリスナー
+        document.getElementById('copy-data-btn').addEventListener('click', copySaveDataToClipboard);
+
         document.querySelectorAll('.nav-button').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const screen = e.currentTarget.dataset.screen;
@@ -988,6 +1036,55 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    // 新規追加: ゲーム説明書表示機能
+    function showGameManual() {
+        const content = `
+            <div class="text-left space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <section>
+                    <h3 class="text-xl font-bold border-b border-gray-600 pb-1 text-yellow-300">1. ゲーム概要</h3>
+                    <p class="mt-2 text-sm text-gray-300">「Arcane Echoes」は、魔法使いとなってダンジョンを探索し、強敵を倒して成長していくブラウザRPGです。多種多様な魔法や装備を収集・強化し、最強の魔法使いを目指しましょう。</p>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">2. メイン機能</h3>
+                    <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
+                        <li><strong class="text-white">⚔️ Dungeon (ダンジョン)</strong>: メインストーリーを進めるモード。経験値や素材を獲得。</li>
+                        <li><strong class="text-white">🗼 Infinite Tower (無限の塔)</strong>: 1日2回挑戦可能な腕試しモード。次回は最高到達階層から<span class="text-yellow-200">スキップ</span>可能。</li>
+                        <li><strong class="text-white">🌀 Rift Challenge (次元の裂け目)</strong>: 1日1回挑戦可能なボス戦。大量の報酬を獲得。</li>
+                        <li><strong class="text-white">✨ Gacha (ガチャ)</strong>: 魔法石で魔法や装備を入手。500回一括召喚も可能。</li>
+                        <li><strong class="text-white">🏫 Magic School (魔法学校)</strong>: 先生と模擬戦を行い、特別な報酬を獲得。</li>
+                        <li><strong class="text-white">📖 Magic / 🛡️ Equipment</strong>: 魔法や装備の強化・編成。「覚醒」による強化も。</li>
+                        <li><strong class="text-white">⚔️ PvP Arena (対戦)</strong>: 自分のデータで他プレイヤーと対戦。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">3. 戦闘システム</h3>
+                    <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
+                        <li><strong class="text-white">基本ルール</strong>: ターン制コマンドバトル。HP0で敗北。</li>
+                        <li><strong class="text-white">魔法攻撃</strong>: MPを消費して魔法を放ちます。</li>
+                        <li><strong class="text-white">精神集中</strong>: MPを最大値の20%回復します。</li>
+                        <li><strong class="text-white">魔力結集</strong>: Lv.75で解禁される必殺技。最大MPの半分を消費し、超極大ダメージを与えます。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">4. 特殊要素</h3>
+                    <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
+                        <li><strong class="text-white">特殊体質</strong>: ゲーム開始時（またはリセット時）に、<span class="text-red-300">10%の確率</span>で「特殊体質」を持った状態でスタートします。専用の「相伝の魔法」などが使用可能です。</li>
+                        <li><strong class="text-white">ポテンシャル</strong>: プレイヤーの潜在能力。レベルアップ時のステータス上昇量や、相伝魔法の威力が高くなります。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">5. 対戦（PvP）のやり方</h3>
+                    <p class="mt-2 text-sm text-gray-300">メイン画面の「PvP Arena」ボタンからデータをコピーし、専用の対戦ページ（別途html）を開いてデータを貼り付けることで対戦が可能です。</p>
+                </section>
+            </div>
+        `;
+        showModal("Arcane Echoes 説明書", content);
+    }
+
 
     // 画面遷移
     function showScreen(screenId) {
@@ -1028,6 +1125,49 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'infinite-tower-screen':
                 renderInfiniteTowerScreen();
                 break;
+            case 'pvp-screen':
+                // 特になし
+                break;
+        }
+    }
+
+    // PvP用データコピー機能 (暗号化)
+    function copySaveDataToClipboard() {
+        const dataStr = JSON.stringify(gameData);
+        // 簡易暗号化 (Base64エンコード)
+        const encryptedData = btoa(unescape(encodeURIComponent(dataStr)));
+        
+        // テキストエリアを取得または作成
+        let textArea = document.getElementById('hidden-copy-area');
+        if (!textArea) {
+            textArea = document.createElement("textarea");
+            textArea.id = "hidden-copy-area";
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+        }
+        
+        textArea.value = encryptedData;
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showModal("コピー完了", "暗号化されたデータをクリップボードにコピーしました。<br>対戦アプリに貼り付けてください。");
+            } else {
+                throw new Error("execCommand returned false");
+            }
+        } catch (err) {
+            console.error("Copy failed", err);
+            // フォールバック: モーダルにテキストエリアを表示して手動コピーさせる
+            const content = `
+                <p class="mb-2 text-red-300">自動コピーに失敗しました。以下のテキストを全選択してコピーしてください。</p>
+                <textarea id="manual-copy-area" class="w-full h-32 bg-gray-800 text-xs p-2 rounded border border-gray-600 break-all" readonly>${encryptedData}</textarea>
+                <button onclick="document.getElementById('manual-copy-area').select()" class="mt-2 magic-button px-4 py-1 text-sm">全選択</button>
+            `;
+            showModal("コピーエラー", content);
         }
     }
 
@@ -1360,17 +1500,48 @@ document.addEventListener('DOMContentLoaded', () => {
              });
         }
 
-        // 精神集中ボタン
+        // --- 特殊アクションボタンエリア ---
+        
+        // 精神集中ボタン (左側)
         const recoverMpButton = document.createElement('button');
-        // UI改善: 横長でコンパクトなボタンに変更
-        recoverMpButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-4 gap-2 col-span-2 mt-2';
+        recoverMpButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-2 gap-1 mt-2';
         recoverMpButton.innerHTML = `
-            <div class="text-2xl">🧘</div>
-            <div class="text-sm font-bold">精神集中 (MP回復)</div>
+            <div class="text-xl">🧘</div>
+            <div class="text-xs font-bold">精神集中<br><span class="text-[10px] font-normal">MP回復</span></div>
         `;
         recoverMpButton.disabled = battleState.turn !== 'player';
         recoverMpButton.onclick = () => playerRecoverMpTurn();
         magicSlotsEl.appendChild(recoverMpButton);
+
+        // 魔力結集ボタン (右側) - 新規追加
+        const manaBlastButton = document.createElement('button');
+        
+        // レベル75以上で解禁
+        const isManaBlastUnlocked = gameData.player.level >= 75;
+
+        if (isManaBlastUnlocked) {
+            // 消費コスト計算：最大MPの1/2
+            const blastCost = Math.floor(player.maxMp / 2);
+            
+            manaBlastButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-2 gap-1 mt-2 border-red-500 shadow-[0_0_10px_rgba(255,0,0,0.3)]';
+            manaBlastButton.innerHTML = `
+                <div class="text-xl">💥</div>
+                <div class="text-xs font-bold text-red-100">魔力結集<br><span class="text-[10px] font-normal">消費:最大MP1/2</span></div>
+            `;
+            // MP不足時は撃てない
+            manaBlastButton.disabled = battleState.turn !== 'player' || player.currentMp < blastCost;
+            manaBlastButton.onclick = () => playerManaBlastTurn();
+        } else {
+            // ロック状態のデザイン
+            manaBlastButton.className = 'h-14 w-full flex flex-row items-center justify-center px-2 gap-1 mt-2 border border-gray-700 rounded bg-gray-900 text-gray-500 cursor-not-allowed opacity-70';
+            manaBlastButton.innerHTML = `
+                <div class="text-xl">🔒</div>
+                <div class="text-xs font-bold">魔力結集<br><span class="text-[10px] font-normal">Lv.75解禁</span></div>
+            `;
+            manaBlastButton.disabled = true;
+        }
+        
+        magicSlotsEl.appendChild(manaBlastButton);
         
         // 戦闘コントロール
         const battleControls = document.getElementById('battle-controls');
@@ -1453,6 +1624,78 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTurnEffects(battleState.player);
         updateBattleUI();
 
+        setTimeout(enemyTurn, 1500);
+    }
+
+    // 新規追加: 魔力結集ターン処理
+    function playerManaBlastTurn() {
+        if (battleState.turn !== 'player') return;
+        
+        // 消費コスト計算：最大MPの1/2
+        const cost = Math.floor(battleState.player.maxMp / 2);
+        
+        if (battleState.player.currentMp < cost) {
+            addLog("MPが足りない！");
+            return;
+        }
+
+        battleState.turn = 'processing';
+        updateBattleUI(); // ボタン無効化
+
+        battleState.player.currentMp -= cost;
+        
+        // --- 圧倒的火力計算ロジック ---
+        // 基本威力: 消費MP * 30 (通常の魔法より遥かに高い変換効率)
+        // 最大MPの半分を強制消費するので、基礎ダメージは非常に高くなる
+        let baseDamage = cost * 30; 
+        
+        // レベル補正: レベル1につき +2%
+        const levelBonus = 1 + (gameData.player.level * 0.02);
+        
+        // ポテンシャル補正: ポテンシャル1につき +10% (ポテンシャルの影響を大きく)
+        const potentialBonus = 1 + (gameData.player.potentialLevel * 0.10);
+        
+        // 装備/バフ補正 (POWER系)
+        let buffMultiplier = 1 + getEquipmentEffect('POWER') + getEquipmentEffect('ALL');
+        battleState.player.effects.forEach(effect => {
+            if (effect.type === 'BUFF') {
+                const master = MAGIC_MASTER[effect.magicId];
+                if (master) buffMultiplier *= master.basePower;
+            }
+        });
+        
+        // 狂戦士補正
+        if (gameData.player.constitution && CONSTITUTION_MASTER[gameData.player.constitution].type === 'PASSIVE_BERSERK') {
+             if (battleState.player.currentHp <= battleState.player.maxHp * 0.5) {
+                 buffMultiplier *= (1 + CONSTITUTION_MASTER[gameData.player.constitution].value);
+             }
+        }
+
+        let finalDamage = Math.floor(baseDamage * levelBonus * potentialBonus * buffMultiplier);
+        
+        // 演出ログ
+        addLog(`<span class="text-red-400 font-bold">全魔力収束...解放！！</span>`);
+        addLog(`「魔力結集」発動！！ (消費MP: ${cost})`);
+
+        // 全体攻撃処理
+        battleState.enemies.forEach(enemy => {
+            if (enemy.currentHp > 0) {
+                // 敵のデバフ等があればここで計算するが、今回は純粋な火力で押し切る
+                takeDamage(enemy, finalDamage);
+            }
+        });
+
+        updateBattleUI();
+        
+        const allEnemiesDefeated = battleState.enemies.every(e => e.currentHp <= 0);
+        if (allEnemiesDefeated) {
+            setTimeout(() => endBattle(true), 1000);
+            return;
+        }
+        
+        applyTurnEffects(battleState.player);
+        updateBattleUI();
+        
         setTimeout(enemyTurn, 1500);
     }
 
@@ -2297,7 +2540,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(MAGIC_MASTER).forEach(masterId => {
             const master = MAGIC_MASTER[masterId];
             // 所持に関係なく表示
-            const isOwned = !!getMagicInstanceByMasterId(masterId) || (master.category === 'INHERITED' && gameData.player.constitution && CONSTITUTION_MASTER[gameData.player.constitution].magics.includes(masterId));
+            const isOwned = !!getMagicInstanceByMasterId(masterId) || (master.category === 'INHERITED' && gameData.player.constitution && CONSTITUTION_MASTER[gameData.player.constitution].magics && CONSTITUTION_MASTER[gameData.player.constitution].magics.includes(masterId));
             const card = document.createElement('div');
             card.className = `p-2 rounded-lg cursor-pointer card-border border-rarity-${master.rarity} bg-rarity-${master.rarity} ${!isOwned ? 'opacity-70' : ''}`;
             card.innerHTML = `
