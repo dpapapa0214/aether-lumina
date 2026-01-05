@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcane Echoes PVP - アーケインエコーズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="icons/logo-gamepad2.png">
+    <link rel="apple-touch-icon" href="icons/logo-gamepad2.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        /* magic_rpg.html からスタイルを流用 */
+        :root { --bg-color: #0a0a1a; --primary-color: #1a1a3a; --secondary-color: #2a2a5a; --accent-color: #c0a0ff; --text-color: #e0e0ff; --gold-color: #ffd700; --p1-color: #4ade80; --p2-color: #f87171; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Noto Sans JP', sans-serif; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0); background-size: 20px 20px; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .glassmorphism { background: rgba(26, 26, 58, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(192, 160, 255, 0.2); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        .magic-button { position: relative; border: 1px solid var(--accent-color); background: linear-gradient(145deg, var(--secondary-color), var(--primary-color)); color: var(--text-color); transition: all 0.3s ease; box-shadow: 0 0 5px rgba(192, 160, 255, 0.3); clip-path: polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%); }
+        .magic-button:hover { transform: translateY(-2px); box-shadow: 0 0 15px var(--accent-color); color: white; }
+        .magic-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .turn-active { border: 2px solid var(--gold-color); box-shadow: 0 0 15px var(--gold-color); }
+        
+        .p1-theme .magic-button { border-color: var(--p1-color); }
+        .p2-theme .magic-button { border-color: var(--p2-color); }
+        
+        /* ローディングスピナー */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl md:text-6xl font-cinzel text-center mb-8 text-shadow-lg" style="text-shadow: 0 0 15px var(--accent-color);">PvP Arena</h1>
+
+        <!-- セットアップ画面 -->
+        <div id="setup-screen" class="glassmorphism p-6 rounded-xl">
+            <!-- URL入力フォームを削除 -->
+
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2">あなたのセーブデータ (JSON / 暗号化データ)</label>
+                <textarea id="my-save-data" class="w-full p-2 bg-gray-800 border border-gray-600 rounded h-24 text-xs" placeholder="magic_rpg.htmlでコピーしたデータを貼り付けてください"></textarea>
+            </div>
+
+            <div class="flex gap-4 justify-center">
+                <button id="create-room-btn" class="magic-button px-8 py-3 w-1/2 font-bold">部屋を作成 (Player 1)</button>
+                <div class="w-1/2">
+                    <div class="flex gap-2">
+                        <input type="text" id="room-id-input" class="w-full p-2 bg-gray-800 border border-gray-600 rounded text-center" placeholder="部屋ID">
+                        <button id="join-room-btn" class="magic-button px-4 py-3 font-bold whitespace-nowrap">参加 (Player 2)</button>
+                    </div>
+                </div>
+            </div>
+            <div id="status-message" class="mt-4 text-center text-yellow-300 h-6"></div>
+        </div>
+
+        <!-- 待機画面 -->
+        <div id="waiting-screen" class="hidden glassmorphism p-6 rounded-xl text-center mt-8">
+            <h2 class="text-2xl font-cinzel mb-4">Waiting for Opponent...</h2>
+            <p class="mb-4">部屋ID: <span id="display-room-id" class="text-4xl font-bold text-yellow-400 mx-2"></span></p>
+            <p class="text-sm text-gray-400">対戦相手にこのIDを伝えてください。</p>
+            <div class="flex justify-center mt-6">
+                <div class="loader"></div>
+            </div>
+            <p id="polling-status" class="text-xs text-gray-500 mt-2">Connecting...</p>
+        </div>
+
+        <!-- バトル画面 -->
+        <div id="battle-screen" class="hidden mt-4">
+            <!-- ログ -->
+            <div id="battle-log" class="w-full h-32 p-2 mb-4 bg-black bg-opacity-60 rounded-lg overflow-y-auto text-sm border border-gray-600 font-mono"></div>
+
+            <!-- ステータス表示エリア -->
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <!-- Player 1 -->
+                <div id="p1-status-box" class="w-1/2 glassmorphism p-3 rounded-lg border-2 border-transparent transition-all">
+                    <p class="font-bold text-green-400 text-lg">P1: <span id="p1-name">Player 1</span></p>
+                    <div class="relative w-full h-3 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                        <div id="p1-hp-bar" class="h-full bg-green-500 transition-all duration-500"></div>
+                        <div id="p1-shield-bar" class="absolute top-0 left-0 h-full bg-cyan-400 bg-opacity-60 transition-all duration-500"></div>
+                    </div>
+                    <div class="w-full h-2 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                        <div id="p1-mp-bar" class="h-full bg-blue-500 transition-all duration-500"></div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-1">
+                        <span id="p1-hp-text">HP: -/-</span>
+                        <span id="p1-mp-text">MP: -/-</span>
+                    </div>
+                    <div id="p1-shield-val" class="text-xs text-cyan-300 h-4"></div>
+                    <div id="p1-effects" class="flex flex-wrap gap-1 mt-1 min-h-[1.5rem]"></div>
+                </div>
+
+                <!-- VS -->
+                <div class="self-center font-cinzel text-xl text-gray-500">VS</div>
+
+                <!-- Player 2 -->
+                <div id="p2-status-box" class="w-1/2 glassmorphism p-3 rounded-lg border-2 border-transparent transition-all">
+                    <p class="font-bold text-red-400 text-lg text-right"><span id="p2-name">Player 2</span> :P2</p>
+                    <div class="relative w-full h-3 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                        <div id="p2-hp-bar" class="h-full bg-green-500 transition-all duration-500"></div>
+                        <div id="p2-shield-bar" class="absolute top-0 left-0 h-full bg-cyan-400 bg-opacity-60 transition-all duration-500"></div>
+                    </div>
+                    <div class="w-full h-2 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                        <div id="p2-mp-bar" class="h-full bg-blue-500 transition-all duration-500"></div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-1">
+                        <span id="p2-hp-text">HP: -/-</span>
+                        <span id="p2-mp-text">MP: -/-</span>
+                    </div>
+                    <div id="p2-shield-val" class="text-xs text-cyan-300 h-4 text-right"></div>
+                    <div id="p2-effects" class="flex flex-wrap gap-1 mt-1 justify-end min-h-[1.5rem]"></div>
+                </div>
+            </div>
+
+            <!-- アクションエリア -->
+            <div id="action-area" class="glassmorphism p-4 rounded-xl">
+                <p id="turn-indicator" class="text-center text-xl font-bold mb-4 animate-pulse"></p>
+                
+                <!-- 魔法ボタン群 -->
+                <div id="magic-buttons" class="grid grid-cols-2 gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- 定数定義 ---
+    // GASのURLを固定
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzmzeGe7rL2d24q0WcdBL8DbibpRSRA1XVErdeyOWZ5-PyeDHTdZKxz0Horcaoge8G0/exec";
+
+    // --- データ定義 (magic_rpg.html から完全移植) ---
+    const ELEMENTS = {
+        WATER: { name: '水', icon: '💧' }, FIRE: { name: '炎', icon: '🔥' }, GRASS: { name: '草', icon: '🌿' },
+        THUNDER: { name: '雷', icon: '⚡' }, WIND: { name: '風', icon: '💨' }, LIGHT: { name: '光', icon: '🌟' },
+        VOID: { name: '虚無', icon: '🌌' }, EARTH: { name: '地', icon: '🌍' }, TIME: { name: '時空', icon: '⏳' },
+        NEUTRAL: { name: '無', icon: '💫' }, DARK: { name: '闇', icon: '🌑' },
+    };
+
+    const MAGIC_MASTER = {
+        // Normal - 初期魔法
+        m000: { name: 'マジックアロー', element: 'NEUTRAL', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '魔力の矢を放つ基本魔法。' },
+        m009: { name: 'マジックガード', element: 'NEUTRAL', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 15, baseCost: 8, duration: 3, description: '魔力の盾で身を守る基本魔法。' },
+        // Normal
+        m001: { name: 'ウォーターショット', element: 'WATER', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 5, description: '水の弾丸を発射する。' },
+        m002: { name: 'ファイアボール', element: 'FIRE', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 12, baseCost: 6, description: '小さな火球を放つ。' },
+        m003: { name: 'ウィンドカッター', element: 'WIND', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '風の刃で切り裂く。' },
+        m004: { name: 'ヒール', element: 'GRASS', rarity: 'NORMAL', category: 'NORMAL', type: 'HEAL', basePower: 20, baseCost: 10, description: 'HPを少し回復する。' },
+        m005: { name: 'プロテクション', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 10, baseCost: 8, duration: 3, description: '3ターンの間、シールドを張る。' },
+        m006: { name: 'ストーンブラスト', element: 'EARTH', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 15, baseCost: 8, description: '石の礫を飛ばす。' },
+        m007: { name: 'フラッシュ', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEBUFF', basePower: 0.8, baseCost: 7, duration: 2, description: '2ターンの間、敵の攻撃力を20%減少させる。' },
+        m008: { name: 'ダークアロー', element: 'VOID', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 13, baseCost: 7, description: '闇の矢を放つ。' },
+        
+        // Rare
+        m101: { name: 'アクアストリーム', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 12, description: '激しい水流で攻撃する。' },
+        m102: { name: 'フレイムランス', element: 'FIRE', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 30, baseCost: 15, description: '炎の槍を突き刺す。' },
+        m103: { name: 'サンダーボルト', element: 'THUNDER', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 28, baseCost: 14, description: '雷を落とす。' },
+        m104: { name: 'リジェネレーション', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 15, baseCost: 20, duration: 3, description: '3ターンの間、HPが徐々に回復する。' },
+        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', category: 'NORMAL', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 3, description: '3ターンの間、ダメージが20%増加する。' },
+        m106: { name: 'アクアバリア', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 30, baseCost: 15, duration: 3, description: '水の障壁で身を守る。' },
+        m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 3, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
+        m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 2, description: '2ターンの間、強固な土の壁で身を守る。' },
+        m109: { name: 'ホーリーライト', element: 'LIGHT', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 50, baseCost: 25, description: '聖なる光でHPを中程度回復する。' },
+        m110: { name: 'カオスボルト', element: 'VOID', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 35, baseCost: 18, description: '混沌の力で予測不能なダメージを与える。' },
+
+        // Epic
+        m201: { name: 'メイルストロム', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 60, baseCost: 30, isAoe: true, description: '巨大な渦潮を発生させ、敵全体を攻撃する。' },
+        m202: { name: 'インフェルノ', element: 'FIRE', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 75, baseCost: 35, description: '業火で敵を焼き尽くす。' },
+        m203: { name: 'ソーラービーム', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 85, baseCost: 40, description: '太陽の光を収束させて放つ。' },
+        m204: { name: 'グレートヒール', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'HEAL', basePower: 100, baseCost: 45, description: 'HPを大幅に回復する。' },
+        m205: { name: 'ギガスパーク', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 38, description: '強力な電撃を広範囲に放つ。' },
+        m206: { name: '生命の恵み', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'HEAL', basePower: 60, baseCost: 50, duration: 5, description: '5ターンの間、HPが大きく回復し続ける。' },
+        m207: { name: 'トルネード', element: 'WIND', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 90, baseCost: 48, isAoe: true, description: '巨大な竜巻で敵全体を攻撃する。' },
+        m208: { name: 'ドレインソウル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 65, baseCost: 40, drain: 0.3, description: '敵にダメージを与え、そのダメージの30%を吸収してHPを回復する。' },
+        m209: { name: 'プラズマフィールド', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 38, duration: 3, isDot: true, isAoe: true, description: '3ターンの間、プラズマフィールドで敵全体に継続ダメージを与える。' },
+        m210: { name: 'アースクエイク', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 100, baseCost: 55, isAoe: true, description: '大地震で敵全体にダメージを与える。' },
+        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', category: 'NORMAL', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 3, description: '3ターンの間、攻撃力を30%増加させる。' },
+        m212: { name: 'ヴォイドテンタクル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 70, baseCost: 42, duration: 2, description: '虚無の触手で攻撃し、2ターンの間、敵の行動を封じることがある。' },
+        m213: { name: 'ブリザード', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 50, isAoe: true, description: '激しい吹雪で敵全体を凍てつかせる。' },
+        m214: { name: 'フレア', element: 'FIRE', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 120, baseCost: 60, description: '爆発的な炎で大ダメージを与える。' },
+
+        // Legendary (コスト調整: 序盤使用不可にするため大幅増)
+        m301: { name: 'ジャッジメント', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 250, baseCost: 320, isAoe: true, description: '聖なる光で敵全体に裁きを下す。' },
+        m302: { name: 'メテオストライク', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 350, baseCost: 400, isAoe: true, description: '巨大な隕石を落下させ、敵全体を攻撃する。'},
+        m303: { name: 'アビスゲート', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 350, description: '深淵への門を開き、敵を引きずり込む。' },
+        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEFENSE', basePower: 250, baseCost: 280, duration: 5, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
+        m305: { name: 'ワールドエンド', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 600, baseCost: 1000, isAoe: true, description: '世界の終わりを告げる虚無の波動を敵全体に放つ。' },
+        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'HEAL', basePower: 200, baseCost: 450, duration: 3, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
+        m307: { name: 'エレメンタルバースト', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 400, baseCost: 480, isAoe: true, description: '全属性の力を凝縮して敵全体に放つ。' },
+        m308: { name: 'ガイアズラース', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 450, baseCost: 600, isAoe: true, description: '大地の怒りを呼び起こし、敵全体を粉砕する。' },
+        m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 500, baseCost: 720, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
+        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 440, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
+        m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
+        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
+        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+        m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
+        m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
+        m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
+
+        // Boss Unique
+        b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
+        b002: { name: 'ディメンショナルリフト', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'ATTACK', basePower: 500, baseCost: 200, isAoe: true, description: '異次元の裂け目から莫大なエネルギーを放つ。'},
+
+        // Inherited Magics (相伝の魔法) - c001 Dragon Blood (コスト調整)
+        i001: { name: '竜の息吹', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 120, isAoe: true, description: '【竜の血脈】灼熱のブレスを吐き出す。' },
+        i002: { name: '竜鱗の守り', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 50, baseCost: 100, duration: 4, description: '【竜の血脈】硬質な竜の鱗で身を守る。' },
+        i003: { name: 'ドラゴニックロア', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.7, baseCost: 150, duration: 3, description: '【竜の血脈】敵を威圧し攻撃力を下げる。' },
+        i004: { name: 'エンシェントメテオ', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 400, isAoe: true, description: '【竜の血脈】古の隕石魔法。' },
+
+        // Inherited Magics - c002 Void Walker (コスト調整)
+        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 3, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
+        i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 100, duration: 5, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
+        i007: { name: 'ブラックホール', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 350, isAoe: true, description: '【虚無の器】全てを飲み込む闇。' },
+        i008: { name: '無への回帰', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 180, drain: 0.5, description: '【虚無の器】存在を喰らいHPを回復する。' },
+
+        // Inherited Magics - c007 Ice Empress (コスト調整)
+        i009: { name: 'ダイヤモンドダスト', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 100, isAoe: true, description: '【氷の女帝】美しくも冷酷な氷の嵐。' },
+        i010: { name: '絶対零度', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.5, baseCost: 200, duration: 3, description: '【氷の女帝】敵を凍結させ、3ターンの間攻撃力を半減させる。' },
+        i011: { name: '氷の城壁', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 140, duration: 4, description: '【氷の女帝】難攻不落の氷壁を展開する。' },
+        i012: { name: 'コキュートス', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 250, baseCost: 380, isAoe: true, description: '【氷の女帝】地獄の最下層の如き寒気で敵を絶滅させる。' },
+
+        // Inherited Magics - c008 Storm Avatar (コスト調整)
+        i013: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 60, baseCost: 120, description: '【嵐の化身】神速の雷撃。' },
+        i014: { name: 'テンペスト', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 140, isAoe: true, description: '【嵐の化身】全てを吹き飛ばす暴風雨。' },
+        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 3, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
+        i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 140, duration: 3, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
+
+        // Inherited Magics - c009 Light Saintess (コスト調整)
+        i017: { name: 'セイクリッドヒール', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 120, baseCost: 200, description: '【光の聖女】聖なる光でHPを大きく回復する。' },
+        i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 150, duration: 3, description: '【光の聖女】神聖な盾で身を守る。' },
+        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 3, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
+        i020: { name: 'ジャッジメントレイ', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 220, baseCost: 300, description: '【光の聖女】邪悪を滅ぼす裁きの光。' },
+
+        // Inherited Magics - c010 Dark Necromancer (コスト調整)
+        i021: { name: 'ソウルリープ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 190, drain: 0.8, description: '【死霊術師】敵の魂を刈り取り、自身のHPにする。' },
+        i022: { name: 'カースクラウド', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.6, baseCost: 180, duration: 4, description: '【死霊術師】呪いの雲で敵の攻撃力を下げる。' },
+        i023: { name: 'ボーンスピア', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 160, baseCost: 220, description: '【死霊術師】骨の槍で敵を貫く。' },
+        i024: { name: 'デスマーチ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 70, baseCost: 280, duration: 3, isDot: true, isAoe: true, description: '【死霊術師】死者の行進により継続ダメージを与える。' },
+
+        // Weapon Magics (コスト調整)
+        w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 180, description: '魔剣レヴァテインの呪いの一撃。' },
+        w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 200, description: '雷を断ち切る神速の抜刀術。' },
+        w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 350, isAoe: true, description: '約束された勝利の剣による極大の光。' },
+        w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 280, duration: 3, description: '神の杖による癒しと活性化の波動。' },
+        w005: { name: '魂切り', element: 'DARK', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 250, baseCost: 250, drain: 0.5, description: '妖刀ムラマサによる、魂を喰らう一撃。' },
+        w006: { name: '流星雨', element: 'WIND', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 220, baseCost: 300, isAoe: true, description: '神弓アルテミスから放たれる無数の光矢。' },
+    };
+    
+    // データがない場合のフォールバック用ダミー
+    const DUMMY_MAGIC = { name: 'Unknown', element: 'NEUTRAL', rarity: 'NORMAL', type: 'ATTACK', basePower: 1, baseCost: 1 };
+
+    const CONSTITUTION_MASTER = {
+        c001: { name: '竜の血脈', type: 'SET_MAGIC', magics: ['i001', 'i002', 'i003', 'i004'], description: '太古の竜の力をその身に宿す希少な体質。炎と強靭な肉体を得る。', color: 'text-red-500' },
+        c002: { name: '虚無の器', type: 'SET_MAGIC', magics: ['i005', 'i006', 'i007', 'i008'], description: '生まれながらにして虚無と繋がっている体質。常理を超えた現象を操る。', color: 'text-purple-500' },
+        c003: { name: '多重詠唱', type: 'EXTRA_SLOTS', value: 2, description: '並列思考に優れた体質。装備できる魔法のスロットが2つ増加する。', color: 'text-blue-400' },
+        c004: { name: '鮮血の代償', type: 'BLOOD_MAGIC', description: '生命力を魔力へ変換する禁忌の体質。MP不足時、HPを消費して魔法を行使できる。', color: 'text-red-700' },
+        c005: { name: '精霊の加護', type: 'PASSIVE_REGEN', value: 0.1, description: '精霊に愛された体質。ターン終了時にMPが最大値の10%回復する。', color: 'text-green-400' },
+        c006: { name: '狂戦士', type: 'PASSIVE_BERSERK', value: 0.5, description: '瀕死になるほど力を発揮する体質。HPが50%以下の時、魔法威力が50%上昇する。', color: 'text-orange-600' },
+        c007: { name: '氷の女帝', type: 'SET_MAGIC', magics: ['i009', 'i010', 'i011', 'i012'], description: '万物を凍てつかせる冷気の支配者。防御と制圧に長ける。', color: 'text-cyan-300' },
+        c008: { name: '嵐の化身', type: 'SET_MAGIC', magics: ['i013', 'i014', 'i015', 'i016'], description: '天候を操る荒ぶる魂。風と雷の複合攻撃を得意とする。', color: 'text-yellow-300' },
+        c009: { name: '光の聖女', type: 'SET_MAGIC', magics: ['i017', 'i018', 'i019', 'i020'], description: '神に選ばれし聖なる体質。癒やしと浄化の力を持つ。', color: 'text-yellow-200' },
+        c010: { name: '死霊術師', type: 'SET_MAGIC', magics: ['i021', 'i022', 'i023', 'i024'], description: '死を操る禁忌の体質。生命力を奪い、呪いを撒き散らす。', color: 'text-indigo-400' },
+    };
+
+    const EQUIPMENT_MASTER = {
+        // Normal
+        e001: { name: '魔力の指輪', rarity: 'NORMAL', type: 'MP', value: 0.05, description: '最大MPが5%増加する。' },
+        e002: { name: '見習いの杖', rarity: 'NORMAL', type: 'POWER', value: 0.05, description: '魔法威力が5%増加する。' },
+
+        // Rare
+        e101: { name: '賢者の指輪', rarity: 'RARE', type: 'MP', value: 0.1, description: '最大MPが10%増加する。' },
+        e102: { name: '魔術師の杖', rarity: 'RARE', type: 'POWER', value: 0.1, description: '魔法威力が10%増加する。' },
+        e103: { name: '守りのアミュレット', rarity: 'RARE', type: 'HP', value: 0.1, description: '最大HPが10%増加する。' },
+        e104: { name: '速詠のチャーム', rarity: 'RARE', type: 'COST_REDUCTION', value: 0.1, description: '魔法の消費MPが10%減少する。' },
+        e105: { name: '精霊のアミュレット', rarity: 'RARE', type: 'MP', value: 0.12, description: '最大MPが12%増加する。' },
+        
+        // Epic
+        e201: { name: '大賢者の指輪', rarity: 'EPIC', type: 'MP', value: 0.2, description: '最大MPが20%増加する。' },
+        e202: { name: '大魔術師の杖', rarity: 'EPIC', type: 'POWER', value: 0.2, description: '魔法威力が20%増加する。' },
+        e203: { name: '精霊の腕輪', rarity: 'EPIC', type: 'MP_REGEN', value: 0.05, description: '戦闘中、ターン終了時に最大MPの5%を回復する。' },
+        e204: { name: '吸血の宝珠', rarity: 'EPIC', type: 'DRAIN', value: 0.1, description: '与えたダメージの10%分HPを吸収する。' },
+        e205: { name: '竜鱗の盾', rarity: 'EPIC', type: 'HP', value: 0.25, description: '最大HPが25%増加する。' },
+
+        // Legendary
+        e301: { name: '世界樹の指輪', rarity: 'LEGENDARY', type: 'MP', value: 0.5, description: '最大MPが50%増加する。' },
+        e302: { name: '根源の杖', rarity: 'LEGENDARY', type: 'POWER', value: 0.5, description: '魔法威力が50%増加する。' },
+        e303: { name: '賢者の石', rarity: 'LEGENDARY', type: 'ALL', value: 0.15, description: '最大HP、最大MP、魔法威力が15%増加する。'},
+        e304: { name: '生命のオーブ', rarity: 'LEGENDARY', type: 'HP_REGEN', value: 0.1, description: '戦闘中、ターン終了時に最大HPの10%を回復する。' },
+        e305: { name: 'クロノマンサーのペンダント', rarity: 'LEGENDARY', type: 'COST_REDUCTION', value: 0.25, description: '魔法の消費MPが25%減少し、デバフ効果を短縮する。' },
+        e306: { name: '支配の王錫', rarity: 'LEGENDARY', type: 'POWER', value: 0.60, description: '魔法威力が60%増加する。' },
+
+        // Weapon Magic Equipment
+        e401: { name: '魔剣レヴァテイン', rarity: 'EPIC', type: 'GRANT_MAGIC', magicId: 'w001', value: 0, description: '装備すると魔法「災いの炎」が使用可能になる。' },
+        e402: { name: '名刀・雷切', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w002', value: 0, description: '装備すると魔法「雷切」が使用可能になる。' },
+        e403: { name: '聖剣エクスカリバー', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w003', value: 0, description: '装備すると魔法「エクスカリバー」が使用可能になる。' },
+        e404: { name: '神杖カドゥケウス', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w004', value: 0, description: '装備すると魔法「カドゥケウス」が使用可能になる。' },
+        e405: { name: '妖刀ムラマサ', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w005', value: 0, description: '装備すると魔法「魂切り」が使用可能になる。' },
+        e406: { name: '神弓アルテミス', rarity: 'LEGENDARY', type: 'GRANT_MAGIC', magicId: 'w006', value: 0, description: '装備すると魔法「流星雨」が使用可能になる。' },
+    };
+
+    // --- アプリロジック ---
+
+    const dom = {
+        mySaveData: document.getElementById('my-save-data'),
+        createRoomBtn: document.getElementById('create-room-btn'),
+        joinRoomBtn: document.getElementById('join-room-btn'),
+        roomIdInput: document.getElementById('room-id-input'),
+        statusMessage: document.getElementById('status-message'),
+        setupScreen: document.getElementById('setup-screen'),
+        waitingScreen: document.getElementById('waiting-screen'),
+        battleScreen: document.getElementById('battle-screen'),
+        displayRoomId: document.getElementById('display-room-id'),
+        pollingStatus: document.getElementById('polling-status'),
+        battleLog: document.getElementById('battle-log'),
+        actionArea: document.getElementById('action-area'),
+        magicButtons: document.getElementById('magic-buttons'),
+        turnIndicator: document.getElementById('turn-indicator')
+    };
+
+    let pollingInterval = null;
+    let battleState = {
+        p1: null,
+        p2: null,
+        turn: 'p1', // 'p1' or 'p2'
+        turnCount: 1
+    };
+
+    dom.createRoomBtn.onclick = async () => {
+        const url = GAS_API_URL;
+        const rawData = dom.mySaveData.value;
+        if (!rawData) return showStatus('セーブデータを入力してください', 'text-red-400');
+
+        showStatus('データを検証中...', 'text-yellow-300');
+        
+        // データの検証と整形（平文/暗号化 両対応）
+        let p1DataObj;
+        try {
+            p1DataObj = parseSaveData(rawData);
+        } catch(e) {
+            return showStatus('データの形式が正しくありません', 'text-red-400');
+        }
+        
+        // サーバーにはJSON文字列として送信
+        const dataToSend = JSON.stringify(p1DataObj);
+
+        showStatus('部屋を作成中...', 'text-yellow-300');
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'create_room', data: dataToSend })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                showWaitingScreen(result.roomId, 'p1');
+            } else {
+                showStatus('エラー: ' + result.message, 'text-red-400');
+            }
+        } catch (e) {
+            showStatus('通信エラー: ' + e.message, 'text-red-400');
+        }
+    };
+
+    dom.joinRoomBtn.onclick = async () => {
+        const url = GAS_API_URL;
+        const rawData = dom.mySaveData.value;
+        const roomId = dom.roomIdInput.value;
+        if (!rawData || !roomId) return showStatus('全ての項目を入力してください', 'text-red-400');
+
+        showStatus('データを検証中...', 'text-yellow-300');
+        
+        let p2DataObj;
+        try {
+            p2DataObj = parseSaveData(rawData);
+        } catch(e) {
+            return showStatus('データの形式が正しくありません', 'text-red-400');
+        }
+        
+        const dataToSend = JSON.stringify(p2DataObj);
+
+        showStatus('部屋に参加中...', 'text-yellow-300');
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'join_room', roomId: roomId, data: dataToSend })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                showWaitingScreen(roomId, 'p2');
+            } else {
+                showStatus('エラー: ' + result.message, 'text-red-400');
+            }
+        } catch (e) {
+            showStatus('通信エラー: ' + e.message, 'text-red-400');
+        }
+    };
+
+    // データパース関数 (平文JSONとBase64暗号化データの両方に対応)
+    function parseSaveData(input) {
+        input = input.trim();
+        try {
+            // まず平文JSONとして試す
+            return JSON.parse(input);
+        } catch (e) {
+            try {
+                // 失敗したらBase64デコードを試す
+                // magic_rpg.htmlでは btoa(unescape(encodeURIComponent(json))) しているので
+                // decodeURIComponent(escape(atob(input))) で復元する
+                const decoded = decodeURIComponent(escape(atob(input)));
+                return JSON.parse(decoded);
+            } catch (e2) {
+                console.error(e2);
+                throw new Error("Invalid Data");
+            }
+        }
+    }
+
+    function showStatus(msg, colorClass) {
+        dom.statusMessage.textContent = msg;
+        dom.statusMessage.className = `mt-4 text-center h-6 ${colorClass}`;
+    }
+
+    function showWaitingScreen(roomId, role) {
+        dom.setupScreen.classList.add('hidden');
+        dom.waitingScreen.classList.remove('hidden');
+        dom.displayRoomId.textContent = roomId;
+        
+        // ポーリング開始
+        const url = GAS_API_URL;
+        let dots = 0;
+        
+        pollingInterval = setInterval(async () => {
+            dots = (dots + 1) % 4;
+            dom.pollingStatus.textContent = '対戦相手を待機中' + '.'.repeat(dots);
+            
+            try {
+                const response = await fetch(`${url}?action=check_room&roomId=${roomId}`);
+                const result = await response.json();
+                
+                if (result.status === 'ready') {
+                    clearInterval(pollingInterval);
+                    startPvPBattle(result.p1Data, result.p2Data);
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 3000); // 3秒ごとに確認
+    }
+
+    // --- バトルロジック ---
+
+    function startPvPBattle(p1Json, p2Json) {
+        dom.waitingScreen.classList.add('hidden');
+        dom.battleScreen.classList.remove('hidden');
+
+        const p1Data = JSON.parse(p1Json);
+        const p2Data = JSON.parse(p2Json);
+
+        battleState = {
+            p1: initPlayerBattleData(p1Data, 'Player 1'),
+            p2: initPlayerBattleData(p2Data, 'Player 2'),
+            turn: 'p1',
+            turnCount: 1
+        };
+
+        addLog(`=== バトル開始 ===`);
+        addLog(`P1: Lv.${p1Data.player.level} vs P2: Lv.${p2Data.player.level}`);
+        
+        updateBattleUI();
+    }
+
+    function initPlayerBattleData(data, defaultName) {
+        // magic_rpg.html のロジックを簡略化して再現
+        // 装備補正等は簡易計算またはdataから取得
+        // 本来はcalculateMaxHpなどを移植する必要がありますが、ここではdata内の値をベースにします
+        const p = data.player;
+        
+        // HP/MP計算 (簡易版: レベルベース + 装備補正は保存されていないため、ベース値のみ使用する制限あり)
+        // ※ 本格的にやるなら装備マスタと計算ロジックを全て持ってくる必要がある
+        // ここでは data.player.hp / mp を最大値として扱う（回復状態でセーブしている前提）
+        
+        // 装備効果の再計算（簡易）
+        let hpBoost = 0;
+        let mpBoost = 0;
+        let powerBoost = 0;
+        
+        p.equippedEquipment.forEach(eqId => {
+            if(!eqId) return;
+            // inventoryからawakening取得は省略（saveデータ構造による）
+            const master = EQUIPMENT_MASTER[eqId];
+            if(master) {
+                if(master.type === 'HP' || master.type === 'ALL') hpBoost += master.value;
+                if(master.type === 'MP' || master.type === 'ALL') mpBoost += master.value;
+                if(master.type === 'POWER' || master.type === 'ALL') powerBoost += master.value;
+            }
+        });
+
+        // 基礎ステータス再計算 (magic_rpg.html準拠)
+        let baseHp = 100 + (p.level - 1) * 50;
+        let maxHp = Math.floor(baseHp * (1 + hpBoost));
+        
+        let baseMp = 50 + (p.level - 1) * 5 + (p.permanentMpBonus || 0);
+        let maxMp = Math.floor(baseMp * (1 + mpBoost));
+
+        return {
+            name: defaultName,
+            level: p.level,
+            potentialLevel: p.potentialLevel || 0,
+            maxHp: maxHp,
+            currentHp: maxHp,
+            maxMp: maxMp,
+            currentMp: maxMp,
+            shield: 0,
+            effects: [],
+            equippedMagic: p.equippedMagic,
+            equippedEquipment: p.equippedEquipment,
+            constitution: p.constitution,
+            powerBoost: powerBoost, // 装備による補正値
+            // MagicInventoryも必要だが、簡易的にMasterIDから生成する
+            magicInventory: data.magicInventory
+        };
+    }
+
+    function updateBattleUI() {
+        const { p1, p2, turn } = battleState;
+
+        // ステータス更新
+        updatePlayerStatus('p1', p1);
+        updatePlayerStatus('p2', p2);
+
+        // ターン表示
+        const activePlayer = turn === 'p1' ? p1 : p2;
+        const playerColor = turn === 'p1' ? 'text-green-400' : 'text-red-400';
+        dom.turnIndicator.innerHTML = `<span class="${playerColor}">${activePlayer.name}のターン</span>`;
+        
+        // 枠のハイライト
+        document.getElementById('p1-status-box').classList.toggle('turn-active', turn === 'p1');
+        document.getElementById('p2-status-box').classList.toggle('turn-active', turn === 'p2');
+        dom.actionArea.className = `glassmorphism p-4 rounded-xl transition-colors duration-500 ${turn === 'p1' ? 'p1-theme' : 'p2-theme'}`;
+
+        // アクションボタン生成
+        renderActionButtons(activePlayer);
+    }
+
+    function updatePlayerStatus(prefix, player) {
+        document.getElementById(`${prefix}-hp-bar`).style.width = `${Math.max(0, (player.currentHp / player.maxHp) * 100)}%`;
+        document.getElementById(`${prefix}-shield-bar`).style.width = `${Math.min(100, (player.shield / player.maxHp) * 100)}%`;
+        document.getElementById(`${prefix}-mp-bar`).style.width = `${Math.max(0, (player.currentMp / player.maxMp) * 100)}%`;
+        document.getElementById(`${prefix}-hp-text`).textContent = `HP: ${player.currentHp}/${player.maxHp}`;
+        document.getElementById(`${prefix}-mp-text`).textContent = `MP: ${player.currentMp}/${player.maxMp}`;
+        document.getElementById(`${prefix}-shield-val`).textContent = player.shield > 0 ? `Shield: ${player.shield}` : '';
+        
+        const effectsDiv = document.getElementById(`${prefix}-effects`);
+        effectsDiv.innerHTML = '';
+        player.effects.forEach(eff => {
+            const m = MAGIC_MASTER[eff.magicId] || DUMMY_MAGIC;
+            let icon = '✨';
+            if(eff.type === 'BUFF') icon = '⚔️';
+            if(eff.type === 'DEFENSE') icon = '🛡️';
+            if(eff.type === 'DEBUFF') icon = '💀';
+            effectsDiv.innerHTML += `<span class="text-xs bg-gray-700 px-1 rounded" title="${m.name}">${icon}${eff.turnsLeft}</span>`;
+        });
+    }
+
+    function renderActionButtons(player) {
+        const container = dom.magicButtons;
+        container.innerHTML = '';
+
+        // 装備魔法
+        player.equippedMagic.forEach(mid => {
+            if(mid) createMagicBtn(mid, player, container, 'EQUIPPED');
+        });
+
+        // 特殊体質魔法
+        if (player.constitution) {
+            const c = CONSTITUTION_MASTER[player.constitution];
+            if (c && c.type === 'SET_MAGIC') {
+                c.magics.forEach(mid => createMagicBtn(mid, player, container, 'INHERITED'));
+            }
+        }
+
+        // 武器魔法
+        player.equippedEquipment.forEach(eid => {
+            if(!eid) return;
+            const em = EQUIPMENT_MASTER[eid];
+            if(em && em.type === 'GRANT_MAGIC') {
+                createMagicBtn(em.magicId, player, container, 'WEAPON');
+            }
+        });
+
+        // 共通アクション
+        // 精神集中
+        const recoverBtn = document.createElement('button');
+        recoverBtn.className = 'magic-button w-full h-12 flex items-center justify-center gap-2 col-span-2 mt-2';
+        recoverBtn.innerHTML = '<span>🧘 精神集中 (MP回復)</span>';
+        recoverBtn.onclick = () => executeAction('RECOVER_MP');
+        container.appendChild(recoverBtn);
+
+        // 魔力結集 (Lv75以上)
+        if(player.level >= 75) {
+            const blastCost = Math.floor(player.maxMp / 2);
+            const blastBtn = document.createElement('button');
+            blastBtn.className = 'magic-button w-full h-12 flex items-center justify-center gap-2 col-span-2 border-red-500';
+            blastBtn.innerHTML = `<span>💥 魔力結集 (消費:${blastCost})</span>`;
+            blastBtn.disabled = player.currentMp < blastCost;
+            blastBtn.onclick = () => executeAction('MANA_BLAST');
+            container.appendChild(blastBtn);
+        }
+    }
+
+    function createMagicBtn(masterId, player, container, context) {
+        const m = MAGIC_MASTER[masterId];
+        if(!m) return;
+
+        // インベントリから覚醒値などを取得（簡易実装：見つからなければLv1）
+        let instance = player.magicInventory.find(i => i.masterId === masterId) || { level: player.level, awakening: 0 };
+        
+        // コスト計算 (装備補正込み)
+        // 簡易実装: Cost Reduction効果を一律適用
+        let costReduction = 0;
+        player.equippedEquipment.forEach(eid => {
+            if(!eid) return;
+            const em = EQUIPMENT_MASTER[eid];
+            if(em && em.type === 'COST_REDUCTION') costReduction += em.value;
+        });
+        const cost = Math.max(1, Math.floor(m.baseCost * (1 - costReduction)));
+
+        const btn = document.createElement('button');
+        let borderClass = '';
+        if(context === 'INHERITED') borderClass = 'border-red-500';
+        if(context === 'WEAPON') borderClass = 'border-purple-500';
+
+        btn.className = `magic-button w-full h-14 flex items-center px-2 gap-2 text-left ${borderClass}`;
+        btn.innerHTML = `
+            <div class="text-2xl">${ELEMENTS[m.element]?.icon || '✨'}</div>
+            <div class="flex-1 min-w-0">
+                <div class="font-bold text-sm truncate">${m.name}</div>
+                <div class="text-xs text-blue-300">MP: ${cost}</div>
+            </div>
+        `;
+        btn.disabled = player.currentMp < cost;
+        btn.onclick = () => executeAction('MAGIC', { masterId, cost, instance });
+        container.appendChild(btn);
+    }
+
+    function executeAction(type, data) {
+        const actor = battleState.turn === 'p1' ? battleState.p1 : battleState.p2;
+        const target = battleState.turn === 'p1' ? battleState.p2 : battleState.p1;
+
+        if (type === 'RECOVER_MP') {
+            const amount = Math.floor(actor.maxMp * 0.2);
+            actor.currentMp = Math.min(actor.maxMp, actor.currentMp + amount);
+            addLog(`${actor.name}は精神を集中し、MPが${amount}回復した！`);
+        } 
+        else if (type === 'MANA_BLAST') {
+            const cost = Math.floor(actor.maxMp / 2);
+            actor.currentMp -= cost;
+            
+            // ダメージ計算 (magic_rpg.html準拠)
+            let baseDamage = cost * 30;
+            const levelBonus = 1 + (actor.level * 0.02);
+            const potentialBonus = 1 + (actor.potentialLevel * 0.10);
+            let buffMultiplier = 1 + actor.powerBoost; // 装備補正
+            
+            // バフチェック
+            actor.effects.forEach(eff => {
+                const m = MAGIC_MASTER[eff.magicId];
+                if(eff.type === 'BUFF' && m) buffMultiplier *= m.basePower;
+            });
+
+            // 狂戦士
+            if(actor.constitution === 'c006' && actor.currentHp <= actor.maxHp * 0.5) {
+                buffMultiplier *= 1.5;
+            }
+
+            const damage = Math.floor(baseDamage * levelBonus * potentialBonus * buffMultiplier);
+            addLog(`${actor.name}の魔力結集！`);
+            takeDamage(target, damage);
+        }
+        else if (type === 'MAGIC') {
+            const { masterId, cost, instance } = data;
+            const m = MAGIC_MASTER[masterId];
+            actor.currentMp -= cost;
+            addLog(`${actor.name}は${m.name}を唱えた！`);
+
+            // 威力計算
+            let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00, 'SPECIAL': 1.50 }[m.rarity] || 0;
+            const awakeningBonus = 1 + instance.awakening * bonusPerAwakening;
+            // レベル補正 (インスタンスレベル or プレイヤーレベル)
+            const level = (m.category === 'INHERITED' || m.category === 'WEAPON') ? actor.level : (instance.level || 1);
+            
+            let power = Math.floor(m.basePower * (1 + level * 0.1) * awakeningBonus);
+            
+            // 相伝魔法ポテンシャルボーナス
+            if (m.category === 'INHERITED') {
+                power = Math.floor(power * (1 + actor.potentialLevel * 0.05));
+            }
+
+            // バフ補正
+            let multiplier = 1 + actor.powerBoost;
+            actor.effects.forEach(eff => {
+                const buffM = MAGIC_MASTER[eff.magicId];
+                if(eff.type === 'BUFF' && buffM) multiplier *= buffM.basePower;
+            });
+            // 攻撃/回復/防御の場合はプレイヤーレベル補正(全体)も乗る仕様
+            if(['ATTACK', 'HEAL', 'DEFENSE'].includes(m.type)) {
+                multiplier *= (1 + actor.level / 100);
+            }
+
+            const finalPower = Math.floor(power * multiplier);
+
+            if (m.type === 'ATTACK') {
+                takeDamage(target, finalPower);
+                if (m.isDot) target.effects.push({ magicId: masterId, type: 'DOT', power: finalPower, turnsLeft: m.duration });
+                // ドレイン処理等は省略
+            } else if (m.type === 'HEAL') {
+                actor.currentHp = Math.min(actor.maxHp, actor.currentHp + finalPower);
+                addLog(`HPが${finalPower}回復した。`);
+                if(m.duration) actor.effects.push({ magicId: masterId, type: 'HEAL', power: finalPower, turnsLeft: m.duration });
+            } else if (m.type === 'DEFENSE') {
+                actor.shield += finalPower;
+                addLog(`シールドを${finalPower}展開した。`);
+                if(m.duration) actor.effects.push({ magicId: masterId, type: 'DEFENSE', power: finalPower, turnsLeft: m.duration });
+            } else if (m.type === 'BUFF') {
+                actor.effects.push({ magicId: masterId, type: 'BUFF', turnsLeft: m.duration });
+                addLog(`強化効果を得た！`);
+            } else if (m.type === 'DEBUFF') {
+                target.effects.push({ magicId: masterId, type: 'DEBUFF', turnsLeft: m.duration });
+                addLog(`${target.name}を弱体化させた！`);
+            }
+        }
+
+        // ターン終了処理
+        checkBattleEnd();
+        if (battleState.p1.currentHp > 0 && battleState.p2.currentHp > 0) {
+            switchTurn();
+        }
+    }
+
+    function takeDamage(target, damage) {
+        // シールド処理
+        let actualDamage = damage;
+        if (target.shield > 0) {
+            const blocked = Math.min(target.shield, actualDamage);
+            target.shield -= blocked;
+            actualDamage -= blocked;
+            addLog(`シールドが${blocked}ダメージを防いだ！`);
+        }
+        
+        target.currentHp = Math.max(0, target.currentHp - actualDamage);
+        addLog(`${target.name}に${actualDamage}のダメージ！`);
+    }
+
+    function switchTurn() {
+        // ターン経過処理（DoT, バフ切れなど）
+        const nextTurn = battleState.turn === 'p1' ? 'p2' : 'p1';
+        const nextActor = nextTurn === 'p1' ? battleState.p1 : battleState.p2;
+
+        addLog(`--- ターン ${++battleState.turnCount} ---`);
+        
+        // エフェクト処理
+        nextActor.effects = nextActor.effects.filter(eff => {
+            const m = MAGIC_MASTER[eff.magicId];
+            if(eff.type === 'DOT') {
+                const dmg = Math.floor(eff.power / m.duration);
+                takeDamage(nextActor, dmg);
+                addLog(`${nextActor.name}は継続ダメージを受けた`);
+            }
+            else if(eff.type === 'HEAL') {
+                const heal = Math.floor(eff.power / m.duration);
+                nextActor.currentHp = Math.min(nextActor.maxHp, nextActor.currentHp + heal);
+                addLog(`${nextActor.name}は再生効果で回復した`);
+            }
+            // パッシブMP回復 (精霊の加護)
+            if(nextActor.constitution === 'c005') {
+                 const heal = Math.floor(nextActor.maxMp * 0.1);
+                 nextActor.currentMp = Math.min(nextActor.maxMp, nextActor.currentMp + heal);
+            }
+
+            eff.turnsLeft--;
+            return eff.turnsLeft > 0;
+        });
+
+        checkBattleEnd();
+        
+        if (battleState.p1.currentHp > 0 && battleState.p2.currentHp > 0) {
+            battleState.turn = nextTurn;
+            updateBattleUI();
+        }
+    }
+
+    function checkBattleEnd() {
+        if (battleState.p1.currentHp <= 0) {
+            endGame(battleState.p2.name);
+        } else if (battleState.p2.currentHp <= 0) {
+            endGame(battleState.p1.name);
+        }
+    }
+
+    function endGame(winnerName) {
+        dom.actionArea.innerHTML = `
+            <div class="text-center py-8">
+                <h2 class="text-4xl font-cinzel text-yellow-400 mb-4">WINNER</h2>
+                <p class="text-2xl font-bold">${winnerName}</p>
+                <button onclick="location.reload()" class="magic-button px-8 py-3 mt-8">タイトルへ戻る</button>
+            </div>
+        `;
+    }
+
+    function addLog(msg) {
+        const p = document.createElement('p');
+        p.innerHTML = msg;
+        dom.battleLog.prepend(p);
+    }
+
+</script>
+</body>
+</html>
