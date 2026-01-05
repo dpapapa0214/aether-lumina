@@ -474,26 +474,32 @@
     function initPlayerBattleData(data, defaultName) {
         // magic_rpg.html のロジックを簡略化して再現
         // 装備補正等は簡易計算またはdataから取得
-        // 本来はcalculateMaxHpなどを移植する必要がありますが、ここではdata内の値をベースにします
         const p = data.player;
         
-        // HP/MP計算 (簡易版: レベルベース + 装備補正は保存されていないため、ベース値のみ使用する制限あり)
-        // ※ 本格的にやるなら装備マスタと計算ロジックを全て持ってくる必要がある
-        // ここでは data.player.hp / mp を最大値として扱う（回復状態でセーブしている前提）
-        
-        // 装備効果の再計算（簡易）
+        // 装備効果の再計算（覚醒値考慮）
         let hpBoost = 0;
         let mpBoost = 0;
         let powerBoost = 0;
         
+        // 装備インベントリを使って覚醒値を取得
+        const equipmentInventory = data.equipmentInventory || [];
+
         p.equippedEquipment.forEach(eqId => {
             if(!eqId) return;
-            // inventoryからawakening取得は省略（saveデータ構造による）
+            
             const master = EQUIPMENT_MASTER[eqId];
             if(master) {
-                if(master.type === 'HP' || master.type === 'ALL') hpBoost += master.value;
-                if(master.type === 'MP' || master.type === 'ALL') mpBoost += master.value;
-                if(master.type === 'POWER' || master.type === 'ALL') powerBoost += master.value;
+                // インベントリから該当アイテムを探す（なければ覚醒0として扱う）
+                const instance = equipmentInventory.find(i => i.masterId === eqId) || { awakening: 0 };
+                
+                // 覚醒ボーナス計算 (magic_rpg.html準拠)
+                let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00, 'SPECIAL': 1.50 }[master.rarity] || 0;
+                const awakeningBonus = 1 + instance.awakening * bonusPerAwakening;
+                const value = master.value * awakeningBonus;
+
+                if(master.type === 'HP' || master.type === 'ALL') hpBoost += value;
+                if(master.type === 'MP' || master.type === 'ALL') mpBoost += value;
+                if(master.type === 'POWER' || master.type === 'ALL') powerBoost += value;
             }
         });
 
@@ -518,8 +524,8 @@
             equippedEquipment: p.equippedEquipment,
             constitution: p.constitution,
             powerBoost: powerBoost, // 装備による補正値
-            // MagicInventoryも必要だが、簡易的にMasterIDから生成する
-            magicInventory: data.magicInventory
+            magicInventory: data.magicInventory || [],
+            equipmentInventory: equipmentInventory // 装備インベントリも保持
         };
     }
 
@@ -617,13 +623,17 @@
         // インベントリから覚醒値などを取得（簡易実装：見つからなければLv1）
         let instance = player.magicInventory.find(i => i.masterId === masterId) || { level: player.level, awakening: 0 };
         
-        // コスト計算 (装備補正込み)
-        // 簡易実装: Cost Reduction効果を一律適用
+        // コスト計算 (装備補正込み・覚醒値考慮)
         let costReduction = 0;
         player.equippedEquipment.forEach(eid => {
             if(!eid) return;
             const em = EQUIPMENT_MASTER[eid];
-            if(em && em.type === 'COST_REDUCTION') costReduction += em.value;
+            if(em && em.type === 'COST_REDUCTION') {
+                const eqInstance = player.equipmentInventory.find(i => i.masterId === eid) || { awakening: 0 };
+                let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00, 'SPECIAL': 1.50 }[em.rarity] || 0;
+                const awakeningBonus = 1 + eqInstance.awakening * bonusPerAwakening;
+                costReduction += em.value * awakeningBonus;
+            }
         });
         const cost = Math.max(1, Math.floor(m.baseCost * (1 - costReduction)));
 
