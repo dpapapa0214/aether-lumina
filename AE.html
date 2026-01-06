@@ -582,7 +582,6 @@ document.addEventListener('DOMContentLoaded', () => {
         m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
         m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
         m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
-        // New Magics
         m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
         m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
         m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
@@ -762,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hp: 100,
             mp: 50,
             potentialLevel: 0,
-            gachaStones: 400,
+            gachaStones: 100, // 修正: 初期配布石を400 -> 100 (1/4)
             materials: 0,
             tomesOfSecrets: 0,
             equippedMagic: [null, null, null, null], // masterIds
@@ -1516,8 +1515,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 魔力結集ボタン (右側) - 新規追加
         const manaBlastButton = document.createElement('button');
         
-        // レベル75以上で解禁
-        const isManaBlastUnlocked = gameData.player.level >= 75;
+        // レベル100以上で解禁
+        const isManaBlastUnlocked = gameData.player.level >= 100;
 
         if (isManaBlastUnlocked) {
             // 消費コスト計算：最大MPの1/2
@@ -1536,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manaBlastButton.className = 'h-14 w-full flex flex-row items-center justify-center px-2 gap-1 mt-2 border border-gray-700 rounded bg-gray-900 text-gray-500 cursor-not-allowed opacity-70';
             manaBlastButton.innerHTML = `
                 <div class="text-xl">🔒</div>
-                <div class="text-xs font-bold">魔力結集<br><span class="text-[10px] font-normal">Lv.75解禁</span></div>
+                <div class="text-xs font-bold">魔力結集<br><span class="text-[10px] font-normal">Lv.100解禁</span></div>
             `;
             manaBlastButton.disabled = true;
         }
@@ -1645,9 +1644,9 @@ document.addEventListener('DOMContentLoaded', () => {
         battleState.player.currentMp -= cost;
         
         // --- 圧倒的火力計算ロジック ---
-        // 基本威力: 消費MP * 30 (通常の魔法より遥かに高い変換効率)
+        // 基本威力: 消費MP * 6 (通常の魔法より遥かに高い変換効率だが、以前よりは抑制)
         // 最大MPの半分を強制消費するので、基礎ダメージは非常に高くなる
-        let baseDamage = cost * 30; 
+        let baseDamage = cost * 6; 
         
         // レベル補正: レベル1につき +2%
         const levelBonus = 1 + (gameData.player.level * 0.02);
@@ -2040,8 +2039,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const potentialMultiplier = gameData.player.potentialLevel * 0.1;
                         const baseExp = enemy.level * 10;
                         totalExp += Math.floor(baseExp + (baseExp * potentialMultiplier));
-                        totalStones += enemy.level * 5 + Math.floor(Math.random() * 25);
-                        totalMaterials += enemy.level * 2 + Math.floor(Math.random() * 10);
+                        // 修正: 石獲得量を1/4, 素材獲得量を2倍
+                        totalStones += Math.floor((enemy.level * 5 + Math.floor(Math.random() * 25)) / 4);
+                        totalMaterials += (enemy.level * 2 + Math.floor(Math.random() * 10)) * 2;
                     });
                     
                     gameData.player.exp += totalExp;
@@ -2075,10 +2075,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('magic-school-screen'); };
                     break;
                 case 'rift':
-                    gameData.player.gachaStones += 5000;
-                    gameData.player.materials += 2500;
-                    gameData.player.tomesOfSecrets += 5;
-                    message = `魔法石+5000, 魔力の欠片+2500, 秘伝の書+5 を獲得！`;
+                    // 修正: 報酬量を調整 (石1/4, 素材2倍, 書2倍)
+                    gameData.player.gachaStones += 1250;
+                    gameData.player.materials += 5000;
+                    gameData.player.tomesOfSecrets += 10;
+                    message = `魔法石+1250, 魔力の欠片+5000, 秘伝の書+10 を獲得！`;
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('rift-challenge-screen'); };
                     break;
             }
@@ -2149,8 +2150,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (possibleItems.length === 0) {
-                    // フォールバック: 素材にする
-                    const materialAmount = 50;
+                    // フォールバック: 素材にする (修正: 2倍)
+                    const materialAmount = 100;
                     gameData.player.materials += materialAmount;
                     results.push({ item: { name: `魔力の欠片x${materialAmount} (変換)`, rarity: 'NORMAL'}, type: 'material' });
                     continue;
@@ -2167,7 +2168,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 results.push({ item: master[itemId], type: 'item', isNew: isNew });
             } else {
-                const materialAmount = 10 + Math.floor(Math.random() * 10);
+                // 修正: ハズレ時の素材量を2倍
+                const materialAmount = (10 + Math.floor(Math.random() * 10)) * 2;
                 gameData.player.materials += materialAmount;
                 results.push({ item: { name: `魔力の欠片x${materialAmount}`, rarity: 'NORMAL'}, type: 'material' });
             }
@@ -2708,10 +2710,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateTowerRewards(startFloor, endFloor) {
         let totalStones = 0, totalMaterials = 0, totalTomes = 0;
         for (let i = startFloor; i <= endFloor; i++) {
-            totalMaterials += i * 5;
-            if (i % 5 === 0) totalMaterials += i * 20;
-            if (i % 10 === 0) totalStones += i * 50;
-            if (i % 25 === 0) totalTomes += 1;
+            totalMaterials += i * 10; // 修正: 素材獲得量を2倍 (5 -> 10)
+            if (i % 5 === 0) totalMaterials += i * 40; // 修正: 素材獲得量を2倍 (20 -> 40)
+            if (i % 10 === 0) totalStones += Math.floor(i * 50 / 4); // 修正: 石獲得量を1/4 (50 -> 12.5)
+            if (i % 25 === 0) totalTomes += 2; // 修正: 秘伝の書獲得量を2倍 (1 -> 2)
         }
         return { stones: totalStones, materials: totalMaterials, tomes: totalTomes };
     }
