@@ -195,6 +195,32 @@
             margin-top: 1rem;
             margin-bottom: 0.5rem;
         }
+
+        /* マップダンジョン用スタイル */
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(30, 1fr); /* 修正: 20 -> 30 */
+            gap: 1px;
+            max-width: 900px; /* 修正: 800px -> 900px */
+            margin: 0 auto;
+        }
+        .map-tile {
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: transform 0.1s;
+            position: relative;
+        }
+        .map-tile:hover:not(.type-ocean) {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 0 10px white;
+        }
+        .type-ocean { background-color: #1e3a8a; cursor: default; } /* 海: 青 */
+        .type-plains { background-color: #4ade80; } /* 平原: 緑 */
+        .type-forest { background-color: #166534; } /* 森: 深緑 */
+        .type-mountain { background-color: #78350f; } /* 山: 茶色 */
+        .type-desert { background-color: #fcd34d; } /* 砂漠: 黄色 */
+        .type-demon { background-color: #581c87; } /* 魔境: 紫 */
     </style>
 </head>
 <body class="bg-gray-900 text-white">
@@ -218,8 +244,11 @@
         <!-- ヘッダー -->
         <header class="flex justify-between items-center p-4 glassmorphism rounded-xl mb-4">
             <div>
-                <span id="player-level" class="font-bold"></span>
-                <span id="player-potential" class="text-xs text-yellow-300 ml-2"></span>
+                <div class="flex items-baseline gap-2">
+                    <span id="player-level" class="font-bold text-xl"></span>
+                    <span id="player-rank" class="text-sm text-cyan-300 font-bold border border-cyan-700 px-2 rounded-full"></span>
+                </div>
+                <span id="player-potential" class="text-xs text-yellow-300"></span>
                 <div id="player-constitution" class="text-xs text-red-400 mt-1 font-bold"></div>
                 <div class="w-40 h-2 bg-gray-700 rounded-full overflow-hidden mt-1">
                     <div id="player-exp-bar" class="h-full bg-yellow-400"></div>
@@ -244,6 +273,10 @@
                     <button data-screen="dungeon-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
                         <span class="text-5xl">⚔️</span>
                         <span class="mt-2 text-lg font-cinzel">Dungeon</span>
+                    </button>
+                     <button data-screen="map-dungeon-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center text-green-300 border-green-500">
+                        <span class="text-5xl">🗺️</span>
+                        <span class="mt-2 text-lg font-cinzel">World Map</span>
                     </button>
                      <button data-screen="infinite-tower-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center">
                         <span class="text-5xl">🗼</span>
@@ -273,7 +306,7 @@
                         <span class="text-5xl">📚</span>
                         <span class="mt-2 text-lg font-cinzel">Encyclopedia</span>
                     </button>
-                    <!-- 新規追加: 対戦ボタン -->
+                    <!-- 対戦ボタン -->
                     <button data-screen="pvp-screen" class="nav-button h-32 md:h-40 magic-button flex flex-col justify-center items-center border-red-500 text-red-100">
                         <span class="text-5xl">⚔️</span>
                         <span class="mt-2 text-lg font-cinzel">PvP Arena</span>
@@ -291,6 +324,22 @@
                  <div id="dungeon-list" class="space-y-4"></div>
             </div>
             
+            <!-- マップダンジョン画面 -->
+            <div id="map-dungeon-screen" class="hidden text-center">
+                <h2 class="text-3xl font-cinzel mb-4">World Map</h2>
+                <p class="mb-4 text-gray-400">タイルを選択して探索を行います。</p>
+                <div id="world-map-container" class="map-grid">
+                    <!-- マップタイルが生成されます -->
+                </div>
+                <div class="mt-4 flex justify-center gap-4 text-xs text-gray-400">
+                     <span class="flex items-center"><div class="w-3 h-3 bg-[#4ade80] mr-1"></div>平原(Lv1~30)</span>
+                     <span class="flex items-center"><div class="w-3 h-3 bg-[#166534] mr-1"></div>森(Lv30~80)</span>
+                     <span class="flex items-center"><div class="w-3 h-3 bg-[#78350f] mr-1"></div>山(Lv80~150)</span>
+                     <span class="flex items-center"><div class="w-3 h-3 bg-[#fcd34d] mr-1"></div>砂漠(Lv150~250)</span>
+                     <span class="flex items-center"><div class="w-3 h-3 bg-[#581c87] mr-1"></div>魔境(Lv250~)</span>
+                </div>
+            </div>
+
             <!-- 次元ノ裂け目画面 -->
             <div id="rift-challenge-screen" class="hidden text-center">
                 <h2 class="text-3xl font-cinzel mb-4">次元の裂け目</h2>
@@ -449,7 +498,7 @@
                 </div>
             </div>
 
-            <!-- 新規追加: 対戦画面 -->
+            <!-- 対戦画面 -->
             <div id="pvp-screen" class="hidden text-center">
                 <h2 class="text-3xl font-cinzel mb-4">PvP Arena</h2>
                 <div class="p-8 glassmorphism rounded-xl">
@@ -529,26 +578,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAGIC_MASTER = {
         // Normal - 初期魔法
         m000: { name: 'マジックアロー', element: 'NEUTRAL', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '魔力の矢を放つ基本魔法。' },
-        m009: { name: 'マジックガード', element: 'NEUTRAL', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 15, baseCost: 8, duration: 3, description: '魔力の盾で身を守る基本魔法。' },
+        m009: { name: 'マジックガード', element: 'NEUTRAL', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 15, baseCost: 8, duration: 4, description: '魔力の盾で身を守る基本魔法。' },
         // Normal
         m001: { name: 'ウォーターショット', element: 'WATER', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 5, description: '水の弾丸を発射する。' },
         m002: { name: 'ファイアボール', element: 'FIRE', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 12, baseCost: 6, description: '小さな火球を放つ。' },
         m003: { name: 'ウィンドカッター', element: 'WIND', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 8, baseCost: 4, description: '風の刃で切り裂く。' },
         m004: { name: 'ヒール', element: 'GRASS', rarity: 'NORMAL', category: 'NORMAL', type: 'HEAL', basePower: 20, baseCost: 10, description: 'HPを少し回復する。' },
-        m005: { name: 'プロテクション', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 10, baseCost: 8, duration: 3, description: '3ターンの間、シールドを張る。' },
+        m005: { name: 'プロテクション', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEFENSE', basePower: 10, baseCost: 8, duration: 4, description: '3ターンの間、シールドを張る。' },
         m006: { name: 'ストーンブラスト', element: 'EARTH', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 15, baseCost: 8, description: '石の礫を飛ばす。' },
-        m007: { name: 'フラッシュ', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEBUFF', basePower: 0.8, baseCost: 7, duration: 2, description: '2ターンの間、敵の攻撃力を20%減少させる。' },
+        m007: { name: 'フラッシュ', element: 'LIGHT', rarity: 'NORMAL', category: 'NORMAL', type: 'DEBUFF', basePower: 0.8, baseCost: 7, duration: 3, description: '2ターンの間、敵の攻撃力を20%減少させる。' },
         m008: { name: 'ダークアロー', element: 'VOID', rarity: 'NORMAL', category: 'NORMAL', type: 'ATTACK', basePower: 13, baseCost: 7, description: '闇の矢を放つ。' },
         
         // Rare
         m101: { name: 'アクアストリーム', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 12, description: '激しい水流で攻撃する。' },
         m102: { name: 'フレイムランス', element: 'FIRE', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 30, baseCost: 15, description: '炎の槍を突き刺す。' },
         m103: { name: 'サンダーボルト', element: 'THUNDER', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 28, baseCost: 14, description: '雷を落とす。' },
-        m104: { name: 'リジェネレーション', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 15, baseCost: 20, duration: 3, description: '3ターンの間、HPが徐々に回復する。' },
-        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', category: 'NORMAL', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 3, description: '3ターンの間、ダメージが20%増加する。' },
-        m106: { name: 'アクアバリア', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 30, baseCost: 15, duration: 3, description: '水の障壁で身を守る。' },
-        m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 3, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
-        m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 2, description: '2ターンの間、強固な土の壁で身を守る。' },
+        m104: { name: 'リジェネレーション', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 15, baseCost: 20, duration: 4, description: '3ターンの間、HPが徐々に回復する。' },
+        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', category: 'NORMAL', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 4, description: '3ターンの間、ダメージが20%増加する。' },
+        m106: { name: 'アクアバリア', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 30, baseCost: 15, duration: 4, description: '水の障壁で身を守る。' },
+        m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 4, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
+        m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 3, description: '2ターンの間、強固な土の壁で身を守る。' },
         m109: { name: 'ホーリーライト', element: 'LIGHT', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 50, baseCost: 25, description: '聖なる光でHPを中程度回復する。' },
         m110: { name: 'カオスボルト', element: 'VOID', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 35, baseCost: 18, description: '混沌の力で予測不能なダメージを与える。' },
 
@@ -558,13 +607,13 @@ document.addEventListener('DOMContentLoaded', () => {
         m203: { name: 'ソーラービーム', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 85, baseCost: 40, description: '太陽の光を収束させて放つ。' },
         m204: { name: 'グレートヒール', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'HEAL', basePower: 100, baseCost: 45, description: 'HPを大幅に回復する。' },
         m205: { name: 'ギガスパーク', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 38, description: '強力な電撃を広範囲に放つ。' },
-        m206: { name: '生命の恵み', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'HEAL', basePower: 60, baseCost: 50, duration: 5, description: '5ターンの間、HPが大きく回復し続ける。' },
+        m206: { name: '生命の恵み', element: 'GRASS', rarity: 'EPIC', category: 'NORMAL', type: 'HEAL', basePower: 60, baseCost: 50, duration: 6, description: '5ターンの間、HPが大きく回復し続ける。' },
         m207: { name: 'トルネード', element: 'WIND', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 90, baseCost: 48, isAoe: true, description: '巨大な竜巻で敵全体を攻撃する。' },
         m208: { name: 'ドレインソウル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 65, baseCost: 40, drain: 0.3, description: '敵にダメージを与え、そのダメージの30%を吸収してHPを回復する。' },
-        m209: { name: 'プラズマフィールド', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 38, duration: 3, isDot: true, isAoe: true, description: '3ターンの間、プラズマフィールドで敵全体に継続ダメージを与える。' },
+        m209: { name: 'プラズマフィールド', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 38, duration: 4, isDot: true, isAoe: true, description: '3ターンの間、プラズマフィールドで敵全体に継続ダメージを与える。' },
         m210: { name: 'アースクエイク', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 100, baseCost: 55, isAoe: true, description: '大地震で敵全体にダメージを与える。' },
-        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', category: 'NORMAL', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 3, description: '3ターンの間、攻撃力を30%増加させる。' },
-        m212: { name: 'ヴォイドテンタクル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 70, baseCost: 42, duration: 2, description: '虚無の触手で攻撃し、2ターンの間、敵の行動を封じることがある。' },
+        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', category: 'NORMAL', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 4, description: '3ターンの間、攻撃力を30%増加させる。' },
+        m212: { name: 'ヴォイドテンタクル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 70, baseCost: 42, duration: 3, description: '虚無の触手で攻撃し、2ターンの間、敵の行動を封じることがある。' },
         m213: { name: 'ブリザード', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 50, isAoe: true, description: '激しい吹雪で敵全体を凍てつかせる。' },
         m214: { name: 'フレア', element: 'FIRE', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 120, baseCost: 60, description: '爆発的な炎で大ダメージを与える。' },
 
@@ -572,18 +621,18 @@ document.addEventListener('DOMContentLoaded', () => {
         m301: { name: 'ジャッジメント', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 250, baseCost: 320, isAoe: true, description: '聖なる光で敵全体に裁きを下す。' },
         m302: { name: 'メテオストライク', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 350, baseCost: 400, isAoe: true, description: '巨大な隕石を落下させ、敵全体を攻撃する。'},
         m303: { name: 'アビスゲート', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 350, description: '深淵への門を開き、敵を引きずり込む。' },
-        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEFENSE', basePower: 250, baseCost: 280, duration: 5, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
+        m304: { name: '聖域', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEFENSE', basePower: 250, baseCost: 280, duration: 6, description: '5ターンの間、強固な聖域を展開し、さらにHPが少しずつ回復する。' },
         m305: { name: 'ワールドエンド', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 600, baseCost: 1000, isAoe: true, description: '世界の終わりを告げる虚無の波動を敵全体に放つ。' },
-        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'HEAL', basePower: 200, baseCost: 450, duration: 3, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
+        m306: { name: '創生の光', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'HEAL', basePower: 200, baseCost: 450, duration: 4, description: 'HPを完全に回復し、3ターンの間強力なリジェネ効果を付与する。' },
         m307: { name: 'エレメンタルバースト', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 400, baseCost: 480, isAoe: true, description: '全属性の力を凝縮して敵全体に放つ。' },
         m308: { name: 'ガイアズラース', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 450, baseCost: 600, isAoe: true, description: '大地の怒りを呼び起こし、敵全体を粉砕する。' },
         m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 500, baseCost: 720, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
-        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 440, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
+        m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 440, duration: 4, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
         m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
-        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
-        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
+        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 5, description: '4ターンの間、魔法威力を100%増加させる。' },
+        m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 4, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
         m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
-        m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
+        m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 4, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
         m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
 
         // Boss Unique
@@ -592,37 +641,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inherited Magics (相伝の魔法) - c001 Dragon Blood (コスト調整)
         i001: { name: '竜の息吹', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 120, isAoe: true, description: '【竜の血脈】灼熱のブレスを吐き出す。' },
-        i002: { name: '竜鱗の守り', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 50, baseCost: 100, duration: 4, description: '【竜の血脈】硬質な竜の鱗で身を守る。' },
-        i003: { name: 'ドラゴニックロア', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.7, baseCost: 150, duration: 3, description: '【竜の血脈】敵を威圧し攻撃力を下げる。' },
+        i002: { name: '竜鱗の守り', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 50, baseCost: 100, duration: 5, description: '【竜の血脈】硬質な竜の鱗で身を守る。' },
+        i003: { name: 'ドラゴニックロア', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.7, baseCost: 150, duration: 4, description: '【竜の血脈】敵を威圧し攻撃力を下げる。' },
         i004: { name: 'エンシェントメテオ', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 400, isAoe: true, description: '【竜の血脈】古の隕石魔法。' },
 
         // Inherited Magics - c002 Void Walker (コスト調整)
-        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 3, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
-        i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 100, duration: 5, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
+        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 4, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
+        i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 100, duration: 6, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
         i007: { name: 'ブラックホール', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 350, isAoe: true, description: '【虚無の器】全てを飲み込む闇。' },
         i008: { name: '無への回帰', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 180, drain: 0.5, description: '【虚無の器】存在を喰らいHPを回復する。' },
 
         // Inherited Magics - c007 Ice Empress (コスト調整)
         i009: { name: 'ダイヤモンドダスト', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 100, isAoe: true, description: '【氷の女帝】美しくも冷酷な氷の嵐。' },
-        i010: { name: '絶対零度', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.5, baseCost: 200, duration: 3, description: '【氷の女帝】敵を凍結させ、3ターンの間攻撃力を半減させる。' },
-        i011: { name: '氷の城壁', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 140, duration: 4, description: '【氷の女帝】難攻不落の氷壁を展開する。' },
+        i010: { name: '絶対零度', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.5, baseCost: 200, duration: 4, description: '【氷の女帝】敵を凍結させ、3ターンの間攻撃力を半減させる。' },
+        i011: { name: '氷の城壁', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 140, duration: 5, description: '【氷の女帝】難攻不落の氷壁を展開する。' },
         i012: { name: 'コキュートス', element: 'WATER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 250, baseCost: 380, isAoe: true, description: '【氷の女帝】地獄の最下層の如き寒気で敵を絶滅させる。' },
 
         // Inherited Magics - c008 Storm Avatar (コスト調整)
         i013: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 60, baseCost: 120, description: '【嵐の化身】神速の雷撃。' },
         i014: { name: 'テンペスト', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 140, isAoe: true, description: '【嵐の化身】全てを吹き飛ばす暴風雨。' },
-        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 3, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
-        i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 140, duration: 3, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
+        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 4, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
+        i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 140, duration: 4, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
 
         // Inherited Magics - c009 Light Saintess (コスト調整)
         i017: { name: 'セイクリッドヒール', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 120, baseCost: 200, description: '【光の聖女】聖なる光でHPを大きく回復する。' },
-        i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 150, duration: 3, description: '【光の聖女】神聖な盾で身を守る。' },
-        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 3, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
+        i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 150, duration: 4, description: '【光の聖女】神聖な盾で身を守る。' },
+        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 4, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
         i020: { name: 'ジャッジメントレイ', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 220, baseCost: 300, description: '【光の聖女】邪悪を滅ぼす裁きの光。' },
 
         // Inherited Magics - c010 Dark Necromancer (コスト調整)
         i021: { name: 'ソウルリープ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 190, drain: 0.8, description: '【死霊術師】敵の魂を刈り取り、自身のHPにする。' },
-        i022: { name: 'カースクラウド', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.6, baseCost: 180, duration: 4, description: '【死霊術師】呪いの雲で敵の攻撃力を下げる。' },
+        i022: { name: 'カースクラウド', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0.6, baseCost: 180, duration: 5, description: '【死霊術師】呪いの雲で敵の攻撃力を下げる。' },
         i023: { name: 'ボーンスピア', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 160, baseCost: 220, description: '【死霊術師】骨の槍で敵を貫く。' },
         i024: { name: 'デスマーチ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 70, baseCost: 280, duration: 3, isDot: true, isAoe: true, description: '【死霊術師】死者の行進により継続ダメージを与える。' },
 
@@ -738,17 +787,64 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: '機械仕掛けの神殿', levelRange: [300, 400], enemies: ['en602', 'boss007', 'en601'], boss: 'boss009' },
     ];
     
+    // 魔術師等級名を更新
     const TEACHER_MASTER = {
-        t001: { name: 'ルナ先生 (初級)', icon: '👩‍🏫', level: 10, baseHp: 500, baseMp: 200, magics: ['m001', 'm002', 'm004'], reward: { type: 'magic', id: 'm107' }, description: '毒魔法の基礎を教えてくれる。' },
-        t002: { name: 'グレイ先生 (中級)', icon: '🧑‍🏫', level: 30, baseHp: 2500, baseMp: 800, magics: ['m101', 'm103', 'm106'], reward: { type: 'equipment', id: 'e203' }, description: 'MP管理の極意を教えてくれる。' },
-        t003: { name: 'ソフィア先生 (上級)', icon: '🧙‍♀️', level: 50, baseHp: 8000, baseMp: 2000, magics: ['m201', 'm202', 'm205'], reward: { type: 'magic', id: 'm208' }, description: '攻防一体の戦闘術を教えてくれる。' },
-        t004: { name: '校長 (伝説)', icon: '🧙‍♂️', level: 80, baseHp: 20000, baseMp: 5000, magics: ['m301', 'm304', 'm302'], reward: { type: 'equipment', id: 'e303' }, description: '全ての魔法の根源に触れる試練。' },
-        t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。' },
-        t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。' },
-        t007: { name: 'マーリン (夢幻の魔術師)', icon: '🧙‍♂️', level: 150, baseHp: 100000, baseMp: 30000, magics: ['m310', 'i005', 'w003'], reward: { type: 'magic', id: 'i004' }, description: '伝説の魔術師による、古の魔法の伝授。' },
-        t008: { name: 'ソロモン (魔術王)', icon: '🤴', level: 200, baseHp: 200000, baseMp: 50000, magics: ['m313', 'i007', 'w004'], reward: { type: 'equipment', id: 'e306' }, description: '魔術の王による、真の支配力の試練。' },
-        t009: { name: 'ニコラ・フラメル (錬金術の祖)', icon: '⚗️', level: 250, baseHp: 300000, baseMp: 60000, magics: ['m306', 'i004', 'm204'], reward: { type: 'equipment', id: 'e303' }, description: '不老不死の探求者。生命と物質の真理を問う。' },
-        t010: { name: 'ギルガメッシュ (英雄王)', icon: '👑', level: 300, baseHp: 500000, baseMp: 100000, magics: ['w002', 'w003', 'w004'], reward: { type: 'equipment', id: 'e401' }, description: '全てを所有する英雄王。至高の財宝を賭けた決闘。' },
+        t001: { name: 'ルナ先生 (初級)', icon: '👩‍🏫', level: 10, baseHp: 500, baseMp: 200, magics: ['m001', 'm002', 'm004'], reward: { type: 'magic', id: 'm107' }, description: '毒魔法の基礎を教えてくれる。', rankTitle: '8級魔術師' },
+        t002: { name: 'グレイ先生 (中級)', icon: '🧑‍🏫', level: 30, baseHp: 2500, baseMp: 800, magics: ['m101', 'm103', 'm106'], reward: { type: 'equipment', id: 'e203' }, description: 'MP管理の極意を教えてくれる。', rankTitle: '7級魔術師' },
+        t003: { name: 'ソフィア先生 (上級)', icon: '🧙‍♀️', level: 50, baseHp: 8000, baseMp: 2000, magics: ['m201', 'm202', 'm205'], reward: { type: 'magic', id: 'm208' }, description: '攻防一体の戦闘術を教えてくれる。', rankTitle: '6級魔術師' },
+        t004: { name: '校長 (伝説)', icon: '🧙‍♂️', level: 80, baseHp: 20000, baseMp: 5000, magics: ['m301', 'm304', 'm302'], reward: { type: 'equipment', id: 'e303' }, description: '全ての魔法の根源に触れる試練。', rankTitle: '5級魔術師' },
+        t005: { name: 'アークメイジ (大賢者)', icon: '📜', level: 100, baseHp: 35000, baseMp: 8000, magics: ['m307', 'm309', 'm211'], reward: { type: 'magic', id: 'm312' }, description: '究極の攻撃魔法を授ける試練。', rankTitle: '4級魔術師' },
+        t006: { name: 'エレメンタルロード (精霊王)', icon: '👑', level: 120, baseHp: 50000, baseMp: 10000, magics: ['m308', 'm311', 'm306'], reward: { type: 'equipment', id: 'e305' }, description: '世界の理を識る者への最終試練。', rankTitle: '3級魔術師' },
+        t007: { name: 'マーリン (夢幻の魔術師)', icon: '🧙‍♂️', level: 150, baseHp: 100000, baseMp: 30000, magics: ['m310', 'i005', 'w003'], reward: { type: 'magic', id: 'i004' }, description: '伝説の魔術師による、古の魔法の伝授。', rankTitle: '2級魔術師' },
+        t008: { name: 'ソロモン (魔術王)', icon: '🤴', level: 200, baseHp: 200000, baseMp: 50000, magics: ['m313', 'i007', 'w004'], reward: { type: 'equipment', id: 'e306' }, description: '魔術の王による、真の支配力の試練。', rankTitle: '1級魔術師' },
+        t009: { name: 'ニコラ・フラメル (錬金術の祖)', icon: '⚗️', level: 250, baseHp: 300000, baseMp: 60000, magics: ['m306', 'i004', 'm204'], reward: { type: 'equipment', id: 'e303' }, description: '不老不死の探求者。生命と物質の真理を問う。', rankTitle: '特級魔術師' },
+        t010: { name: 'ギルガメッシュ (英雄王)', icon: '👑', level: 300, baseHp: 500000, baseMp: 100000, magics: ['w002', 'w003', 'w004'], reward: { type: 'equipment', id: 'e401' }, description: '全てを所有する英雄王。至高の財宝を賭けた決闘。', rankTitle: '魔導王' },
+    };
+    
+    // マップデータ定義 (拡大)
+    const MAP_WIDTH = 30;
+    const MAP_HEIGHT = 30;
+    // 0:海, 1:平原, 2:森, 3:山, 4:砂漠, 5:魔境
+    const WORLD_MAP_DATA = [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,1,2,2,0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,2,2,2,2,3,3,0,0,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,2,2,2,2,3,3,3,3,3,4,4,4,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,2,2,2,3,3,3,3,3,4,4,4,4,4,5,5,5,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,2,2,2,3,3,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,1,1,1,0,0],
+        [0,0,1,2,2,2,2,4,4,4,4,4,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,0,1,1,1,1,2,2,2,0,0,0,0,0,0,0,1,1,1,2,2,2,2,1,1,1,1,0,0],
+        [0,0,0,1,1,1,1,2,2,2,2,0,0,0,0,1,1,1,2,2,2,2,3,3,2,2,1,0,0,0],
+        [0,0,1,1,1,1,1,2,2,2,3,3,3,0,1,1,1,2,2,2,3,3,3,3,3,2,0,0,0,0],
+        [0,1,1,1,1,1,2,2,2,3,3,3,3,3,1,1,2,2,2,3,3,3,4,4,4,0,0,0,0,0],
+        [0,1,1,1,1,2,2,2,3,3,3,3,4,4,4,3,2,2,2,3,3,4,4,4,4,0,0,0,0,0],
+        [0,1,1,1,2,2,2,3,3,4,4,4,5,5,4,3,3,3,3,3,4,4,4,5,5,0,0,0,0,0],
+        [0,0,1,2,2,2,3,3,4,4,5,5,5,5,5,5,4,4,3,3,4,4,5,5,5,0,0,0,0,0],
+        [0,0,0,2,3,3,3,4,4,5,5,5,5,5,5,5,5,4,4,0,0,5,5,5,5,0,0,0,0,0],
+        [0,0,0,0,3,3,4,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0],
+        [0,0,0,0,0,4,4,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0],
+        [0,0,0,0,0,0,4,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,0,0,0,0,5,5,5,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,0,0,0,0,0,0,0,0,0,0,2,2,2,3,3,0,0,0,0,1,1,1,1,0,0,0],
+        [0,1,1,1,1,0,0,0,0,0,0,0,0,2,2,2,3,3,3,0,0,0,1,1,2,2,2,1,0,0],
+        [0,1,1,1,1,1,0,0,0,0,0,0,2,2,3,3,3,0,0,0,0,1,1,2,3,3,3,2,1,0],
+        [0,0,1,1,1,1,0,0,0,0,0,2,2,3,3,4,0,0,0,0,1,1,2,3,4,4,4,3,2,0],
+        [0,0,0,1,1,0,0,0,0,0,0,2,3,4,4,4,0,0,0,1,1,2,3,4,5,5,5,4,3,0],
+        [0,0,0,0,0,0,0,0,0,0,0,3,4,4,5,0,0,0,0,1,2,3,4,5,5,5,5,4,3,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,4,5,5,0,0,0,0,2,3,4,5,5,5,5,5,4,3,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,3,4,5,5,5,5,4,3,2,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,5,5,4,3,2,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ];
+    
+    const MAP_TILES = {
+        0: { name: '海', class: 'type-ocean', minLv: 0, maxLv: 0 },
+        1: { name: '平原', class: 'type-plains', minLv: 1, maxLv: 30 },
+        2: { name: '森', class: 'type-forest', minLv: 30, maxLv: 80 },
+        3: { name: '山', class: 'type-mountain', minLv: 80, maxLv: 150 },
+        4: { name: '砂漠', class: 'type-desert', minLv: 150, maxLv: 250 },
+        5: { name: '魔境', class: 'type-demon', minLv: 250, maxLv: 400 },
     };
 
     // ゲームデータ
@@ -1048,6 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">2. メイン機能</h3>
                     <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
                         <li><strong class="text-white">⚔️ Dungeon (ダンジョン)</strong>: メインストーリーを進めるモード。経験値や素材を獲得。</li>
+                        <li><strong class="text-white">🗺️ World Map (マップ)</strong>: 広大な大陸を探索し、エリアごとの強敵と戦います。</li>
                         <li><strong class="text-white">🗼 Infinite Tower (無限の塔)</strong>: 1日2回挑戦可能な腕試しモード。次回は最高到達階層から<span class="text-yellow-200">スキップ</span>可能。</li>
                         <li><strong class="text-white">🌀 Rift Challenge (次元の裂け目)</strong>: 1日1回挑戦可能なボス戦。大量の報酬を獲得。</li>
                         <li><strong class="text-white">✨ Gacha (ガチャ)</strong>: 魔法石で魔法や装備を入手。500回一括召喚も可能。</li>
@@ -1063,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <li><strong class="text-white">基本ルール</strong>: ターン制コマンドバトル。HP0で敗北。</li>
                         <li><strong class="text-white">魔法攻撃</strong>: MPを消費して魔法を放ちます。</li>
                         <li><strong class="text-white">精神集中</strong>: MPを最大値の20%回復します。</li>
-                        <li><strong class="text-white">魔力結集</strong>: Lv.75で解禁される必殺技。最大MPの半分を消費し、超極大ダメージを与えます。</li>
+                        <li><strong class="text-white">魔力結集</strong>: Lv.100で解禁される必殺技。最大MPの2/3を消費し、超極大ダメージを与えます。</li>
                     </ul>
                 </section>
 
@@ -1093,7 +1190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.backToHomeButton.classList.toggle('hidden', screenId === 'home-screen' || screenId === 'battle-screen');
         dom.headerTitle.textContent = screenId.replace('-screen', '').replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase());
 
-
         // 各画面のレンダリング
         switch (screenId) {
             case 'home-screen':
@@ -1101,6 +1197,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'dungeon-screen':
                 renderDungeonList();
+                break;
+            case 'map-dungeon-screen':
+                renderMapDungeonScreen();
                 break;
             case 'rift-challenge-screen':
                 renderRiftChallengeScreen();
@@ -1177,6 +1276,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxMp = calculateMaxMp();
         
         document.getElementById('player-level').textContent = `Lv. ${player.level}`;
+        
+        // ランク表示の更新
+        const rankEl = document.getElementById('player-rank');
+        if(rankEl) {
+             rankEl.textContent = getPlayerRankTitle();
+        }
+
         document.getElementById('player-potential').textContent = `ポテンシャル: ${player.potentialLevel}`;
         
         const constitutionEl = document.getElementById('player-constitution');
@@ -1193,6 +1299,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('player-gacha-stones').textContent = `💎 ${player.gachaStones}`;
         document.getElementById('player-materials').textContent = `🧱 ${player.materials}`;
         document.getElementById('player-tomes').textContent = `📖 ${player.tomesOfSecrets}`;
+    }
+
+    // 新規追加: ランクタイトル取得関数
+    function getPlayerRankTitle() {
+        let currentRank = "見習い魔術師";
+        let maxLevel = 0;
+        
+        gameData.defeatedTeachers.forEach(tid => {
+            const teacher = TEACHER_MASTER[tid];
+            if (teacher && teacher.level > maxLevel) {
+                maxLevel = teacher.level;
+                currentRank = teacher.rankTitle;
+            }
+        });
+        return currentRank;
     }
 
     // プレイヤー関連の計算
@@ -1262,6 +1383,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // マップダンジョン画面
+    function renderMapDungeonScreen() {
+        const container = document.getElementById('world-map-container');
+        container.innerHTML = '';
+
+        WORLD_MAP_DATA.forEach((row, y) => {
+            row.forEach((type, x) => {
+                const tile = document.createElement('div');
+                const mapInfo = MAP_TILES[type];
+                tile.className = `map-tile ${mapInfo.class}`;
+                
+                // 海以外はクリック可能
+                if (type !== 0) {
+                    tile.title = `${mapInfo.name} (Lv.${mapInfo.minLv}~${mapInfo.maxLv})`;
+                    tile.onclick = () => {
+                         // 修正: confirmではなくshowModalを使用 (iframe環境等でのブロック回避)
+                         showModal(
+                            "探索確認",
+                            `${mapInfo.name} (推奨Lv:${mapInfo.minLv}-${mapInfo.maxLv})<br>ここで戦闘を開始しますか？`,
+                            () => {
+                                dom.modalContainer.classList.add('hidden');
+                                startBattle('map', { type: type, levelRange: [mapInfo.minLv, mapInfo.maxLv] });
+                            },
+                            true // キャンセルボタンを表示
+                         );
+                    };
+                }
+                container.appendChild(tile);
+            });
+        });
+    }
+
     // Rift Challenge Screen
     function renderRiftChallengeScreen() {
         const listEl = document.getElementById('rift-boss-list');
@@ -1308,13 +1461,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const button = document.createElement('button');
             button.className = `w-full p-6 text-left magic-button flex justify-between items-center`;
             
+            // 撃破済みかどうかで表示を変える
+            const isDefeated = gameData.defeatedTeachers.includes(teacherId);
             let rewardHtml = '';
-            if (teacher.reward.type === 'magic') {
-                const magic = MAGIC_MASTER[teacher.reward.id];
-                rewardHtml = `<p class="text-sm rarity-${magic.rarity}">報酬: ${magic.name}</p>`;
+            
+            if (isDefeated) {
+                rewardHtml = `<p class="text-sm text-green-400">【撃破済み】報酬受取済み</p>`;
             } else {
-                const equipment = EQUIPMENT_MASTER[teacher.reward.id];
-                rewardHtml = `<p class="text-sm rarity-${equipment.rarity}">報酬: ${equipment.name}</p>`;
+                if (teacher.reward.type === 'magic') {
+                    const magic = MAGIC_MASTER[teacher.reward.id];
+                    rewardHtml = `<p class="text-sm rarity-${magic.rarity}">報酬: ${magic.name}</p>`;
+                } else {
+                    const equipment = EQUIPMENT_MASTER[teacher.reward.id];
+                    rewardHtml = `<p class="text-sm rarity-${equipment.rarity}">報酬: ${equipment.name}</p>`;
+                }
             }
             
             button.innerHTML = `
@@ -1359,6 +1519,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             battleState.originalEnemies = [...battleState.enemies];
             battleState.dungeonIndex = dungeonIndex;
+        } else if (mode === 'map') {
+            // マップダンジョン用エンカウントロジック
+            const { type, levelRange } = id; // idにはマップ情報オブジェクトが入る
+            const numEnemies = Math.floor(Math.random() * 3) + 1;
+            
+            // 地形に応じた敵選出ロジック（簡易）
+            // 全エネミーからレベル帯に合うものを選出するか、ランダム
+            // ここでは簡易的に全通常エネミーからランダム選出とするが、本来は地形ごとに設定すべき
+            const allNormalEnemies = Object.keys(ENEMY_MASTER).filter(k => !ENEMY_MASTER[k].isBoss);
+
+            for(let i=0; i<numEnemies; i++) {
+                const enemyLevel = levelRange[0] + Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1));
+                const enemyMasterId = allNormalEnemies[Math.floor(Math.random() * allNormalEnemies.length)];
+                const enemyMaster = ENEMY_MASTER[enemyMasterId];
+                // マップ補正でHP/MP強化
+                const maxHp = Math.floor(enemyMaster.baseHp * (1 + enemyLevel * 0.15)); 
+                const maxMp = Math.floor(enemyMaster.baseMp * (1 + enemyLevel * 0.15));
+                const enemy = { ...enemyMaster, level: enemyLevel, maxHp, currentHp: maxHp, maxMp, currentMp: maxMp, shield: 0, effects: [] };
+                battleState.enemies.push(enemy);
+            }
+            battleState.originalEnemies = [...battleState.enemies];
+
         } else {
             // School, Rift, Tower are 1v1
             let enemyMaster;
@@ -1400,6 +1582,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const battleHeader = document.getElementById('battle-header');
         if (mode === 'infinite') {
             battleHeader.textContent = `無限の塔 - ${currentFloor}階`;
+            battleHeader.classList.remove('hidden');
+        } else if (mode === 'map') {
+            battleHeader.textContent = `フィールド探索`;
             battleHeader.classList.remove('hidden');
         } else {
             battleHeader.classList.add('hidden');
@@ -1519,13 +1704,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const isManaBlastUnlocked = gameData.player.level >= 100;
 
         if (isManaBlastUnlocked) {
-            // 消費コスト計算：最大MPの1/2
-            const blastCost = Math.floor(player.maxMp / 2);
+            // 消費コスト計算：最大MPの2/3 (修正)
+            const blastCost = Math.floor(player.maxMp * 2 / 3);
             
             manaBlastButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-2 gap-1 mt-2 border-red-500 shadow-[0_0_10px_rgba(255,0,0,0.3)]';
             manaBlastButton.innerHTML = `
                 <div class="text-xl">💥</div>
-                <div class="text-xs font-bold text-red-100">魔力結集<br><span class="text-[10px] font-normal">消費:最大MP1/2</span></div>
+                <div class="text-xs font-bold text-red-100">魔力結集<br><span class="text-[10px] font-normal">消費:最大MP2/3</span></div>
             `;
             // MP不足時は撃てない
             manaBlastButton.disabled = battleState.turn !== 'player' || player.currentMp < blastCost;
@@ -1630,8 +1815,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function playerManaBlastTurn() {
         if (battleState.turn !== 'player') return;
         
-        // 消費コスト計算：最大MPの1/2
-        const cost = Math.floor(battleState.player.maxMp / 2);
+        // 消費コスト計算：最大MPの2/3 (修正)
+        const cost = Math.floor(battleState.player.maxMp * 2 / 3);
         
         if (battleState.player.currentMp < cost) {
             addLog("MPが足りない！");
@@ -1644,9 +1829,8 @@ document.addEventListener('DOMContentLoaded', () => {
         battleState.player.currentMp -= cost;
         
         // --- 圧倒的火力計算ロジック ---
-        // 基本威力: 消費MP * 6 (通常の魔法より遥かに高い変換効率だが、以前よりは抑制)
-        // 最大MPの半分を強制消費するので、基礎ダメージは非常に高くなる
-        let baseDamage = cost * 6; 
+        // 基本威力: 消費MP * 3 (通常の魔法より遥かに高い変換効率だが、以前よりは抑制)
+        let baseDamage = cost * 3; 
         
         // レベル補正: レベル1につき +2%
         const levelBonus = 1 + (gameData.player.level * 0.02);
@@ -2053,25 +2237,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     message = `経験値+${totalExp}, 魔法石+${totalStones}, 素材+${totalMaterials}`;
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); levelUp(); saveGame(); showScreen('dungeon-screen'); };
                     break;
+                case 'map':
+                     // マップダンジョン報酬 (Dungeonと同様の計算)
+                     let mapExp = 0, mapStones = 0, mapMaterials = 0;
+                     battleState.originalEnemies.forEach(enemy => {
+                        const potentialMultiplier = gameData.player.potentialLevel * 0.1;
+                        const baseExp = enemy.level * 10;
+                        mapExp += Math.floor(baseExp + (baseExp * potentialMultiplier));
+                        mapStones += Math.floor((enemy.level * 5 + Math.floor(Math.random() * 25)) / 4);
+                        mapMaterials += (enemy.level * 2 + Math.floor(Math.random() * 10)) * 2;
+                     });
+                     gameData.player.exp += mapExp;
+                     gameData.player.gachaStones += mapStones;
+                     gameData.player.materials += mapMaterials;
+                     message = `経験値+${mapExp}, 魔法石+${mapStones}, 素材+${mapMaterials}`;
+                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); levelUp(); saveGame(); showScreen('map-dungeon-screen'); };
+                     break;
                 case 'school':
                     const teacher = TEACHER_MASTER[battleState.teacherId];
                     const reward = teacher.reward;
                     message = '';
-                    if (reward.type === 'magic') {
-                        addMagicToInventory(reward.id);
-                        message = `新たな魔法「${MAGIC_MASTER[reward.id].name}」を習得した！`;
-                    } else {
-                        addEquipmentToInventory(reward.id);
-                        message = `新たな装備「${EQUIPMENT_MASTER[reward.id].name}」を入手した！`;
-                    }
+                    
+                    // 初回撃破チェック
                     if (!gameData.defeatedTeachers.includes(battleState.teacherId)) {
                         gameData.defeatedTeachers.push(battleState.teacherId);
-                        let mpBonus = {t001:50, t002:75, t003:100, t004:150, t005:200, t006:250}[battleState.teacherId] || 0;
+                        
+                        // 報酬付与
+                        if (reward.type === 'magic') {
+                            addMagicToInventory(reward.id);
+                            message = `初回撃破報酬！新たな魔法「${MAGIC_MASTER[reward.id].name}」を習得した！`;
+                        } else {
+                            addEquipmentToInventory(reward.id);
+                            message = `初回撃破報酬！新たな装備「${EQUIPMENT_MASTER[reward.id].name}」を入手した！`;
+                        }
+
+                        // MPボーナス
+                        let mpBonus = {t001:50, t002:75, t003:100, t004:150, t005:200, t006:250, t007:300, t008:400, t009:500, t010:1000}[battleState.teacherId] || 0;
                         if (mpBonus > 0) {
                             gameData.player.permanentMpBonus += mpBonus;
-                            message += `<br>初回勝利ボーナスとして最大MPが ${mpBonus} 増加した！`;
+                            message += `<br>さらに最大MPが ${mpBonus} 増加した！`;
                         }
+                        
+                        // ランクアップのメッセージ
+                        message += `<br>魔術師ランクが「${teacher.rankTitle}」に昇格した！`;
+
+                    } else {
+                        message = "既にこの先生には勝利しています。（報酬は初回のみ）";
                     }
+                    
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('magic-school-screen'); };
                     break;
                 case 'rift':
@@ -2086,7 +2299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             title = "敗北...";
             message = "拠地に戻された。";
-            let screenMap = {'dungeon': 'dungeon-screen', 'school': 'magic-school-screen', 'rift': 'rift-challenge-screen', 'infinite': 'infinite-tower-screen'};
+            let screenMap = {'dungeon': 'dungeon-screen', 'school': 'magic-school-screen', 'rift': 'rift-challenge-screen', 'infinite': 'infinite-tower-screen', 'map': 'map-dungeon-screen'};
             onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen(screenMap[battleState.mode]); };
         }
         
