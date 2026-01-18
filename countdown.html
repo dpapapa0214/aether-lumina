@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Multi Countdown</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-glow: rgba(56, 189, 248, 0.6);
+            --secondary-glow: rgba(168, 85, 247, 0.6);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .font-mono-custom {
+            font-family: 'Space Mono', monospace;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            color-scheme: dark;
+        }
+        
+        input:focus {
+            border-color: #38bdf8;
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .timer-card {
+            animation: slideIn 0.4s ease-out forwards;
+            cursor: pointer; /* クリック可能であることを示す */
+        }
+
+        /* ホバー時のカード拡大効果 */
+        .timer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(56, 189, 248, 0.15);
+        }
+
+        .glow-text { text-shadow: 0 0 15px var(--primary-glow); }
+        .glow-text-secondary { text-shadow: 0 0 15px var(--secondary-glow); }
+        .glow-text-finish { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        
+        /* 大画面用の強い発光 */
+        .glow-text-lg { text-shadow: 0 0 30px var(--primary-glow); }
+        .glow-text-secondary-lg { text-shadow: 0 0 30px var(--secondary-glow); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* フェードインアニメーション */
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="relative min-h-screen">
+
+    <!-- 背景エフェクト -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- メインコンテンツ -->
+    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col items-center">
+        
+        <header class="w-full flex flex-col items-center mb-10 mt-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
+                Multi Future Timer
+            </h1>
+            <p class="text-slate-400 text-sm">Create multiple countdowns for your events</p>
+        </header>
+
+        <!-- 新規作成フォーム -->
+        <div class="glass-panel w-full max-w-4xl p-6 rounded-2xl mb-10 transition-all duration-300 hover:border-cyan-500/30">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="text-xs text-cyan-300 uppercase tracking-widest font-bold mb-1 block pl-1">Event Title</label>
+                    <input type="text" id="new-title" placeholder="Ex: Project Launch, Birthday..." class="w-full p-3 rounded-xl transition-colors text-lg" maxlength="30">
+                </div>
+                <div class="w-full md:w-64">
+                    <label class="text-xs text-purple-300 uppercase tracking-widest font-bold mb-1 block pl-1">Date & Time</label>
+                    <input type="datetime-local" id="new-date" class="w-full p-3 rounded-xl transition-colors font-mono-custom">
+                </div>
+                <button id="add-btn" class="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap h-[52px]">
+                    + Add Timer
+                </button>
+            </div>
+        </div>
+
+        <!-- タイマーリスト (Grid) -->
+        <div id="timers-grid" class="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- JSでカード追加 -->
+        </div>
+
+        <!-- 空の状態 -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-slate-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-lg">No active timers.</p>
+            <p class="text-sm">Add a new event above to get started.</p>
+        </div>
+    </main>
+
+    <!-- フルスクリーン表示用オーバーレイ -->
+    <div id="fullscreen-view" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl hidden flex-col items-center justify-center animate-fade-in">
+        <!-- 閉じるボタン -->
+        <button onclick="closeFullscreen()" class="absolute top-6 right-6 p-4 group z-50">
+            <div class="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+        </button>
+
+        <div class="text-center mb-8 md:mb-16 w-full px-4">
+            <h2 id="fs-title" class="text-4xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 mb-4 tracking-tight leading-tight">Title</h2>
+            <p id="fs-date" class="text-xl md:text-2xl text-slate-400 font-mono-custom tracking-widest">Target Date</p>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4 md:gap-12 text-center w-full px-4">
+            <!-- Days -->
+            <div class="flex flex-col items-center">
+                <span id="fs-d" class="text-5xl md:text-9xl font-mono-custom font-bold text-white glow-text-lg tracking-tighter">00</span>
+                <span class="text-sm md:text-xl text-slate-500 uppercase tracking-[0.2em] mt-2 md:mt-4">Days</span>
+            </div>
+            
+            <div class="text-4xl md:text-8xl text-slate-700 font-light mt-2 hidden md:block">:</div>
+
+            <!-- Hours -->
+             <div class="flex flex-col items-center">
+                <span id="fs-h" class="text-5xl md:text-9xl font-mono-custom font-bold text-white glow-text-lg tracking-tighter">00</span>
+                <span class="text-sm md:text-xl text-slate-500 uppercase tracking-[0.2em] mt-2 md:mt-4">Hours</span>
+            </div>
+
+            <div class="text-4xl md:text-8xl text-slate-700 font-light mt-2 hidden md:block">:</div>
+
+            <!-- Minutes -->
+            <div class="flex flex-col items-center">
+                <span id="fs-m" class="text-5xl md:text-9xl font-mono-custom font-bold text-white glow-text-lg tracking-tighter">00</span>
+                <span class="text-sm md:text-xl text-slate-500 uppercase tracking-[0.2em] mt-2 md:mt-4">Minutes</span>
+            </div>
+
+            <div class="text-4xl md:text-8xl text-slate-700 font-light mt-2 hidden md:block">:</div>
+
+            <!-- Seconds -->
+            <div class="flex flex-col items-center">
+                <span id="fs-s" class="text-5xl md:text-9xl font-mono-custom font-bold text-cyan-300 glow-text-secondary-lg tracking-tighter">00</span>
+                <span class="text-sm md:text-xl text-slate-500 uppercase tracking-[0.2em] mt-2 md:mt-4">Seconds</span>
+            </div>
+        </div>
+        
+        <!-- Fullscreen Progress Bar -->
+        <div class="absolute bottom-0 left-0 w-full h-2 bg-slate-800">
+            <div id="fs-progress" class="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 transition-all duration-1000"></div>
+        </div>
+
+        <!-- Fullscreen Finished Message (Hidden by default) -->
+        <div id="fs-finish-msg" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden flex-col items-center">
+             <h2 class="text-6xl md:text-9xl font-bold text-yellow-400 glow-text-finish mb-4 animate-bounce">FINISHED!</h2>
+        </div>
+    </div>
+
+    <!-- テンプレート: タイマーカード -->
+    <template id="timer-template">
+        <div class="glass-panel rounded-3xl p-6 relative overflow-hidden group timer-card border border-white/5 hover:border-cyan-500/20 transition-all duration-300">
+            <!-- 背景の装飾光 -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl group-hover:bg-purple-500/30 transition-all"></div>
+            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl group-hover:bg-cyan-500/30 transition-all"></div>
+
+            <!-- Click Hint Overlay -->
+            <div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors z-0"></div>
+
+            <!-- ヘッダー -->
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div class="pointer-events-none"> <!-- テキスト選択防止 -->
+                    <h3 class="text-xl font-bold text-white truncate max-w-[200px] sm:max-w-[250px] title-el">Title</h3>
+                    <p class="text-xs text-slate-400 font-mono-custom mt-1 date-el">YYYY-MM-DD HH:MM</p>
+                </div>
+                <button class="delete-btn text-slate-500 hover:text-red-400 hover:bg-white/10 transition-colors p-2 rounded-full z-20" title="Delete Timer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- カウントダウン数値 -->
+            <div class="flex justify-center items-center gap-2 sm:gap-4 mb-6 relative z-10 pointer-events-none">
+                <div class="flex flex-col items-center w-14 sm:w-16">
+                    <span class="text-3xl sm:text-4xl font-mono-custom font-bold text-white val-d">00</span>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider mt-1">Days</span>
+                </div>
+                <span class="text-2xl text-slate-600 mb-4">:</span>
+                <div class="flex flex-col items-center w-14 sm:w-16">
+                    <span class="text-3xl sm:text-4xl font-mono-custom font-bold text-white val-h">00</span>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider mt-1">Hrs</span>
+                </div>
+                <span class="text-2xl text-slate-600 mb-4">:</span>
+                <div class="flex flex-col items-center w-14 sm:w-16">
+                    <span class="text-3xl sm:text-4xl font-mono-custom font-bold text-white val-m">00</span>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider mt-1">Min</span>
+                </div>
+                <span class="text-2xl text-slate-600 mb-4">:</span>
+                <div class="flex flex-col items-center w-14 sm:w-16">
+                    <span class="text-3xl sm:text-4xl font-mono-custom font-bold text-cyan-300 glow-text-secondary val-s">00</span>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider mt-1">Sec</span>
+                </div>
+            </div>
+
+            <!-- プログレスバー -->
+            <div class="relative w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden pointer-events-none z-10">
+                <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-500 to-purple-500 progress-bar" style="width: 50%"></div>
+            </div>
+            
+            <!-- 完了メッセージ (非表示) -->
+            <div class="finish-msg absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-500 z-20">
+                <div class="text-center transform scale-90 transition-transform duration-300">
+                    <h2 class="text-3xl font-bold text-yellow-400 glow-text-finish mb-1">FINISHED!</h2>
+                    <p class="text-sm text-white/80 font-mono-custom time-finished"></p>
+                </div>
+            </div>
+            
+            <!-- ヒントテキスト (右下) -->
+            <div class="absolute bottom-2 right-4 text-[10px] text-white/20 uppercase tracking-widest z-10 group-hover:text-white/40 transition-colors">
+                Click to Expand
+            </div>
+        </div>
+    </template>
+
+    <script>
+        /**
+         * ------------------------------------------------------------------
+         * パーティクル背景エフェクト (Canvas)
+         * ------------------------------------------------------------------
+         */
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let width, height;
+
+        let mouse = { x: null, y: null, radius: 150 };
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                const colors = ['rgba(56, 189, 248, ', 'rgba(168, 85, 247, ', 'rgba(232, 121, 249, ']; 
+                this.baseColor = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = Math.random() * 0.5 + 0.1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.baseColor + this.opacity + ')';
+                ctx.fill();
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < mouse.radius) {
+                    const forceDirectionX = dx / distance;
+                    const forceDirectionY = dy / distance;
+                    const force = (mouse.radius - distance) / mouse.radius;
+                    const directionX = forceDirectionX * force * 3; 
+                    const directionY = forceDirectionY * force * 3;
+                    
+                    this.x -= directionX;
+                    this.y -= directionY;
+                }
+
+                this.draw();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            let numberOfParticles = (width * height) / 9000; 
+            for (let i = 0; i < numberOfParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function connect() {
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    let distance = ((particles[a].x - particles[b].x) * (particles[a].x - particles[b].x)) + 
+                                   ((particles[a].y - particles[b].y) * (particles[a].y - particles[b].y));
+                    
+                    if (distance < (width/7) * (height/7)) {
+                        let opacityValue = 1 - (distance / 20000);
+                        if(opacityValue > 0) {
+                            ctx.strokeStyle = 'rgba(255, 255, 255,' + (opacityValue * 0.05) + ')';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[a].x, particles[a].y);
+                            ctx.lineTo(particles[b].x, particles[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        }
+
+        function animateBg() {
+            requestAnimationFrame(animateBg);
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animateBg();
+
+        /**
+         * ------------------------------------------------------------------
+         * 花火/紙吹雪エフェクト (完了時)
+         * ------------------------------------------------------------------
+         */
+        function launchConfetti() {
+            particles.forEach(p => {
+                p.baseColor = 'rgba(' + Math.floor(Math.random()*255) + ',' + Math.floor(Math.random()*255) + ',' + Math.floor(Math.random()*255) + ', ';
+                p.vx *= 8;
+                p.vy *= 8;
+            });
+
+            setTimeout(() => {
+                const colors = ['rgba(56, 189, 248, ', 'rgba(168, 85, 247, ', 'rgba(232, 121, 249, ']; 
+                particles.forEach(p => {
+                     p.baseColor = colors[Math.floor(Math.random() * colors.length)];
+                     p.vx /= 8;
+                     p.vy /= 8;
+                });
+            }, 2000);
+        }
+
+        /**
+         * ------------------------------------------------------------------
+         * マルチカウントダウン ロジック
+         * ------------------------------------------------------------------
+         */
+        // ローカルストレージから取得
+        let timers = JSON.parse(localStorage.getItem('myTimers'));
+
+        // データがない、または空の場合はデフォルトイベント(共通テスト)を追加
+        if (!timers || timers.length === 0) {
+            const defaultTarget = new Date('2027-01-16T09:30:00').getTime();
+            timers = [{
+                id: 'default-common-test',
+                title: '共通テスト',
+                targetTime: defaultTarget,
+                startTime: new Date().getTime(),
+                finished: false
+            }];
+            localStorage.setItem('myTimers', JSON.stringify(timers));
+        }
+
+        let activeFullscreenId = null; // 現在フルスクリーン表示中のタイマーID
+        
+        const newTitleInput = document.getElementById('new-title');
+        const newDateInput = document.getElementById('new-date');
+        const addBtn = document.getElementById('add-btn');
+        const timersGrid = document.getElementById('timers-grid');
+        const timerTemplate = document.getElementById('timer-template');
+        const emptyState = document.getElementById('empty-state');
+        
+        // Fullscreen Elements
+        const fullscreenView = document.getElementById('fullscreen-view');
+        const fsTitle = document.getElementById('fs-title');
+        const fsDate = document.getElementById('fs-date');
+        const fsD = document.getElementById('fs-d');
+        const fsH = document.getElementById('fs-h');
+        const fsM = document.getElementById('fs-m');
+        const fsS = document.getElementById('fs-s');
+        const fsProgress = document.getElementById('fs-progress');
+        const fsFinishMsg = document.getElementById('fs-finish-msg');
+
+        const setDefaultDate = () => {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 10);
+            const pad = (n) => n < 10 ? '0' + n : n;
+            const str = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            newDateInput.value = str;
+        };
+        setDefaultDate();
+
+        function saveTimers() {
+            localStorage.setItem('myTimers', JSON.stringify(timers));
+        }
+
+        addBtn.addEventListener('click', () => {
+            const title = newTitleInput.value.trim() || 'Untitled Event';
+            const dateStr = newDateInput.value;
+
+            if (!dateStr) {
+                alert('日時を設定してください');
+                return;
+            }
+
+            const targetTime = new Date(dateStr).getTime();
+            const now = new Date().getTime();
+
+            if (targetTime <= now) {
+                alert('未来の日時を設定してください');
+                return;
+            }
+
+            const newTimer = {
+                id: Date.now().toString(),
+                title: title,
+                targetTime: targetTime,
+                startTime: now, 
+                finished: false
+            };
+
+            timers.push(newTimer);
+            saveTimers();
+            renderTimers();
+            
+            newTitleInput.value = '';
+            setDefaultDate();
+        });
+
+        window.deleteTimer = (id) => {
+            if(confirm('このタイマーを削除しますか？')) {
+                timers = timers.filter(t => t.id !== id);
+                saveTimers();
+                renderTimers();
+                
+                // もし開いていたタイマーを削除した場合は閉じる
+                if (activeFullscreenId === id) {
+                    closeFullscreen();
+                }
+            }
+        };
+
+        // フルスクリーンを開く
+        window.openFullscreen = (id) => {
+            const timer = timers.find(t => t.id === id);
+            if (!timer) return;
+
+            activeFullscreenId = id;
+            
+            // 静的情報のセット
+            fsTitle.innerText = timer.title;
+            fsDate.innerText = new Date(timer.targetTime).toLocaleString();
+            fsFinishMsg.classList.add('hidden'); // Reset finish msg
+            fsFinishMsg.classList.remove('flex');
+
+            fullscreenView.classList.remove('hidden');
+            fullscreenView.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // 背景スクロール禁止
+            
+            // 即時更新
+            updateAllTimers();
+        };
+
+        // フルスクリーンを閉じる
+        window.closeFullscreen = () => {
+            activeFullscreenId = null;
+            fullscreenView.classList.add('hidden');
+            fullscreenView.classList.remove('flex');
+            document.body.style.overflow = ''; // スクロール復帰
+        };
+
+        function renderTimers() {
+            timersGrid.innerHTML = '';
+            
+            if (timers.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            const sortedTimers = [...timers].sort((a, b) => {
+                if (a.finished && !b.finished) return 1;
+                if (!a.finished && b.finished) return -1;
+                return a.targetTime - b.targetTime;
+            });
+
+            sortedTimers.forEach(timer => {
+                const clone = timerTemplate.content.cloneNode(true);
+                const card = clone.querySelector('.timer-card');
+                
+                card.dataset.id = timer.id;
+
+                clone.querySelector('.title-el').textContent = timer.title;
+                clone.querySelector('.date-el').textContent = new Date(timer.targetTime).toLocaleString();
+                
+                // クリックイベント (カード全体)
+                card.addEventListener('click', (e) => {
+                    // 削除ボタンをクリックした場合は遷移しない
+                    if (e.target.closest('.delete-btn')) return;
+                    openFullscreen(timer.id);
+                });
+
+                // 削除ボタン
+                const delBtn = clone.querySelector('.delete-btn');
+                delBtn.onclick = (e) => {
+                    e.stopPropagation(); // バブリング防止 (念のため)
+                    deleteTimer(timer.id);
+                };
+
+                timersGrid.appendChild(clone);
+            });
+
+            updateAllTimers();
+        }
+
+        function updateAllTimers() {
+            const now = new Date().getTime();
+
+            timers.forEach(timer => {
+                const distance = timer.targetTime - now;
+                
+                // カード要素の取得
+                const card = document.querySelector(`.timer-card[data-id="${timer.id}"]`);
+                // カードが見つからない場合でも、フルスクリーンがアクティブなら計算は必要
+
+                let days, hours, minutes, seconds;
+                let isFinished = false;
+
+                if (distance < 0) {
+                    isFinished = true;
+                    if (!timer.finished) {
+                        timer.finished = true;
+                        saveTimers();
+                        launchConfetti();
+                    }
+                    days = 0; hours = 0; minutes = 0; seconds = 0;
+                } else {
+                    days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                }
+
+                // 文字列整形
+                const dStr = days < 10 ? '0' + days : days;
+                const hStr = hours < 10 ? '0' + hours : hours;
+                const mStr = minutes < 10 ? '0' + minutes : minutes;
+                const sStr = seconds < 10 ? '0' + seconds : seconds;
+
+                // プログレス計算
+                let totalDuration = timer.targetTime - timer.startTime;
+                if(totalDuration <= 0) totalDuration = 1;
+                const elapsed = now - timer.startTime;
+                const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+
+                // --- カード表示の更新 ---
+                if (card) {
+                    const dVal = card.querySelector('.val-d');
+                    const hVal = card.querySelector('.val-h');
+                    const mVal = card.querySelector('.val-m');
+                    const sVal = card.querySelector('.val-s');
+                    const progressBar = card.querySelector('.progress-bar');
+                    const finishMsg = card.querySelector('.finish-msg');
+                    const timeFinished = card.querySelector('.time-finished');
+
+                    dVal.innerText = dStr;
+                    hVal.innerText = hStr;
+                    mVal.innerText = mStr;
+                    sVal.innerText = sStr;
+                    progressBar.style.width = `${progress}%`;
+
+                    if (isFinished) {
+                        finishMsg.classList.remove('opacity-0', 'pointer-events-none');
+                        finishMsg.querySelector('div').classList.remove('scale-90');
+                        finishMsg.querySelector('div').classList.add('scale-100');
+                        timeFinished.textContent = new Date(timer.targetTime).toLocaleString();
+                        progressBar.style.width = "100%";
+                    }
+                }
+
+                // --- フルスクリーン表示の更新 (アクティブな場合のみ) ---
+                if (activeFullscreenId === timer.id) {
+                    fsD.innerText = dStr;
+                    fsH.innerText = hStr;
+                    fsM.innerText = mStr;
+                    fsS.innerText = sStr;
+                    fsProgress.style.width = `${progress}%`;
+
+                    if (isFinished) {
+                        fsProgress.style.width = "100%";
+                        fsFinishMsg.classList.remove('hidden');
+                        fsFinishMsg.classList.add('flex');
+                        
+                        // 数字を隠すかどうかは好みだが、00を見せたままFINISHEDを出すスタイルにする
+                        // もし数字を隠したい場合はここでdisplay:none等を制御
+                    } else {
+                        fsFinishMsg.classList.add('hidden');
+                        fsFinishMsg.classList.remove('flex');
+                    }
+                }
+            });
+        }
+
+        renderTimers();
+        setInterval(updateAllTimers, 1000);
+
+    </script>
+</body>
+</html>
