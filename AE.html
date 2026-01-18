@@ -1738,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manaBlastButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-2 gap-2 col-span-2 border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.3)]';
             manaBlastButton.innerHTML = `
                 <div class="text-xl">💥</div>
-                <div class="text-xs font-bold text-red-100 text-left">魔力結集<br><span class="text-[9px] font-normal text-red-200">消費:最大MP1/2</span></div>
+                <div class="text-xs font-bold text-red-100 text-left">魔力結集<br><span class="text-[9px] font-normal text-red-200">消費:最大MP2/3</span></div>
             `;
             manaBlastButton.disabled = battleState.turn !== 'player' || player.currentMp < blastCost;
             manaBlastButton.onclick = () => playerManaBlastTurn();
