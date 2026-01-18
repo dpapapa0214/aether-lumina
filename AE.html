@@ -1917,6 +1917,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // 修正: 攻撃力上昇バフの効果を体術にも適用
+        battleState.player.effects.forEach(effect => {
+            if (effect.type === 'BUFF') {
+                const master = MAGIC_MASTER[effect.magicId];
+                if (master) powerMultiplier *= master.basePower;
+            }
+        });
+        
         if (cost > 0 && battleState.player.currentMp < cost) {
              addLog("MPが足りない！");
              return;
