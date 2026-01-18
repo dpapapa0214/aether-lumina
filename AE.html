@@ -676,6 +676,12 @@ document.addEventListener('DOMContentLoaded', () => {
         i023: { name: 'ボーンスピア', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 160, baseCost: 220, description: '【死霊術師】骨の槍で敵を貫く。' },
         i024: { name: 'デスマーチ', element: 'DARK', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 70, baseCost: 280, duration: 3, isDot: true, isAoe: true, description: '【死霊術師】死者の行進により継続ダメージを与える。' },
 
+        // Inherited Magics - c014 Heavenly Restriction (New)
+        i025: { name: '鬼神乱舞', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 0, isAoe: false, description: '【天与呪縛】肉体の限界を超えた超高速の連撃。' },
+        i026: { name: '自己再生', element: 'GRASS', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 200, baseCost: 0, description: '【天与呪縛】驚異的な代謝で傷を癒やす。' },
+        i027: { name: '金剛不壊', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 200, baseCost: 0, duration: 3, description: '【天与呪縛】鋼鉄のごとき肉体で攻撃を受け止める。' },
+        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 3, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' },
+
         // Weapon Magics (コスト調整)
         w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 180, description: '魔剣レヴァテインの呪いの一撃。' },
         w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 200, description: '雷を断ち切る神速の抜刀術。' },
@@ -700,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // New Constitutions
         c012: { name: '格闘王', type: 'PASSIVE_TAIJUTSU_POWER', value: 2.0, description: '肉体を極限まで鍛え上げた体質。体術のダメージが2倍になる。', color: 'text-orange-500' },
         c013: { name: '気の達人', type: 'PASSIVE_TAIJUTSU_COST', value: 0.5, description: '気の扱いに長けた体質。体術の消費MPが半分になる。', color: 'text-green-300' },
-        c014: { name: '天与呪縛', type: 'HEAVENLY_RESTRICTION', description: '生まれつき魔力を一切持たない代わりに、肉体が超人的に強化される。最大HP100倍、MP0固定。体術コスト0。', color: 'text-gray-500' },
+        c014: { name: '天与呪縛', type: 'HEAVENLY_RESTRICTION', magics: ['i025', 'i026', 'i027', 'i028'], description: '生まれつき魔力を一切持たない代わりに、肉体が超人的に強化される。最大HP100倍、MP0固定。体術コスト0。', color: 'text-gray-500' },
     };
     
     // 体術データ (威力調整 & 解放レベル設定)
@@ -1678,7 +1684,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. 相伝の魔法 (特殊体質: SET_MAGIC型のみ)
         if (gameData.player.constitution) {
              const constMaster = CONSTITUTION_MASTER[gameData.player.constitution];
-             if (constMaster && constMaster.type === 'SET_MAGIC') {
+             // 修正: typeがSET_MAGICでなくても、magics配列を持っていれば表示するように変更 (天与呪縛対応)
+             if (constMaster && constMaster.magics && constMaster.magics.length > 0) {
                  const title = document.createElement('div');
                  title.className = "slot-section-title col-span-4 text-center text-xs text-gray-400 mt-2 border-b border-gray-700 pb-1 mb-1";
                  title.textContent = `【${constMaster.name}】`;
@@ -1734,7 +1741,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const manaBlastButton = document.createElement('button');
         const isManaBlastUnlocked = gameData.player.level >= 100;
         if (isManaBlastUnlocked) {
-            const blastCost = Math.floor(player.maxMp / 2);
+            // 修正: 消費コスト計算を実際の処理(2/3)に合わせる
+            const blastCost = Math.floor(player.maxMp * 2 / 3);
             manaBlastButton.className = 'magic-button h-14 w-full flex flex-row items-center justify-center px-2 gap-2 col-span-2 border-red-500 shadow-[0_0_5px_rgba(255,0,0,0.3)]';
             manaBlastButton.innerHTML = `
                 <div class="text-xl">💥</div>
@@ -2648,7 +2656,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 相伝の魔法スロット (特殊体質所持時のみ表示、着脱不可)
         if (gameData.player.constitution) {
             const c = CONSTITUTION_MASTER[gameData.player.constitution];
-            if (c.type === 'SET_MAGIC' && c.magics) {
+            // 修正: type判定を削除し、magics配列の有無で判断 (天与呪縛対応)
+            if (c.magics && c.magics.length > 0) {
                 // セパレーター
                 const separator = document.createElement('div');
                 separator.className = "col-span-2 text-center text-xs text-red-300 border-b border-red-900 mt-2 mb-1";
@@ -2882,6 +2891,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getMagicCost(instance) {
         const master = MAGIC_MASTER[instance.masterId];
+        
+        // 修正: 武器魔法(category: WEAPON)は消費MP0
+        if (master.category === 'WEAPON') return 0;
+
         const costReduction = getEquipmentEffect('COST_REDUCTION');
         return Math.max(1, Math.floor(master.baseCost * (1 - costReduction)));
     }
