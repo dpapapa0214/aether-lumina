@@ -246,7 +246,7 @@
             <div>
                 <div class="flex items-baseline gap-2">
                     <span id="player-level" class="font-bold text-xl"></span>
-                    <span id="player-rank" class="text-sm text-cyan-300 font-bold"></span>
+                    <span id="player-rank" class="text-sm text-cyan-300 font-bold border border-cyan-700 px-2 rounded-full"></span>
                 </div>
                 <span id="player-potential" class="text-xs text-yellow-300"></span>
                 <div id="player-constitution" class="text-xs text-red-400 mt-1 font-bold"></div>
@@ -814,7 +814,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: '機械仕掛けの神殿', levelRange: [300, 400], enemies: ['en602', 'boss007', 'en601'], boss: 'boss009' },
     ];
     
-    // 魔術師等級名を更新 (8級~1級, 特級, 魔導王)
     const TEACHER_MASTER = {
         t001: { name: 'ルナ先生 (初級)', icon: '👩‍🏫', level: 10, baseHp: 500, baseMp: 200, magics: ['m001', 'm002', 'm004'], reward: { type: 'magic', id: 'm107' }, description: '毒魔法の基礎を教えてくれる。', rankTitle: '8級魔術師' },
         t002: { name: 'グレイ先生 (中級)', icon: '🧑‍🏫', level: 30, baseHp: 2500, baseMp: 800, magics: ['m101', 'm103', 'm106'], reward: { type: 'equipment', id: 'e203' }, description: 'MP管理の極意を教えてくれる。', rankTitle: '7級魔術師' },
@@ -884,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hp: 100,
             mp: 50,
             potentialLevel: 0,
-            gachaStones: 100,
+            gachaStones: 100, // 修正: 初期配布石を400 -> 100 (1/4)
             materials: 0,
             tomesOfSecrets: 0,
             equippedMagic: [null, null, null, null], // 修正: 8 -> 4スロットに戻す
@@ -1180,10 +1179,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
                         <li><strong class="text-white">⚔️ Dungeon (ダンジョン)</strong>: メインストーリーを進めるモード。経験値や素材を獲得。</li>
                         <li><strong class="text-white">🗺️ World Map (マップ)</strong>: 広大な大陸を探索し、エリアごとの強敵と戦います。</li>
-                        <li><strong class="text-white">🗼 Infinite Tower (無限の塔)</strong>: 1日2回挑戦可能な腕試しモード。次回は最高到達階層から<span class="text-yellow-200">スキップ</span>可能。</li>
+                        <li><strong class="text-white">🗼 Infinite Tower (無限の塔)</strong>: 1日3回挑戦可能な腕試しモード。次回は最高到達階層から<span class="text-yellow-200">スキップ</span>可能。</li>
                         <li><strong class="text-white">🌀 Rift Challenge (次元の裂け目)</strong>: 1日1回挑戦可能なボス戦。大量の報酬を獲得。</li>
                         <li><strong class="text-white">✨ Gacha (ガチャ)</strong>: 魔法石で魔法や装備を入手。500回一括召喚も可能。</li>
-                        <li><strong class="text-white">🏫 Magic School (魔法学校)</strong>: 先生と模擬戦を行い、特別な報酬を獲得。</li>
+                        <li><strong class="text-white">🏫 Magic School (魔法学校)</strong>: 先生と模擬戦を行い、特別な報酬を獲得（初回のみ）。</li>
                         <li><strong class="text-white">📖 Magic / 🛡️ Equipment</strong>: 魔法や装備の強化・編成。「覚醒」による強化も。</li>
                         <li><strong class="text-white">⚔️ PvP Arena (対戦)</strong>: 自分のデータで他プレイヤーと対戦。</li>
                     </ul>
@@ -1195,7 +1194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <li><strong class="text-white">基本ルール</strong>: ターン制コマンドバトル。HP0で敗北。</li>
                         <li><strong class="text-white">魔法攻撃</strong>: MPを消費して魔法を放ちます。</li>
                         <li><strong class="text-white">精神集中</strong>: MPを最大値の20%回復します。</li>
-                        <li><strong class="text-white">体術</strong>: 現在MPの20%を消費し、消費量×8の物理ダメージを与えます。</li>
+                        <li><strong class="text-white">体術</strong>: 現在MPの一定割合を消費し、物理ダメージを与えます。Lvに応じて新しい技が解禁されます。</li>
                         <li><strong class="text-white">魔力結集</strong>: Lv.100で解禁される必殺技。最大MPの2/3を消費し、超極大ダメージを与えます。</li>
                     </ul>
                 </section>
@@ -1203,7 +1202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <section>
                     <h3 class="text-xl font-bold border-b border-gray-600 pb-1 mt-6 text-yellow-300">4. 特殊要素</h3>
                     <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-gray-300">
-                        <li><strong class="text-white">特殊体質</strong>: ゲーム開始時（またはリセット時）に、<span class="text-red-300">10%の確率</span>で「特殊体質」を持った状態でスタートします。専用の「相伝の魔法」などが使用可能です。</li>
+                        <li><strong class="text-white">特殊体質</strong>: ゲーム開始時（またはリセット時）に、<span class="text-red-300">1%の確率</span>で「特殊体質」を持った状態でスタートします。専用の「相伝の魔法」などが使用可能です。</li>
                         <li><strong class="text-white">ポテンシャル</strong>: プレイヤーの潜在能力。レベルアップ時のステータス上昇量や、相伝魔法の威力が高くなります。</li>
                     </ul>
                 </section>
@@ -1597,7 +1596,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 battleState.teacherId = id;
             } else if (mode === 'rift') {
                 enemyMaster = ENEMY_MASTER[id];
-                enemyLevel = 150;
+                // Rift Challengeのレベル設定 (ボスIDに応じて変動)
+                // IDの末尾の数字を取得してレベルを決定する簡易ロジック
+                const bossNum = parseInt(id.replace('boss', ''));
+                if (bossNum <= 3) enemyLevel = 300 + (bossNum * 100); // 300, 400, 500
+                else if (bossNum <= 6) enemyLevel = 800 + ((bossNum-3) * 200); // 1000, 1200, 1400
+                else enemyLevel = 2000 + ((bossNum-6) * 1000); // 3000, 4000, 5000...
+                
                 battleState.riftBossId = id;
                 gameData.lastRiftChallenge = new Date().toISOString();
             }
@@ -1644,14 +1649,35 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.currentHp > 0) {
                 const enemyCard = document.createElement('div');
                 enemyCard.id = `enemy-card-${index}`;
-                enemyCard.className = 'enemy-card text-center p-2 transition-transform duration-200';
+                enemyCard.className = 'enemy-card text-center p-2 transition-transform duration-200 w-32';
+                
+                // エフェクトアイコン生成
+                let effectsHtml = '';
+                enemy.effects.forEach(e => {
+                    let icon = '';
+                    if (e.type === 'DOT') icon = '🔥';
+                    else if (e.type === 'DEBUFF') icon = '💀';
+                    else if (e.type === 'STUN') icon = '⚡';
+                    else if (e.type === 'BUFF') icon = '⚔️';
+                    effectsHtml += `<span class="text-xs bg-gray-800 rounded px-1" title="${e.type}">${icon}${e.turnsLeft}</span>`;
+                });
+
+                // シールド計算
+                const hpPercent = Math.max(0, (enemy.currentHp / enemy.maxHp) * 100);
+                const shieldPercent = Math.min(100, (enemy.shield / enemy.maxHp) * 100);
+
                 enemyCard.innerHTML = `
-                    <p class="text-lg font-bold">${enemy.name} Lv.${enemy.level}</p>
-                    <p class="text-6xl my-2">${enemy.icon}</p>
-                    <div class="w-32 h-3 bg-gray-700 rounded-full overflow-hidden border border-red-900">
-                         <div style="width: ${Math.max(0, (enemy.currentHp / enemy.maxHp) * 100)}%" class="h-full bg-red-500 transition-all duration-500"></div>
+                    <p class="text-sm font-bold truncate">${enemy.name}</p>
+                    <p class="text-4xl my-1">${enemy.icon}</p>
+                    <div class="relative w-full h-3 bg-gray-700 rounded-full overflow-hidden border border-red-900 mx-auto">
+                        <div style="width: ${hpPercent}%" class="h-full bg-red-500 transition-all duration-500"></div>
+                        <div style="width: ${shieldPercent}%" class="absolute top-0 left-0 h-full bg-cyan-400 bg-opacity-70 transition-all duration-500"></div>
                     </div>
-                    <p class="mt-1 text-xs">HP: ${enemy.currentHp} / ${enemy.maxHp}</p>
+                    <p class="text-xs mt-1 font-mono">${enemy.currentHp}/${enemy.maxHp}</p>
+                    <p class="mt-0.5 text-[10px] text-gray-400">Lv.${enemy.level}</p>
+                    <div class="flex justify-center gap-1 mt-1 min-h-[1.5rem] flex-wrap">
+                        ${effectsHtml}
+                    </div>
                 `;
                 enemiesArea.appendChild(enemyCard);
             }
@@ -1673,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player.effects.forEach(effect => {
             let icon = '';
             let master = MAGIC_MASTER[effect.magicId];
-            let title = `${master.name} (残り ${effect.turnsLeft} ターン)`;
+            let title = `${master ? master.name : effect.type} (残り ${effect.turnsLeft} ターン)`;
             switch(effect.type) {
                 case 'BUFF': icon = '⚔️'; break;
                 case 'DEFENSE': icon = '🛡️'; break;
@@ -2529,11 +2555,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('magic-school-screen'); };
                     break;
                 case 'rift':
-                    // 修正: 報酬量を調整 (石1/4, 素材2倍, 書2倍)
-                    gameData.player.gachaStones += 1250;
-                    gameData.player.materials += 5000;
-                    gameData.player.tomesOfSecrets += 10;
-                    message = `魔法石+1250, 魔力の欠片+5000, 秘伝の書+10 を獲得！`;
+                    // 修正: 敵の強さ(ID番号)に応じて報酬を大幅に増加
+                    const bossNum = parseInt(battleState.riftBossId.replace('boss', '')) || 1;
+                    
+                    // 報酬計算
+                    // 魔法石: 基礎1000 + (500 * IDの2乗) -> 後半ほど爆発的に増える
+                    // 素材: 5000 * ID
+                    // 秘伝の書: 10 * ID
+                    const rStones = 1000 + (500 * bossNum * bossNum);
+                    const rMaterials = 5000 * bossNum;
+                    const rTomes = 10 * bossNum;
+
+                    gameData.player.gachaStones += rStones;
+                    gameData.player.materials += rMaterials;
+                    gameData.player.tomesOfSecrets += rTomes;
+
+                    message = `魔法石+${rStones}, 魔力の欠片+${rMaterials}, 秘伝の書+${rTomes} を獲得！`;
                     onConfirm = () => { dom.modalContainer.classList.add('hidden'); saveGame(); showScreen('rift-challenge-screen'); };
                     break;
             }
