@@ -640,6 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
         m317: { name: 'ライトニング・バインド', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 150, duration: 3, description: '雷の鎖で敵を拘束し、3ターン行動不能にする。' },
         m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 120, duration: 2, description: '大地の檻で敵を閉じ込め、2ターン行動不能にする。' },
         m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 130, duration: 2, description: '氷の棺で敵を凍結させ、2ターン行動不能にする。' },
+        m320: { name: 'ジャッジメント・チェーン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 400, duration: 3, isAoe: true, description: '聖なる鎖で敵全体を拘束し、1ターン行動不能にする。' }, // 新規追加
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
@@ -2891,7 +2892,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (master.rarity === 'SPECIAL') materialCost *= 3.0; // 相伝魔法のコストは高め
 
         let tomeCost = 0;
-        if (nextLevel % 10 === 0) {
+        // 修正: 相伝魔法(INHERITED)の場合は秘伝の書を不要にする
+        if (nextLevel % 10 === 0 && master.category !== 'INHERITED') {
             tomeCost = 1 + Math.floor(instance.level / 10);
         }
 
@@ -2939,7 +2941,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let bonusPerAwakening = { 'NORMAL': 0.05, 'RARE': 0.10, 'EPIC': 0.50, 'LEGENDARY': 1.00, 'SPECIAL': 1.50 }[master.rarity] || 0;
         const awakeningBonus = 1 + instance.awakening * bonusPerAwakening;
         const level = instance.level || 1; 
-        let power = Math.floor(master.basePower * (1 + level * 0.1) * awakeningBonus);
+        
+        // 修正: レベルアップによる威力上昇幅を3倍に変更 (0.1 -> 0.3)
+        let power = Math.floor(master.basePower * (1 + level * 0.3) * awakeningBonus);
 
         // 相伝魔法の場合、ポテンシャルボーナスを適用
         if (master.category === 'INHERITED') {
@@ -3093,7 +3097,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveGame();
         }
 
-        const maxAttempts = 2;
+        // 修正: 挑戦回数を1日3回に変更
+        const maxAttempts = 3;
         const currentAttempts = gameData.infiniteTower.dailyAttempts || 0;
         const remaining = Math.max(0, maxAttempts - currentAttempts);
 
