@@ -573,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
         BUFF: '強化',
         DEFENSE: '防御',
         DEBUFF: '弱体',
+        STUN: 'スタン', // 追加
     };
     
     // マスターデータ
@@ -595,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
         m102: { name: 'フレイムランス', element: 'FIRE', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 30, baseCost: 15, description: '炎の槍を突き刺す。' },
         m103: { name: 'サンダーボルト', element: 'THUNDER', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 28, baseCost: 14, description: '雷を落とす。' },
         m104: { name: 'リジェネレーション', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 15, baseCost: 20, duration: 3, description: '3ターンの間、HPが徐々に回復する。' },
-        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', category: 'NORMAL', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 3, description: '3ターンの間、ダメージが20%増加する。' },
+        m105: { name: 'ヘイスト', element: 'WIND', rarity: 'RARE', category: 'NORMAL', type: 'BUFF', basePower: 1.2, baseCost: 18, duration: 5, description: '5ターンの間、ダメージが20%増加する。' }, // 3->5
         m106: { name: 'アクアバリア', element: 'WATER', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 30, baseCost: 15, duration: 3, description: '水の障壁で身を守る。' },
         m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 3, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
         m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 2, description: '2ターンの間、強固な土の壁で身を守る。' },
@@ -613,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
         m208: { name: 'ドレインソウル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 65, baseCost: 40, drain: 0.3, description: '敵にダメージを与え、そのダメージの30%を吸収してHPを回復する。' },
         m209: { name: 'プラズマフィールド', element: 'THUNDER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 25, baseCost: 38, duration: 3, isDot: true, isAoe: true, description: '3ターンの間、プラズマフィールドで敵全体に継続ダメージを与える。' },
         m210: { name: 'アースクエイク', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 100, baseCost: 55, isAoe: true, description: '大地震で敵全体にダメージを与える。' },
-        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', category: 'NORMAL', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 3, description: '3ターンの間、攻撃力を30%増加させる。' },
+        m211: { name: 'エンジェルブレス', element: 'LIGHT', rarity: 'EPIC', category: 'NORMAL', type: 'BUFF', basePower: 1.3, baseCost: 40, duration: 5, description: '5ターンの間、攻撃力を30%増加させる。' }, // 3->5
         m212: { name: 'ヴォイドテンタクル', element: 'VOID', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 70, baseCost: 42, duration: 2, description: '虚無の触手で攻撃し、2ターンの間、敵の行動を封じることがある。' },
         m213: { name: 'ブリザード', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 80, baseCost: 50, isAoe: true, description: '激しい吹雪で敵全体を凍てつかせる。' },
         m214: { name: 'フレア', element: 'FIRE', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 120, baseCost: 60, description: '爆発的な炎で大ダメージを与える。' },
@@ -630,11 +631,15 @@ document.addEventListener('DOMContentLoaded', () => {
         m309: { name: 'スーパーノヴァ', element: 'FIRE', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 500, baseCost: 720, isAoe: true, description: '超新星爆発を敵全体に引き起こす究極の炎魔法。' },
         m310: { name: '時空の裂け目', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 300, baseCost: 440, duration: 3, isDot: true, description: '時空を歪め、3ターンの間、敵に継続的な次元ダメージを与える。' },
         m311: { name: 'ゼウスの審判', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 480, baseCost: 640, isAoe: true, description: '天から神の雷を召喚し、敵全体を焼き払う。' },
-        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 3, description: '3ターンの間、魔法威力を100%増加させる。' },
+        m312: { name: 'アルケインオーバードライブ', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'BUFF', basePower: 2.0, baseCost: 600, duration: 5, description: '5ターンの間、魔法威力を100%増加させる。' }, // 3->5
         m313: { name: 'アポカリプス', element: 'VOID', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 200, baseCost: 600, duration: 3, isDot: true, isAoe: true, description: '終末の刻印を敵全体に刻み、3ターンの間、甚大な継続ダメージを与える。'},
         m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
         m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
         m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
+        // New Stun Magics (Updated duration)
+        m317: { name: 'ライトニング・バインド', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 150, duration: 3, description: '雷の鎖で敵を拘束し、3ターン行動不能にする。' },
+        m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 120, duration: 2, description: '大地の檻で敵を閉じ込め、2ターン行動不能にする。' },
+        m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 130, duration: 2, description: '氷の棺で敵を凍結させ、2ターン行動不能にする。' },
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
@@ -647,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
         i004: { name: 'エンシェントメテオ', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 400, isAoe: true, description: '【竜の血脈】古の隕石魔法。' },
 
         // Inherited Magics - c002 Void Walker (コスト調整)
-        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 3, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' },
+        i005: { name: '虚空の歩法', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.5, baseCost: 140, duration: 5, description: '【虚無の器】次元を滑り、回避と攻撃力を高める。' }, // 3->5
         i006: { name: 'エントロピー', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 20, baseCost: 100, duration: 5, isDot: true, description: '【虚無の器】対象を徐々に崩壊させる。' },
         i007: { name: 'ブラックホール', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 350, isAoe: true, description: '【虚無の器】全てを飲み込む闇。' },
         i008: { name: '無への回帰', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 100, baseCost: 180, drain: 0.5, description: '【虚無の器】存在を喰らいHPを回復する。' },
@@ -661,13 +666,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Inherited Magics - c008 Storm Avatar (コスト調整)
         i013: { name: '雷神の鉄槌', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 60, baseCost: 120, description: '【嵐の化身】神速の雷撃。' },
         i014: { name: 'テンペスト', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 50, baseCost: 140, isAoe: true, description: '【嵐の化身】全てを吹き飛ばす暴風雨。' },
-        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 3, description: '【嵐の化身】風を纏い、3ターンの間攻撃力を40%上昇させる。' },
+        i015: { name: '風神の加護', element: 'WIND', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 160, duration: 5, description: '【嵐の化身】風を纏い、5ターンの間攻撃力を40%上昇させる。' }, // 3->5
         i016: { name: 'ボルトチェイン', element: 'THUNDER', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 40, baseCost: 140, duration: 3, isDot: true, isAoe: true, description: '【嵐の化身】連鎖する雷で敵全体に継続ダメージを与える。' },
 
         // Inherited Magics - c009 Light Saintess (コスト調整)
         i017: { name: 'セイクリッドヒール', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 120, baseCost: 200, description: '【光の聖女】聖なる光でHPを大きく回復する。' },
         i018: { name: 'ディバインシールド', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 80, baseCost: 150, duration: 3, description: '【光の聖女】神聖な盾で身を守る。' },
-        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 3, description: '【光の聖女】天使の歌声で攻撃力を高める。' },
+        i019: { name: 'エンジェルソング', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 1.4, baseCost: 180, duration: 5, description: '【光の聖女】天使の歌声で攻撃力を高める。' }, // 3->5
         i020: { name: 'ジャッジメントレイ', element: 'LIGHT', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 220, baseCost: 300, description: '【光の聖女】邪悪を滅ぼす裁きの光。' },
 
         // Inherited Magics - c010 Dark Necromancer (コスト調整)
@@ -680,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         i025: { name: '鬼神乱舞', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 0, isAoe: false, description: '【天与呪縛】肉体の限界を超えた超高速の連撃。' },
         i026: { name: '自己再生', element: 'GRASS', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 200, baseCost: 0, description: '【天与呪縛】驚異的な代謝で傷を癒やす。' },
         i027: { name: '金剛不壊', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 200, baseCost: 0, duration: 3, description: '【天与呪縛】鋼鉄のごとき肉体で攻撃を受け止める。' },
-        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 5, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' },
+        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 7, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' }, // 5->7
 
         // Weapon Magics (コスト調整)
         w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 180, description: '魔剣レヴァテインの呪いの一撃。' },
@@ -707,6 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
         c012: { name: '格闘王', type: 'PASSIVE_TAIJUTSU_POWER', value: 2.0, description: '肉体を極限まで鍛え上げた体質。体術のダメージが2倍になる。', color: 'text-orange-500' },
         c013: { name: '気の達人', type: 'PASSIVE_TAIJUTSU_COST', value: 0.5, description: '気の扱いに長けた体質。体術の消費MPが半分になる。', color: 'text-green-300' },
         c014: { name: '天与呪縛', type: 'HEAVENLY_RESTRICTION', magics: ['i025', 'i026', 'i027', 'i028'], description: '生まれつき魔力を一切持たない代わりに、肉体が超人的に強化される。最大HP100倍、MP0固定。体術コスト0。', color: 'text-gray-500' },
+        c015: { name: '魔導の器', type: 'PASSIVE_MP_DOUBLE', description: '規格外の魔力容量を持つ体質。最大MPが2倍になる。', color: 'text-blue-500' },
     };
     
     // 体術データ (威力調整 & 解放レベル設定)
@@ -996,8 +1002,8 @@ document.addEventListener('DOMContentLoaded', () => {
             gameData = JSON.parse(JSON.stringify(defaultGameData));
             gameData.player.potentialLevel = Math.floor(Math.random() * 120) + 1;
             
-            // 初期体質の抽選 (10%の確率で最初から発現)
-            if (Math.random() < 0.1) {
+            // 初期体質の抽選 (1%の確率で最初から発現 - 修正)
+            if (Math.random() < 0.01) {
                 const constitutions = Object.keys(CONSTITUTION_MASTER);
                 const randomConst = constitutions[Math.floor(Math.random() * constitutions.length)];
                 gameData.player.constitution = randomConst;
@@ -1370,7 +1376,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let baseMp = 50 + (gameData.player.level - 1) * 5 + (gameData.player.permanentMpBonus || 0);
         const mpBoost = getEquipmentEffect('MP') + getEquipmentEffect('ALL');
-        return Math.floor(baseMp * (1 + mpBoost));
+        let maxMp = Math.floor(baseMp * (1 + mpBoost));
+
+        // 魔導の器: MP2倍
+        if (gameData.player.constitution && CONSTITUTION_MASTER[gameData.player.constitution].type === 'PASSIVE_MP_DOUBLE') {
+             maxMp *= 2;
+        }
+        return maxMp;
     }
 
     function getMaxMagicSlots() {
@@ -2086,8 +2098,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 修正: DEBUFFかつ単体対象の場合もターゲット選択モードに移行するように変更
-        if ((magicMaster.type === 'ATTACK' || magicMaster.type === 'DEBUFF') && !magicMaster.isAoe) {
+        // 修正: DEBUFF, STUN かつ単体対象の場合もターゲット選択モードに移行するように変更
+        if ((magicMaster.type === 'ATTACK' || magicMaster.type === 'DEBUFF' || magicMaster.type === 'STUN') && !magicMaster.isAoe) {
             enterTargetingMode(magicInstance);
         } else {
             executePlayerAction(magicInstance, -1); // -1 for no specific target (AoE or non-attack)
@@ -2179,6 +2191,15 @@ document.addEventListener('DOMContentLoaded', () => {
              return;
         }
 
+        // 修正: スタンチェック (行動不能)
+        const isStunned = enemy.effects.some(e => e.type === 'STUN');
+        if (isStunned) {
+            addLog(`${enemy.name}はスタンしていて動けない！`);
+            updateBattleUI();
+            setTimeout(() => processSingleEnemyTurn(enemyIndex + 1), 1000);
+            return;
+        }
+
         const availableMagics = enemy.magics.filter(id => {
             const instance = { masterId: id, level: enemy.level, awakening: 0 };
             return getMagicCost(instance) <= enemy.currentMp;
@@ -2192,10 +2213,27 @@ document.addEventListener('DOMContentLoaded', () => {
             
             enemy.currentMp -= cost;
             addLog(`${enemy.name} は ${magicMaster.name} を使った！`);
+            
+            // 敵の攻撃力倍増 (魔法) - ボス以外
+            if (!enemy.isBoss && magicMaster.type === 'ATTACK') {
+                // applyMagicEffect内部で計算されるが、敵側のロジックに介入するのは複雑なため
+                // ここで呼び出す際に一時的に補正する方法もあるが、applyMagicEffect内で敵かどうか判定して補正するのが安全。
+                // ただし applyMagicEffect は汎用なので、今回は引数で調整できない。
+                // 仕方ないので、applyMagicEffect内で敵判定を追加して補正する形をとるか、
+                // あるいはここで effect 適用後にダメージログが出るので、表示上の整合性が...
+                // -> applyMagicEffect の方を修正します。
+            }
+            
             applyMagicEffect(magicInstance, enemy, battleState.player);
         } else {
             addLog(`${enemy.name} の通常攻撃！`);
-            const damage = Math.floor(enemy.level * 2 * (Math.random() * 0.4 + 0.8));
+            let damage = Math.floor(enemy.level * 2 * (Math.random() * 0.4 + 0.8));
+            
+            // 修正: 雑魚敵の通常攻撃力2倍
+            if (!enemy.isBoss) {
+                damage *= 2;
+            }
+            
             takeDamage(battleState.player, damage);
         }
         
@@ -2228,6 +2266,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const bonus = CONSTITUTION_MASTER[gameData.player.constitution].value;
                     powerMultiplier *= (1 + bonus);
                 }
+            }
+        } else {
+            // 修正: 敵（雑魚）の魔法攻撃力2倍
+            if (caster !== battleState.player && !caster.isBoss && master.type === 'ATTACK') {
+                powerMultiplier *= 2;
             }
         }
         
@@ -2274,18 +2317,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         addLog(`HPが ${healedAmount} 回復した。`);
                     }
                     if(master.isDot){
-                        t.effects.push({ magicId: magicInstance.masterId, type: 'DOT', power: finalTargetPower, turnsLeft: master.duration });
+                        // 修正: ターン数+1
+                        t.effects.push({ magicId: magicInstance.masterId, type: 'DOT', power: finalTargetPower, turnsLeft: master.duration + 1 });
                     }
                     break;
                 case 'DEBUFF':
-                     t.effects.push({ magicId: magicInstance.masterId, type: master.type, turnsLeft: master.duration });
+                     // 修正: ターン数+1
+                     t.effects.push({ magicId: magicInstance.masterId, type: master.type, turnsLeft: master.duration + 1 });
                      // 追加: デバフ付与時のログ
                      addLog(`${t.name || '敵'}に${master.name}の効果を与えた！`);
+                    break;
+                case 'STUN': // 追加: スタン処理
+                     t.effects.push({ magicId: magicInstance.masterId, type: 'STUN', turnsLeft: master.duration + 1 });
+                     addLog(`${t.name || '敵'}をスタンさせた！`);
                     break;
             }
         };
 
-        if (master.type === 'ATTACK' || master.type === 'DEBUFF') {
+        if (master.type === 'ATTACK' || master.type === 'DEBUFF' || master.type === 'STUN') { // STUN追加
             if (master.isAoe) {
                 const targets = caster === battleState.player ? battleState.enemies : [battleState.player];
                 targets.forEach(applyToTarget);
@@ -2303,18 +2352,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         addLog(`${caster.name || 'プレイヤー'}のHPが ${finalPower} 回復した。`);
                     }
                     if (master.duration) {
-                        caster.effects.push({ magicId: magicInstance.masterId, type: 'HEAL', power: finalPower, turnsLeft: master.duration });
+                        // 修正: ターン数+1
+                        caster.effects.push({ magicId: magicInstance.masterId, type: 'HEAL', power: finalPower, turnsLeft: master.duration + 1 });
                     }
                     break;
                 case 'DEFENSE':
                     caster.shield += finalPower;
                     if (master.duration) {
-                        caster.effects.push({ magicId: magicInstance.masterId, type: 'DEFENSE', power: finalPower, turnsLeft: master.duration });
+                        // 修正: ターン数+1
+                        caster.effects.push({ magicId: magicInstance.masterId, type: 'DEFENSE', power: finalPower, turnsLeft: master.duration + 1 });
                     }
                     break;
                 case 'BUFF':
                     const type = master.masterId === 'b001' ? 'STUN' : master.type; // タイムストップ
-                    caster.effects.push({ magicId: magicInstance.masterId, type: type, turnsLeft: master.duration });
+                    // 修正: ターン数+1
+                    caster.effects.push({ magicId: magicInstance.masterId, type: type, turnsLeft: master.duration + 1 });
                     addLog(`${caster.name || 'プレイヤー'}の攻撃力が ${Math.round((master.basePower - 1) * 100)}% 増加した！`);
                     break;
             }
