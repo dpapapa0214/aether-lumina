@@ -246,7 +246,7 @@
             <div>
                 <div class="flex items-baseline gap-2">
                     <span id="player-level" class="font-bold text-xl"></span>
-                    <span id="player-rank" class="text-sm text-cyan-300 font-bold border border-cyan-700 px-2 rounded-full"></span>
+                    <span id="player-rank" class="text-sm text-cyan-300 font-bold"></span>
                 </div>
                 <span id="player-potential" class="text-xs text-yellow-300"></span>
                 <div id="player-constitution" class="text-xs text-red-400 mt-1 font-bold"></div>
@@ -404,7 +404,6 @@
                         <div id="player-effects" class="flex justify-center gap-2 mt-2 h-6"></div>
                     </div>
 
-                    <!-- 魔法ボタンエリア (grid-cols-4に変更) -->
                     <div id="magic-slots" class="grid grid-cols-4 gap-1 w-full max-w-4xl px-1"></div>
                     
                     <div id="battle-controls" class="mt-4"></div>
@@ -573,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         BUFF: '強化',
         DEFENSE: '防御',
         DEBUFF: '弱体',
-        STUN: 'スタン', // 追加
+        STUN: 'スタン',
     };
     
     // マスターデータ
@@ -686,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         i025: { name: '鬼神乱舞', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 0, isAoe: false, description: '【天与呪縛】肉体の限界を超えた超高速の連撃。' },
         i026: { name: '自己再生', element: 'GRASS', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 200, baseCost: 0, description: '【天与呪縛】驚異的な代謝で傷を癒やす。' },
         i027: { name: '金剛不壊', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 200, baseCost: 0, duration: 3, description: '【天与呪縛】鋼鉄のごとき肉体で攻撃を受け止める。' },
-        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 7, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' },
+        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 7, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' }, // 5->7
 
         // Inherited Magics - c016 Last Light (New)
         i029: { name: 'ヴォイド・ブレイク', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 400, isShieldBreak: true, description: '【末光】敵のシールドを強制的に破壊し、ダメージを与える。' },
@@ -694,7 +693,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Weapon Magics (コスト調整 - MP0)
         w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 0, description: '魔剣レヴァテインの呪いの一撃。' },
-        w006: { name: '流星雨', element: 'WIND', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 220, baseCost: 300, isAoe: true, description: '神弓アルテミスから放たれる無数の光矢。' },
+        w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 0, description: '雷を断ち切る神速の抜刀術。' },
+        w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 0, isAoe: true, description: '約束された勝利の剣による極大の光。' },
+        w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 0, duration: 3, description: '神の杖による癒しと活性化の波動。' },
+        w005: { name: '魂切り', element: 'DARK', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 250, baseCost: 0, drain: 0.5, description: '妖刀ムラマサによる、魂を喰らう一撃。' },
+        w006: { name: '流星雨', element: 'WIND', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 220, baseCost: 0, isAoe: true, description: '神弓アルテミスから放たれる無数の光矢。' },
+
+        // Enemy Unique Skills (Shields)
+        e_sh01: { name: 'アイアン・シェル', element: 'EARTH', rarity: 'EPIC', category: 'ENEMY_SKILL', type: 'DEFENSE', basePower: 0.2, baseCost: 0, duration: 3, description: '強固な殻に籠もり、最大HPの20%分のシールドを展開する。' },
+        e_sh02: { name: 'ディバイン・ウォール', element: 'LIGHT', rarity: 'LEGENDARY', category: 'ENEMY_SKILL', type: 'DEFENSE', basePower: 0.4, baseCost: 0, duration: 5, description: '神聖な壁を展開し、最大HPの40%分のシールドを得る。' },
     };
 
     const CONSTITUTION_MASTER = {
@@ -775,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Mid Level Enemies
         en401: { name: 'ヘルハウンド', icon: '🐕‍🦺', rarity: 'EPIC', baseHp: 800, baseMp: 200, magics: ['m102', 'm008'] },
-        en402: { name: 'サイクロプス', icon: '👁️', rarity: 'EPIC', baseHp: 1200, baseMp: 100, magics: ['m006', 'm210'] },
+        en402: { name: 'サイクロプス', icon: '👁️', rarity: 'EPIC', baseHp: 1200, baseMp: 100, magics: ['m006', 'm210', 'e_sh01'] }, // e_sh01追加
         en403: { name: 'エンシェントドラゴン', icon: '🐲', rarity: 'LEGENDARY', baseHp: 8000, baseMp: 2000, magics: ['m302', 'm308', 'i001'] },
         
         // High Level Enemies
@@ -783,19 +790,19 @@ document.addEventListener('DOMContentLoaded', () => {
         en502: { name: 'スルト', icon: '🔥', rarity: 'LEGENDARY', baseHp: 60000, baseMp: 6000, magics: ['m309', 'm202', 'w001'] },
         
         // Ultra High Level Enemies
-        en601: { name: 'カオス・キメラ', icon: '🦁', rarity: 'LEGENDARY', baseHp: 80000, baseMp: 8000, magics: ['m202', 'm205', 'i006'] },
+        en601: { name: 'カオス・キメラ', icon: '🦁', rarity: 'LEGENDARY', baseHp: 80000, baseMp: 8000, magics: ['m202', 'm205', 'i006', 'e_sh01'] }, // e_sh01追加
         en602: { name: 'ヴォイド・ロード', icon: '🌑', rarity: 'LEGENDARY', baseHp: 100000, baseMp: 12000, magics: ['i007', 'i008', 'm310'] },
         
         // Bosses (HP大幅増量: 約100倍に強化)
         boss001: { name: 'クロノス', icon: '⏳', rarity: 'LEGENDARY', baseHp: 5000000, baseMp: 50000, magics: ['b001', 'b002', 'm310'], isBoss: true },
         boss002: { name: 'ニャルラトホテプ', icon: '🐙', rarity: 'LEGENDARY', baseHp: 7500000, baseMp: 75000, magics: ['m303', 'm305', 'm212'], isBoss: true },
-        boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 10000000, baseMp: 80000, magics: ['m308', 'm210', 'm108'], isBoss: true },
-        boss004: { name: 'リヴァイアサン', icon: '🐋', rarity: 'LEGENDARY', baseHp: 15000000, baseMp: 100000, magics: ['m307', 'i012', 'm201'], isBoss: true },
+        boss003: { name: 'テラ・タイタン', icon: '🌳', rarity: 'LEGENDARY', baseHp: 10000000, baseMp: 80000, magics: ['m308', 'm210', 'm108', 'e_sh01'], isBoss: true }, // e_sh01追加
+        boss004: { name: 'リヴァイアサン', icon: '🐋', rarity: 'LEGENDARY', baseHp: 15000000, baseMp: 100000, magics: ['m307', 'i012', 'm201', 'e_sh02'], isBoss: true }, // e_sh02追加
         boss005: { name: 'バハムート', icon: '🦖', rarity: 'LEGENDARY', baseHp: 20000000, baseMp: 125000, magics: ['m309', 'i004', 'm312'], isBoss: true },
         boss006: { name: 'アザトース', icon: '🌌', rarity: 'LEGENDARY', baseHp: 99999999, baseMp: 500000, magics: ['i007', 'i008', 'm305', 'm313'], isBoss: true },
         boss007: { name: '終焉を齎すもの', icon: 'Ω', rarity: 'LEGENDARY', baseHp: 200000000, baseMp: 1000000, magics: ['b001', 'b002', 'm305', 'm307'], isBoss: true },
-        boss008: { name: '原初の混沌', icon: '🌀', rarity: 'LEGENDARY', baseHp: 350000000, baseMp: 2500000, magics: ['m305', 'm313', 'b002'], isBoss: true },
-        boss009: { name: 'デウス・エクス・マキナ', icon: '⚙️', rarity: 'LEGENDARY', baseHp: 500000000, baseMp: 5000000, magics: ['m311', 'b001', 'm307'], isBoss: true },
+        boss008: { name: '原初の混沌', icon: '🌀', rarity: 'LEGENDARY', baseHp: 350000000, baseMp: 2500000, magics: ['m305', 'm313', 'b002', 'e_sh02'], isBoss: true }, // e_sh02追加
+        boss009: { name: 'デウス・エクス・マキナ', icon: '⚙️', rarity: 'LEGENDARY', baseHp: 500000000, baseMp: 5000000, magics: ['m311', 'b001', 'm307', 'e_sh02'], isBoss: true }, // e_sh02追加
     };
     
     const DUNGEON_MASTER = [
@@ -1674,7 +1681,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="width: ${hpPercent}%" class="h-full bg-red-500 transition-all duration-500"></div>
                         <div style="width: ${shieldPercent}%" class="absolute top-0 left-0 h-full bg-cyan-400 bg-opacity-70 transition-all duration-500"></div>
                     </div>
-                    <p class="text-xs mt-1 font-mono">${enemy.currentHp}/${enemy.maxHp}</p>
+                    <p class="text-xs mt-1 font-mono">
+                        ${enemy.currentHp}/${enemy.maxHp}
+                        ${enemy.shield > 0 ? `<span class="text-cyan-300 ml-1 font-bold">[${enemy.shield}]</span>` : ''}
+                    </p>
                     <p class="mt-0.5 text-[10px] text-gray-400">Lv.${enemy.level}</p>
                     <div class="flex justify-center gap-1 mt-1 min-h-[1.5rem] flex-wrap">
                         ${effectsHtml}
@@ -2307,6 +2317,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (caster === battleState.player && (master.type === 'ATTACK' || master.type === 'HEAL' || master.type === 'DEFENSE')) {
             const levelBonus = 1 + (gameData.player.level / 100);
             finalPower = Math.floor(finalPower * levelBonus);
+        }
+
+        // 修正: 敵専用シールドスキルの計算 (HP割合)
+        if (master.category === 'ENEMY_SKILL' && master.type === 'DEFENSE') {
+            finalPower = Math.floor(caster.maxHp * master.basePower);
         }
 
         const applyToTarget = (t) => {
@@ -3376,7 +3391,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (master.rarity === 'SPECIAL') materialCost *= 3.0; // 相伝魔法のコストは高め
 
         let tomeCost = 0;
-        if (nextLevel % 10 === 0) {
+        // 修正: 相伝魔法(INHERITED)の場合は秘伝の書を不要にする
+        if (nextLevel % 10 === 0 && master.category !== 'INHERITED') {
             tomeCost = 1 + Math.floor(instance.level / 10);
         }
 
