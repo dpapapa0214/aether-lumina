@@ -636,11 +636,11 @@ document.addEventListener('DOMContentLoaded', () => {
         m314: { name: 'スターダスト・レイン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 420, baseCost: 550, isAoe: true, description: '降り注ぐ星の雨で敵全体を浄化する。' },
         m315: { name: 'アブソリュート・ゼロ', element: 'WATER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'DEBUFF', basePower: 0.2, baseCost: 500, duration: 2, description: '絶対零度で敵を凍結させ、攻撃力を激減させる。' },
         m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
-        // New Stun Magics (Updated duration)
-        m317: { name: 'ライトニング・バインド', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 150, duration: 3, description: '雷の鎖で敵を拘束し、3ターン行動不能にする。' },
-        m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 120, duration: 2, description: '大地の檻で敵を閉じ込め、2ターン行動不能にする。' },
-        m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 130, duration: 2, description: '氷の棺で敵を凍結させ、2ターン行動不能にする。' },
-        m320: { name: 'ジャッジメント・チェーン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 400, duration: 3, isAoe: true, description: '聖なる鎖で敵全体を拘束し、3ターン行動不能にする。' }, // 新規追加
+        // New Stun Magics (Updated duration & Cost x50)
+        m317: { name: 'ライトニング・バインド', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 7500, duration: 3, description: '雷の鎖で敵を拘束し、3ターン行動不能にする。' },
+        m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6000, duration: 2, description: '大地の檻で敵を閉じ込め、2ターン行動不能にする。' },
+        m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6500, duration: 2, description: '氷の棺で敵を凍結させ、2ターン行動不能にする。' },
+        m320: { name: 'ジャッジメント・チェーン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 20000, duration: 1, isAoe: true, description: '聖なる鎖で敵全体を拘束し、1ターン行動不能にする。' }, 
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
@@ -686,14 +686,14 @@ document.addEventListener('DOMContentLoaded', () => {
         i025: { name: '鬼神乱舞', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 300, baseCost: 0, isAoe: false, description: '【天与呪縛】肉体の限界を超えた超高速の連撃。' },
         i026: { name: '自己再生', element: 'GRASS', rarity: 'SPECIAL', category: 'INHERITED', type: 'HEAL', basePower: 200, baseCost: 0, description: '【天与呪縛】驚異的な代謝で傷を癒やす。' },
         i027: { name: '金剛不壊', element: 'EARTH', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEFENSE', basePower: 200, baseCost: 0, duration: 3, description: '【天与呪縛】鋼鉄のごとき肉体で攻撃を受け止める。' },
-        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 7, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' }, // 5->7
+        i028: { name: 'リミッター解除', element: 'FIRE', rarity: 'SPECIAL', category: 'INHERITED', type: 'BUFF', basePower: 2.0, baseCost: 0, duration: 7, description: '【天与呪縛】脳のリミッターを外し、攻撃力を倍増させる。' },
 
-        // Weapon Magics (コスト調整)
-        w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 180, description: '魔剣レヴァテインの呪いの一撃。' },
-        w002: { name: '雷切', element: 'THUNDER', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 200, baseCost: 200, description: '雷を断ち切る神速の抜刀術。' },
-        w003: { name: 'エクスカリバー', element: 'LIGHT', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 300, baseCost: 350, isAoe: true, description: '約束された勝利の剣による極大の光。' },
-        w004: { name: 'カドゥケウス', element: 'NEUTRAL', rarity: 'LEGENDARY', category: 'WEAPON', type: 'HEAL', basePower: 150, baseCost: 280, duration: 3, description: '神の杖による癒しと活性化の波動。' },
-        w005: { name: '魂切り', element: 'DARK', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 250, baseCost: 250, drain: 0.5, description: '妖刀ムラマサによる、魂を喰らう一撃。' },
+        // Inherited Magics - c016 Last Light (New)
+        i029: { name: 'ヴォイド・ブレイク', element: 'VOID', rarity: 'SPECIAL', category: 'INHERITED', type: 'ATTACK', basePower: 150, baseCost: 400, isShieldBreak: true, description: '【末光】敵のシールドを強制的に破壊し、ダメージを与える。' },
+        i030: { name: 'ゼロ・リセット', element: 'NEUTRAL', rarity: 'SPECIAL', category: 'INHERITED', type: 'DEBUFF', basePower: 0, baseCost: 300, isDispel: true, description: '【末光】敵にかかっている全ての強化効果（バフ）を打ち消す。' },
+
+        // Weapon Magics (コスト調整 - MP0)
+        w001: { name: '災いの炎', element: 'DARK', rarity: 'EPIC', category: 'WEAPON', type: 'ATTACK', basePower: 150, baseCost: 0, description: '魔剣レヴァテインの呪いの一撃。' },
         w006: { name: '流星雨', element: 'WIND', rarity: 'LEGENDARY', category: 'WEAPON', type: 'ATTACK', basePower: 220, baseCost: 300, isAoe: true, description: '神弓アルテミスから放たれる無数の光矢。' },
     };
 
@@ -714,6 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
         c013: { name: '気の達人', type: 'PASSIVE_TAIJUTSU_COST', value: 0.5, description: '気の扱いに長けた体質。体術の消費MPが半分になる。', color: 'text-green-300' },
         c014: { name: '天与呪縛', type: 'HEAVENLY_RESTRICTION', magics: ['i025', 'i026', 'i027', 'i028'], description: '生まれつき魔力を一切持たない代わりに、肉体が超人的に強化される。最大HP100倍、MP0固定。体術コスト0。', color: 'text-gray-500' },
         c015: { name: '魔導の器', type: 'PASSIVE_MP_DOUBLE', description: '規格外の魔力容量を持つ体質。最大MPが2倍になる。', color: 'text-blue-500' },
+        c016: { name: '末光', type: 'SET_MAGIC', magics: ['i029', 'i030'], description: '終焉の光を宿す体質。理不尽な守りや強化を無効化する力を持つ。', color: 'text-gray-200' },
     };
     
     // 体術データ (威力調整 & 解放レベル設定)
@@ -2331,6 +2332,20 @@ document.addEventListener('DOMContentLoaded', () => {
                      // スタック増加
                      t.magicResistanceStack = (t.magicResistanceStack || 0) + 1;
                  }
+            }
+
+            // 特殊効果: シールド破壊
+            if (master.isShieldBreak && t.shield > 0) {
+                t.shield = 0;
+                addLog(`${t.name || '敵'}のシールドを破壊した！`);
+            }
+            // 特殊効果: バフ解除 (Dispel)
+            if (master.isDispel) {
+                const buffCount = t.effects.filter(e => e.type === 'BUFF').length;
+                if (buffCount > 0) {
+                    t.effects = t.effects.filter(e => e.type !== 'BUFF');
+                    addLog(`${t.name || '敵'}の強化効果を全て打ち消した！`);
+                }
             }
 
             switch (master.type) {
