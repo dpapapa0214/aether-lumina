@@ -1987,8 +1987,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // -> 天与呪縛の場合は「最大HP」をベースにダメージ計算する特別ルールを追加
         let damage = 0;
         if (gameData.player.constitution && CONSTITUTION_MASTER[gameData.player.constitution].type === 'HEAVENLY_RESTRICTION') {
-            // HP依存ダメージ: 最大HP * 0.1 * powerRate (例: 連撃なら HP*0.8)
-            damage = Math.floor(battleState.player.maxHp * 0.01 * art.powerRate); 
+            // HP依存ダメージ: 最大HP * 0.15 * powerRate (例: 連撃なら HP*0.8)
+            damage = Math.floor(battleState.player.maxHp * 0.015 * art.powerRate); 
             addLog(`天与呪縛の身体能力で攻撃！`);
         } else {
             // 通常: 消費MP依存
