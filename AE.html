@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         m107: { name: 'ポイズンミスト', element: 'GRASS', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 10, baseCost: 18, duration: 3, isDot: true, description: '3ターンの間、敵を毒状態にし、継続ダメージを与える。' },
         m108: { name: 'アースウォール', element: 'EARTH', rarity: 'RARE', category: 'NORMAL', type: 'DEFENSE', basePower: 40, baseCost: 18, duration: 2, description: '2ターンの間、強固な土の壁で身を守る。' },
         m109: { name: 'ホーリーライト', element: 'LIGHT', rarity: 'RARE', category: 'NORMAL', type: 'HEAL', basePower: 50, baseCost: 25, description: '聖なる光でHPを中程度回復する。' },
-        m110: { name: 'カオスボルト', element: 'VOID', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 35, baseCost: 18, description: '混沌の力で予測不能なダメージを与える。' },
+        m110: { name: 'カオスボルト', element: 'VOID', rarity: 'RARE', category: 'NORMAL', type: 'ATTACK', basePower: 40, baseCost: 18, description: '混沌の力で予測不能なダメージを与える。' },
 
         // Epic
         m201: { name: 'メイルストロム', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'ATTACK', basePower: 60, baseCost: 30, isAoe: true, description: '巨大な渦潮を発生させ、敵全体を攻撃する。' },
@@ -637,9 +637,9 @@ document.addEventListener('DOMContentLoaded', () => {
         m316: { name: 'グラビティ・プレス', element: 'EARTH', rarity: 'LEGENDARY', category: 'NORMAL', type: 'ATTACK', basePower: 550, baseCost: 650, description: '超重力で敵単体を押し潰す。' },
         // New Stun Magics (Updated duration & Cost x50)
         m317: { name: 'ライトニング・バインド', element: 'THUNDER', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 7500, duration: 3, description: '雷の鎖で敵を拘束し、3ターン行動不能にする。' },
-        m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6000, duration: 2, description: '大地の檻で敵を閉じ込め、2ターン行動不能にする。' },
-        m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6500, duration: 2, description: '氷の棺で敵を凍結させ、2ターン行動不能にする。' },
-        m320: { name: 'ジャッジメント・チェーン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 20000, duration: 1, isAoe: true, description: '聖なる鎖で敵全体を拘束し、1ターン行動不能にする。' }, 
+        m318: { name: 'アース・プリズン', element: 'EARTH', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6000, duration: 4, description: '大地の檻で敵を閉じ込め、4ターン行動不能にする。' },
+        m319: { name: 'フリーズ・コフィン', element: 'WATER', rarity: 'EPIC', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 6500, duration: 4, description: '氷の棺で敵を凍結させ、4ターン行動不能にする。' },
+        m320: { name: 'ジャッジメント・チェーン', element: 'LIGHT', rarity: 'LEGENDARY', category: 'NORMAL', type: 'STUN', basePower: 0, baseCost: 20000, duration: 5, isAoe: true, description: '聖なる鎖で敵全体を拘束し、5ターン行動不能にする。' }, 
 
         // Boss Unique
         b001: { name: 'タイムストップ', element: 'TIME', rarity: 'LEGENDARY', category: 'BOSS', type: 'DEBUFF', basePower: 0, baseCost: 100, duration: 1, description: '時間を停止させ、1ターン行動不能にする。'},
@@ -715,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         c008: { name: '嵐の化身', type: 'SET_MAGIC', magics: ['i013', 'i014', 'i015', 'i016'], description: '天候を操る荒ぶる魂。風と雷の複合攻撃を得意とする。', color: 'text-yellow-300' },
         c009: { name: '光の聖女', type: 'SET_MAGIC', magics: ['i017', 'i018', 'i019', 'i020'], description: '神に選ばれし聖なる体質。癒やしと浄化の力を持つ。', color: 'text-yellow-200' },
         c010: { name: '死霊術師', type: 'SET_MAGIC', magics: ['i021', 'i022', 'i023', 'i024'], description: '死を操る禁忌の体質。生命力を奪い、呪いを撒き散らす。', color: 'text-indigo-400' },
-        c011: { name: '魔力適応', type: 'PASSIVE_ADAPTATION', value: 0.1, description: '魔法攻撃を受けるたびに耐性を獲得する体質。被弾ごとに魔法ダメージを10%軽減する（最大100%）。戦闘終了後にリセット。', color: 'text-blue-200' },
+        c011: { name: '魔力適応', type: 'PASSIVE_ADAPTATION', value: 0.25, description: '魔法攻撃を受けるたびに耐性を獲得する体質。被弾ごとに魔法ダメージを25%軽減する（最大100%）。戦闘終了後にリセット。', color: 'text-blue-200' },
         // New Constitutions
         c012: { name: '格闘王', type: 'PASSIVE_TAIJUTSU_POWER', value: 2.0, description: '肉体を極限まで鍛え上げた体質。体術のダメージが2倍になる。', color: 'text-orange-500' },
         c013: { name: '気の達人', type: 'PASSIVE_TAIJUTSU_COST', value: 0.5, description: '気の扱いに長けた体質。体術の消費MPが半分になる。', color: 'text-green-300' },
@@ -729,7 +729,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tj01: { name: '連撃', costRate: 0.10, powerRate: 4, isAoe: false, description: '素早い連続攻撃。(MP10%)', unlockLevel: 1 },
         tj02: { name: '重撃', costRate: 0.20, powerRate: 10, isAoe: false, description: '重い一撃を放つ。(MP20%)', unlockLevel: 20 },
         tj03: { name: '旋風脚', costRate: 0.30, powerRate: 8, isAoe: true, description: '周囲を薙ぎ払う範囲攻撃。(MP30%)', unlockLevel: 40 },
-        tj04: { name: '瞬殺', costRate: 0.50, powerRate: 30, isAoe: false, description: '全力を込めた必殺の一撃。(MP50%)', unlockLevel: 60 },
+        tj04: { name: '瞬殺', costRate: 0.50, powerRate: 30, isAoe: true, description: '全力を込めた必殺の一撃。(MP50%)', unlockLevel: 60 },
+        tj05: { name: '次元斬', costRate: 0.60, powerRate: 3200, isAoe: true, isShieldBreak: true, description: '空間を断つ防御不能の斬撃。シールドを強制的に破壊する。(MP60%)', unlockLevel: 200 },
     };
 
     const EQUIPMENT_MASTER = {
@@ -838,11 +839,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // マップデータ定義 (拡大)
     const MAP_WIDTH = 30;
     const MAP_HEIGHT = 30;
-    // 0:海, 1:平原, 2:森, 3:山, 4:砂漠, 5:魔境
+    // 0:海, 1:平原, 2:森, 3:山, 4:砂漠, 5:魔境, 6:神域
     const WORLD_MAP_DATA = [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,1,1,1,1,1,1,2,2,0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0],
-        [0,1,1,1,1,2,2,2,2,3,3,0,0,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,2,2,2,2,3,3,0,0,5,5,6,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
         [0,1,1,1,2,2,2,2,3,3,3,3,3,4,4,4,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
         [0,1,1,1,2,2,2,3,3,3,3,3,4,4,4,4,4,5,5,5,0,0,0,0,0,0,0,0,0,0],
         [0,1,1,2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,0],
@@ -855,7 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [0,1,1,1,1,2,2,2,3,3,3,3,4,4,4,3,2,2,2,3,3,4,4,4,4,0,0,0,0,0],
         [0,1,1,1,2,2,2,3,3,4,4,4,5,5,4,3,3,3,3,3,4,4,4,5,5,0,0,0,0,0],
         [0,0,1,2,2,2,3,3,4,4,5,5,5,5,5,5,4,4,3,3,4,4,5,5,5,0,0,0,0,0],
-        [0,0,0,2,3,3,3,4,4,5,5,5,5,5,5,5,5,4,4,0,0,5,5,5,5,0,0,0,0,0],
+        [0,0,0,2,3,3,3,4,4,5,5,5,5,6,5,5,5,4,4,0,0,5,5,5,5,0,0,0,0,0],
         [0,0,0,0,3,3,4,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0],
         [0,0,0,0,0,4,4,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0],
         [0,0,0,0,0,0,4,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -866,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [0,0,1,1,1,1,0,0,0,0,0,2,2,3,3,4,0,0,0,0,1,1,2,3,4,4,4,3,2,0],
         [0,0,0,1,1,0,0,0,0,0,0,2,3,4,4,4,0,0,0,1,1,2,3,4,5,5,5,4,3,0],
         [0,0,0,0,0,0,0,0,0,0,0,3,4,4,5,0,0,0,0,1,2,3,4,5,5,5,5,4,3,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,4,5,5,0,0,0,0,2,3,4,5,5,5,5,5,4,3,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,4,6,5,0,0,0,0,2,3,4,5,5,5,6,5,4,3,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,3,4,5,5,5,5,4,3,2,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,5,5,4,3,2,1,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -879,6 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
         3: { name: '山', class: 'type-mountain', minLv: 80, maxLv: 150 },
         4: { name: '砂漠', class: 'type-desert', minLv: 150, maxLv: 250 },
         5: { name: '魔境', class: 'type-demon', minLv: 250, maxLv: 400 },
+        6: { name: '神域', class: 'type-god', minLv: 1000, maxLv: 5000 },
     };
 
     // ゲームデータ
